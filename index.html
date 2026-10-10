@@ -303,8 +303,20 @@ $('btnFind').onclick = async () => {
     const want = +$('maxGroups').value || 15;
     const byId = {};
     groups.filter(g => g.manual).forEach(g => { byId[groupId(g.url)] = g; });
-    status('st1', 'Searching ' + ph.length + ' phrase' + (ph.length === 1 ? '' : 's') + ' in ' + country + ' (all together, 2\u20134 minutes, please keep this page open)...', true);
-    const p = await post('/rr-group-finder', { keywords: ph.map(x => x.text), country, maxGroups: want, minMembers: 0 });
+    status('st1', 'Starting ' + ph.length + ' search' + (ph.length === 1 ? '' : 'es') + ' in ' + country + '...', true);
+    const started = await post('/rr-group-finder', { keywords: ph.map(x => x.text), country, maxGroups: want, minMembers: 0 });
+    if (!started.search_id) throw new Error('The server did not start the search.');
+    // The server works in the background (about 2-4 minutes). Ask for the result every 5 seconds.
+    let p = null; const t0 = Date.now();
+    for (;;) {
+      await new Promise(r => setTimeout(r, 5000));
+      const secs = Math.round((Date.now() - t0) / 1000);
+      status('st1', 'Searching ' + ph.length + ' phrase' + (ph.length === 1 ? '' : 's') + ' in ' + country + '... ' + secs + 's (keep this page open, usually 2-4 minutes)', true);
+      let r;
+      try { r = await post('/rr-group-result', { search_id: started.search_id }); } catch (e) { if (secs > 600) throw e; continue; }
+      if (!r.pending) { p = r; break; }
+      if (secs > 600) throw new Error('The search is taking too long (over 10 minutes). Try fewer phrases.');
+    }
     if (p.searchError && !(p.groups || []).length) throw new Error(p.searchError);
     const roleOf = {};
     ph.forEach(x => { roleOf[(x.text + ' ' + country).toLowerCase()] = x.role; });
