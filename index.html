@@ -135,7 +135,7 @@
     <div class="note">A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
   </div>
 
-  <details class="cfg">
+  <details class="cfg" id="cfgBox">
     <summary class="muted small" style="cursor:pointer">Settings (for the person who set this up)</summary>
     <label style="margin-top:8px">Access key</label>
     <div style="display:flex;gap:8px;align-items:center">
@@ -197,6 +197,7 @@ function saveKey() {
   setTimeout(() => { $('keyMsg').textContent = ''; }, 3000);
 }
 $('btnSaveKey').onclick = saveKey;
+try { if (!$('key').value.trim()) $('cfgBox').open = true; } catch (e) {}
 $('key').addEventListener('change', saveKey);
 
 function status(id, msg, busy) { $(id).innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(msg) + '</span>'; }
