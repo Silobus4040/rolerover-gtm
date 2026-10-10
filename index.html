@@ -128,12 +128,12 @@
         <button class="ghost" id="btnAll">Select all</button>
         <button class="ghost" id="btnNone">Untick all</button>
         <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
-        <button class="ghost" id="btnHealth" title="Reads about 10 recent posts from up to 8 groups and shows which have real conversation">&#128269; Check which groups are alive</button>
+        <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
         <span class="muted small" id="selCount"></span>
         <span class="muted small" id="healthMsg"></span>
       </div>
       <div style="overflow:auto"><table id="groupsTbl">
-        <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
+        <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
         <tbody></tbody></table></div>
       <div class="note warn">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
     </div>
@@ -336,16 +336,18 @@ $('btnFind').onclick = async () => {
 
 function verdictOf(h) {
   if (!h) return null;
-  if (h.posts === 0) return { t: 'Dead', c: 'other' };
-  if (h.advertPct >= 60) return { t: 'Mostly adverts', c: 'hot' };
-  if (h.comments === 0) return { t: 'No conversation', c: 'other' };
-  return { t: 'Alive', c: 'seeker' };
+  const p7 = h.posts7d != null ? h.posts7d : h.posts;
+  if (!p7) return { t: 'Dead (no posts in 7 days)', c: 'other', alive: false };
+  if (h.advertPct >= 60) return { t: 'Mostly adverts', c: 'hot', alive: false };
+  if (p7 >= 3) return { t: h.comments ? 'Active' : 'Active, no replies', c: 'seeker', alive: true };
+  return { t: 'Slow', c: 'other', alive: true };
 }
+function lastPostText(h) { if (h.lastPostDays == null) return 'none found'; if (h.lastPostDays === 0) return 'today'; if (h.lastPostDays === 1) return '1 day ago'; return h.lastPostDays + ' days ago'; }
 function healthCells(g) {
   const h = g.health;
-  if (!h) return '<td class="num muted">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="muted small">not checked</td>';
+  if (!h) return '<td class="muted small">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="muted small">not checked</td>';
   const v = verdictOf(h);
-  return '<td class="num">' + h.posts + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
+  return '<td class="small">' + lastPostText(h) + '</td><td class="num">' + (h.posts7d != null ? h.posts7d : h.posts) + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
 }
 function renderGroups() {
   $('groupsBox').style.display = groups.length ? 'block' : 'none';
@@ -373,10 +375,10 @@ $('btnHealth').onclick = async () => {
     const d = await post('/rr-health', { groupUrls: idx.map(i => groups[i].url), hours: 168 });
     const byId = {}; (d.health || []).forEach(h => { byId[groupId(h.url)] = h; });
     let alive = 0;
-    idx.forEach(i => { const h = byId[groupId(groups[i].url)]; if (h) { groups[i].health = h; const v = verdictOf(h); if (v && v.t === 'Alive') alive++; } });
-    selected = new Set(idx.filter(i => { const v = verdictOf(groups[i].health); return v && v.t === 'Alive'; }));
+    idx.forEach(i => { const h = byId[groupId(groups[i].url)]; if (h) { groups[i].health = h; const v = verdictOf(h); if (v && v.alive) alive++; } });
+    selected = new Set(idx.filter(i => { const v = verdictOf(groups[i].health); return v && v.alive; }));
     renderGroups();
-    $('healthMsg').textContent = alive ? alive + ' of ' + idx.length + ' groups are alive and now ticked.' : 'None of these ' + idx.length + ' groups have real conversation.';
+    $('healthMsg').textContent = alive ? alive + ' of ' + idx.length + ' groups had posts in the last 7 days and are now ticked.' : 'None of these ' + idx.length + ' groups had a post in the last 7 days.';
   } catch (e) { $('healthMsg').textContent = 'Error: ' + e.message; }
   $('btnHealth').disabled = false;
 };
