@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoleRover Job Seeker Finder</title>
+<style>
+  :root{
+    --bg:#0b0f17; --card:#121826; --card2:#161d2d; --line:#232c40; --text:#e8ecf4; --mute:#8b96ad;
+    --lime:#D4FF33; --teal:#00FFCC; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lime),var(--teal));display:grid;place-items:center;font-weight:800;color:#0b0f17;box-shadow:0 6px 20px #d4ff3322}
+  h1{font-size:22px;margin:0} .sub{color:var(--mute);font-size:13px}
+  .card{background:linear-gradient(90deg,#d4ff330d,transparent),var(--card);border:1px solid #d4ff3329;border-radius:14px;padding:18px;margin-bottom:16px}
+  .step{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:700;margin-bottom:10px}
+  label{display:block;font-size:11px;color:var(--mute);font-weight:600;margin-bottom:5px}
+  input,select,textarea{width:100%;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit}
+  input:focus,select:focus,textarea:focus{outline:2px solid #d4ff3366;border-color:var(--lime)}
+  textarea{resize:vertical}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:140px}
+  .row>.grow{flex:3;min-width:220px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:700;color:#0b0f17;background:linear-gradient(90deg,var(--lime),var(--teal))}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:#0d1320;border:1px solid var(--line);color:var(--text);font-weight:600;padding:8px 12px}
+  .status{margin-top:12px;color:var(--mute);display:flex;gap:8px;align-items:center;min-height:20px}
+  .spin{width:14px;height:14px;border:2px solid #d4ff3344;border-top-color:var(--lime);border-radius:50%;animation:s .8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:9px 8px;border-bottom:1px solid #1a2236;vertical-align:top}
+  tr.clickable{cursor:pointer} tr.clickable:hover td{background:#ffffff06}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid}
+  .hot{background:#f8717126;color:var(--red);border-color:#f8717155}
+  .seeker{background:#00ffcc1f;color:var(--teal);border-color:#00ffcc55}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .stat b{display:block;font-size:26px}
+  a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+  .btn-link{display:inline-block;background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17!important;padding:5px 11px;border-radius:8px;font-weight:700;font-size:12px;white-space:nowrap}
+  .btn-link:hover{text-decoration:none;opacity:.9}
+  .muted{color:var(--mute)} .small{font-size:12px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+  .toolbar>div{min-width:150px}
+  .clip{max-width:380px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .empty{padding:26px;text-align:center;color:var(--mute)}
+  .chip{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:99px;padding:3px 11px;font-size:12px;font-weight:500;cursor:pointer}
+  .chip:hover{border-color:var(--lime);color:#fff}
+  .drawer{position:fixed;inset:0 0 0 auto;width:min(520px,100%);background:var(--card2);border-left:1px solid var(--line);padding:20px;overflow:auto;transform:translateX(100%);transition:transform .2s;z-index:10}
+  .drawer.open{transform:none}
+  .drawer h3{margin:0 0 4px}
+  .qbox{border:1px solid;border-left-width:4px;border-radius:10px;padding:10px 12px;white-space:pre-wrap;margin:6px 0 16px}
+  .q-orig{background:#a78bfa14;border-color:#a78bfa44;border-left-color:#a78bfa}
+  .q-comment{background:#fbbf2414;border-color:#fbbf2444;border-left-color:#fbbf24}
+  .q-post{background:#60a5fa14;border-color:#60a5fa44;border-left-color:#60a5fa}
+  .q-why{background:#00ffcc12;border-color:#00ffcc44;border-left-color:#00ffcc}
+  .q-draft{background:#d4ff3312;border-color:#d4ff3344;border-left-color:#D4FF33}
+  .cfg{margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px;font-size:12px}
+  .cfg input{margin-top:4px}
+  .note{font-size:12px;color:var(--mute);margin-top:6px}
+  .warn{color:var(--amber)}
+  .banner{border:1px solid #fbbf2455;background:#fbbf2410;color:var(--amber);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">R</div>
+    <div>
+      <h1>RoleRover Job Seeker Finder</h1>
+      <div class="sub">Find job-search groups by words and country &rarr; pick the public ones &rarr; scrape posts &amp; comments &rarr; get job seekers, hottest first, with a link to reply</div>
+    </div>
+  </header>
+
+  <div class="banner">RoleRover only. This page uses its own server addresses (<code>rr-*</code>) and its own saved leads. It never touches the forex / investing data.</div>
+
+  <!-- STEP 1 -->
+  <div class="card">
+    <div class="step">Step 1 &middot; Find job-search groups</div>
+    <div class="row">
+      <div class="grow"><label for="kw">Words associated with the groups (up to 6, separated by commas)</label>
+        <input id="kw" placeholder="e.g. jobs in nigeria, remote jobs africa" value="jobs in nigeria" autocomplete="off"></div>
+      <div><label for="country">Country / region</label><input id="country" placeholder="e.g. Nigeria, Africa" value="Nigeria"></div>
+      <div><label for="maxGroups">How many groups</label><input id="maxGroups" type="number" min="1" max="200" value="30"></div>
+      <div><label for="minMembers">Min members</label><input id="minMembers" type="number" min="0" value="0"></div>
+      <div style="flex:0"><button id="btnFind">Find groups</button></div>
+    </div>
+    <div class="note">The group search service charges a start fee per word (about $0.09), even when nothing is found. It runs only when you click, and stops after the first failed word.</div>
+    <div style="margin-top:10px">
+      <div class="muted small" style="margin-bottom:6px">Ideas &mdash; click to add:</div>
+      <div id="chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div style="margin-top:14px">
+      <label for="manualLinks">Or add public group links yourself (one per line)</label>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <textarea id="manualLinks" rows="3" placeholder="https://www.facebook.com/groups/123456789/" style="flex:1;min-width:240px"></textarea>
+        <button class="ghost" id="btnAddLinks" style="white-space:nowrap">Add these groups</button>
+      </div>
+      <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
+    </div>
+    <div class="status" id="st1"></div>
+    <div id="groupsBox" style="display:none;margin-top:10px">
+      <div class="toolbar">
+        <button class="ghost" id="btnAll">Select all</button>
+        <button class="ghost" id="btnNone">Clear</button>
+        <button class="ghost" id="btnHealth" title="Reads about 10 recent posts from up to 8 groups and shows which are alive">&#128269; Check which groups are alive</button>
+        <span class="muted small" id="selCount"></span>
+        <span class="muted small" id="healthMsg"></span>
+      </div>
+      <div style="overflow:auto"><table id="groupsTbl">
+        <thead><tr><th></th><th>Group</th><th class="num">Members</th><th>Access</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
+        <tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card">
+    <div class="step">Step 2 &middot; Scrape the selected groups</div>
+    <div class="row">
+      <div><label for="maxPosts">Posts per group</label><input id="maxPosts" type="number" min="1" max="60" value="15"></div>
+      <div><label for="hours">Posts newer than</label>
+        <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="7"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
+      <div><label for="viewOption">Sorting order</label>
+        <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
+      <div><label for="cpp">Comments per post</label><input id="cpp" type="number" min="1" max="50" value="30"></div>
+      <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
+      <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+    </div>
+    <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+    <div class="note">A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
+  </div>
+
+  <details class="cfg">
+    <summary class="muted small" style="cursor:pointer">Settings (for the person who set this up)</summary>
+    <label style="margin-top:8px">Access key</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="key" type="password" placeholder="paste the access key" autocomplete="off">
+      <button class="ghost" id="btnSaveKey" style="white-space:nowrap">Save key</button>
+      <span id="keyMsg" class="small" style="white-space:nowrap"></span>
+    </div>
+    <label style="margin-top:8px">Server address</label>
+    <input id="base" value="https://n8n.leadscompass.ai/webhook">
+    <div class="note">Leave this as it is unless you were told to change it.</div>
+  </details>
+
+  <!-- RESULTS -->
+  <div style="height:16px"></div>
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><b id="sTotal">0</b><span class="muted">Job seekers</span></div>
+    <div class="stat"><b id="sHot" style="color:var(--red)">0</b><span class="muted">Hot (struggling)</span></div>
+    <div class="stat"><b id="sPosts" style="color:var(--blue)">0</b><span class="muted">From posts</span></div>
+    <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From comments</span></div>
+  </div>
+
+  <div class="card" id="resCard" style="display:none">
+    <div class="step">Job seekers</div>
+    <div class="note" id="runSummary" style="margin:-4px 0 10px"></div>
+    <div class="toolbar">
+      <div><label>Search</label><input id="q" placeholder="name or text"></div>
+      <div><label>Temperature</label><select id="fHot"><option value="all">All</option><option value="hot">Hot only</option><option value="seeker">Not hot</option></select></div>
+      <div><label>From</label><select id="fSource"><option value="all">Posts &amp; comments</option><option value="post">Posts</option><option value="comment">Comments</option></select></div>
+      <div><label>Group</label><select id="fGroup"><option value="all">All groups</option></select></div>
+      <div style="flex:0"><button class="ghost" id="btnRefresh">Refresh</button></div>
+      <div style="flex:0"><button class="ghost" id="btnCsv">Download CSV</button></div>
+    </div>
+    <div style="overflow:auto"><table id="leadsTbl">
+      <thead><tr><th>Person</th><th>Type</th><th>What they said</th><th>Group</th><th>Reply</th></tr></thead>
+      <tbody></tbody></table></div>
+    <div class="empty" id="emptyMsg" style="display:none"></div>
+  </div>
+</div>
+
+<div class="drawer" id="drawer">
+  <button class="ghost" id="btnClose" style="float:right">Close</button>
+  <div id="dBody"></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base = () => $('base').value.replace(/\/$/, '');
+let groups = [], selected = new Set(), leads = [], runId = null, poll = null, runStats = null, runLeadCount = 0, runSeen = 0;
+
+// RoleRover keeps its own browser storage names so it never shares anything with the forex page.
+try { const b = localStorage.getItem('rr_base'); if (b) $('base').value = b; const k = localStorage.getItem('rr_key'); if (k) $('key').value = k; } catch (e) {}
+$('base').addEventListener('change', () => { try { localStorage.setItem('rr_base', $('base').value); } catch (e) {} });
+function saveKey() {
+  const v = $('key').value.trim();
+  try { localStorage.setItem('rr_key', v); } catch (e) { $('keyMsg').style.color = 'var(--amber)'; $('keyMsg').textContent = 'Could not save here, but the key works until you close the page.'; return; }
+  $('keyMsg').style.color = 'var(--teal)';
+  $('keyMsg').textContent = v ? 'Saved ✓' : 'Key cleared';
+  setTimeout(() => { $('keyMsg').textContent = ''; }, 3000);
+}
+$('btnSaveKey').onclick = saveKey;
+$('key').addEventListener('change', saveKey);
+
+function status(id, msg, busy) { $(id).innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(msg) + '</span>'; }
+
+async function post(path, body) {
+  const r = await fetch(base() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ key: $('key').value.trim() }, body)) });
+  if (r.status === 401) throw new Error('Wrong access key. Open Settings at the bottom and paste the key.');
+  if (r.status === 404) throw new Error('The RoleRover server is not switched on yet (' + path + ' not found).');
+  if (!r.ok) throw new Error('Server returned ' + r.status);
+  const t = await r.text();
+  try { return JSON.parse(t); } catch (e) { return { raw: t }; }
+}
+
+/* WORD IDEAS */
+const WORD_BANK = ['jobs in nigeria', 'remote jobs africa', 'job vacancies lagos', 'job seekers nigeria', 'jobs abuja', 'work from home jobs', 'unemployed graduates', 'entry level jobs', 'job hunting support', 'cv help', 'remote work africa', 'jobs in kenya', 'jobs in ghana', 'jobs in south africa'];
+const typedWords = () => $('kw').value.split(/[,;\n]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+function addWord(w) {
+  const have = typedWords();
+  if (!have.includes(w.toLowerCase())) have.push(w);
+  $('kw').value = have.join(', ');
+  renderChips();
+}
+function renderChips() {
+  const used = typedWords();
+  $('chips').innerHTML = WORD_BANK.filter(w => !used.includes(w)).slice(0, 14).map(w => '<button type="button" class="chip" data-w="' + esc(w) + '">' + esc(w) + '</button>').join('');
+  $('chips').querySelectorAll('.chip').forEach(b => b.onclick = () => addWord(b.dataset.w));
+}
+$('kw').addEventListener('input', renderChips); renderChips();
+
+/* STEP 1: find groups (one call per word, like the forex page) */
+function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
+$('btnFind').onclick = async () => {
+  const words = $('kw').value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+  if (!words.length) return status('st1', 'Type at least one word first.');
+  if (words.length > 6) return status('st1', 'Please use 6 words or fewer (you typed ' + words.length + ').');
+  $('btnFind').disabled = true;
+  try {
+    const want = +$('maxGroups').value || 30, minM = +$('minMembers').value || 0, country = $('country').value.trim();
+    const parts = [];
+    for (let i = 0; i < words.length; i++) {
+      status('st1', 'Searching "' + words[i] + '" (' + (i + 1) + ' of ' + words.length + ', about 30 seconds each)...', true);
+      const p = await post('/rr-group-finder', { keyword: words[i], country, maxGroups: want, minMembers: minM, sortBy: 'members' }).catch(e => ({ groups: [], searchError: e.message }));
+      parts.push(p);
+      if (!(p.groups || []).length && p.searchError) { status('st1', 'Stopped: ' + p.searchError + ' (stopped so no more search fees are charged).'); $('btnFind').disabled = false; return; }
+    }
+    const seen = new Set(); const all = [];
+    parts.forEach(p => (p.groups || []).forEach(g => { if (!seen.has(groupId(g.url))) { seen.add(groupId(g.url)); all.push(g); } }));
+    all.sort((a, b) => b.membersNumber - a.membersNumber);
+    const keep = groups.filter(g => g.manual);
+    groups = keep.concat(all.slice(0, want).filter(g => !keep.some(k => groupId(k.url) === groupId(g.url))));
+    selected = new Set(keep.map((_, i) => i));
+    renderGroups();
+    status('st1', groups.length ? groups.length + ' groups found. Tick the ones to scrape.' : 'No groups found for those words. Try different words.');
+  } catch (e) { status('st1', 'Error: ' + e.message); }
+  $('btnFind').disabled = false;
+};
+function fmtNum(n) { return n ? n.toLocaleString() : '-'; }
+function fmtAccess(v) { const s = String(v || '').toLowerCase(); return /public|públic/.test(s) ? 'Public' : /priv|closed|cerrad/.test(s) ? 'Private' : (v || '-'); }
+function verdictOf(h) {
+  if (!h) return null;
+  if (h.posts === 0) return { t: 'Dead', c: 'other' };
+  if (h.advertPct >= 60) return { t: 'Mostly adverts', c: 'hot' };
+  if (h.comments === 0) return { t: 'No conversation', c: 'other' };
+  return { t: 'Alive', c: 'seeker' };
+}
+function healthCells(g) {
+  const h = g.health;
+  if (!h) return '<td class="num muted">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="muted small">not checked</td>';
+  const v = verdictOf(h);
+  return '<td class="num">' + h.posts + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
+}
+$('btnHealth').onclick = async () => {
+  let idx = [...selected]; if (!idx.length) idx = groups.slice(0, 8).map((_, i) => i); idx = idx.slice(0, 8);
+  $('btnHealth').disabled = true; $('healthMsg').textContent = 'Checking ' + idx.length + ' groups (about 20 seconds)...';
+  try {
+    const d = await post('/rr-health', { groupUrls: idx.map(i => groups[i].url), hours: 168 });
+    const byId = {}; (d.health || []).forEach(h => { byId[groupId(h.url)] = h; });
+    let alive = 0;
+    idx.forEach(i => { const h = byId[groupId(groups[i].url)]; if (h) { groups[i].health = h; const v = verdictOf(h); if (v && v.t === 'Alive') alive++; } });
+    selected = new Set(idx.filter(i => { const v = verdictOf(groups[i].health); return v && v.t === 'Alive'; }));
+    renderGroups();
+    $('healthMsg').textContent = alive ? alive + ' of ' + idx.length + ' groups are alive and now ticked.' : 'None of these ' + idx.length + ' groups have real conversation.';
+  } catch (e) { $('healthMsg').textContent = 'Error: ' + e.message; }
+  $('btnHealth').disabled = false;
+};
+
+function renderGroups() {
+  $('groupsBox').style.display = groups.length ? 'block' : 'none';
+  const tb = $('groupsTbl').querySelector('tbody');
+  tb.innerHTML = groups.map((g, i) => `<tr>
+    <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} style="width:auto"></td>
+    <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>${g.manual ? ' <span class="muted small">(added by you)</span>' : ''}</td>
+    <td class="num">${fmtNum(g.membersNumber)}</td>
+    <td>${esc(fmtAccess(g.visibility))}</td>
+    ${healthCells(g)}</tr>`).join('');
+  tb.querySelectorAll('input[type=checkbox]').forEach(cb => cb.onchange = () => { cb.checked ? selected.add(+cb.dataset.i) : selected.delete(+cb.dataset.i); updSel(); });
+  updSel();
+}
+function updSel() {
+  $('selCount').textContent = selected.size + ' selected';
+  $('btnScrape').disabled = selected.size === 0;
+  if (!runId || !poll) status('st2', selected.size ? selected.size + ' group(s) ready. Click Start scraping.' : 'Tick at least one group in Step 1 to enable Start scraping.');
+}
+function parseGroupLinks(text) {
+  const found = [], unreadable = [];
+  String(text || '').split(/[\s,;]+/).filter(Boolean).forEach(tok => {
+    const m = tok.match(/facebook\.com\/groups\/([^\/?#\s]+)/i);
+    if (m) found.push({ id: m[1], url: 'https://www.facebook.com/groups/' + m[1] + '/' });
+    else if (/facebook\.com|fb\.me|fb\.com/i.test(tok)) unreadable.push(tok);
+  });
+  return { found, unreadable };
+}
+$('btnAddLinks').onclick = () => {
+  const { found, unreadable } = parseGroupLinks($('manualLinks').value);
+  const have = new Set(groups.map(g => groupId(g.url)));
+  let added = 0, dup = 0;
+  found.forEach(o => {
+    const id = o.id.toLowerCase();
+    if (have.has(id)) { dup++; const i = groups.findIndex(g => groupId(g.url) === id); if (i >= 0) selected.add(i); return; }
+    have.add(id); groups.push({ url: o.url, name: 'Group ' + o.id, membersNumber: 0, visibility: '', manual: true }); selected.add(groups.length - 1); added++;
+  });
+  renderGroups();
+  const parts = [];
+  if (added) parts.push(added + ' group' + (added === 1 ? '' : 's') + ' added and ticked');
+  if (dup) parts.push(dup + ' already in the list (ticked)');
+  if (unreadable.length) parts.push(unreadable.length + ' link(s) could not be used: share links (facebook.com/share/g/...) cannot be read. Open the link in your browser and copy the address once the group opens (facebook.com/groups/123...)');
+  if (!found.length && !unreadable.length) parts.push('No group links found. Paste addresses that look like facebook.com/groups/...');
+  $('manualMsg').className = 'note' + (unreadable.length || !found.length ? ' warn' : '');
+  $('manualMsg').textContent = parts.join('. ') + '.';
+  if (added) $('manualLinks').value = '';
+};
+$('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
+$('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
+
+/* STEP 2 */
+$('btnScrape').onclick = async () => {
+  const picked = [...selected].map(i => ({ url: groups[i].url, name: groups[i].name }));
+  $('btnScrape').disabled = true;
+  status('st2', 'Starting scrape of ' + picked.length + ' group(s)...', true);
+  try {
+    const d = await post('/rr-scrape', {
+      groupUrls: picked, maxPosts: +$('maxPosts').value || 15, newerThan: (+$('hours').value || 7) + ' ' + $('unit').value,
+      viewOption: $('viewOption').value, commentsPerPost: +$('cpp').value || 30, includeReplies: $('replies').value === 'true'
+    });
+    runId = d.run_id;
+    if (!runId) throw new Error('No run id returned');
+    $('stats').style.display = 'grid'; $('resCard').style.display = 'block';
+    status('st2', 'Run ' + runId + ' started. Results appear below when classified (usually a few minutes).', true);
+    startPolling();
+  } catch (e) { status('st2', 'Error: ' + e.message); $('btnScrape').disabled = false; }
+};
+function startPolling() {
+  clearInterval(poll); let n = 0, lastCount = -1, still = 0;
+  // Leads are saved only at the end of a run, so 0 for a few minutes is normal.
+  const done = (msg) => { clearInterval(poll); poll = null; status('st2', msg); $('btnScrape').disabled = selected.size === 0; renderLeads(); };
+  const tick = async () => {
+    n++; await loadLeads();
+    still = runSeen === lastCount ? still + 1 : 0; lastCount = runSeen;
+    status('st2', 'Run ' + runId + ': ' + runLeadCount + ' new job seekers so far (' + n * 10 + 's)...', true);
+    if (runStats && runStats.posts === 0 && n >= 2) return done('Run ' + runId + ' finished: no posts were found in the time window.');
+    if (runSeen && still >= 6) return done('Run ' + runId + ' finished: ' + runLeadCount + ' new job seekers.');
+    if (!runSeen && n >= 36) return done('Run ' + runId + ' finished after 6 minutes with 0 job seekers. Press Refresh to check again.');
+    if (n > 180) done('Stopped waiting. Press Refresh to check again.');
+  };
+  poll = setInterval(tick, 10000); tick();
+}
+
+/* RESULTS */
+async function loadLeads() {
+  try {
+    const all = await post('/rr-leads', { run_id: null });
+    leads = all.leads || [];
+    if (runId) {
+      const mine = await post('/rr-leads', { run_id: runId });
+      runSeen = (mine.leads || []).length;
+      runLeadCount = mine.new_count != null ? mine.new_count : runSeen;
+      runStats = mine.hasStats ? mine.stats : null;
+    } else { runSeen = 0; runLeadCount = 0; runStats = null; }
+    renderLeads();
+  } catch (e) { if (!poll) $('emptyMsg').textContent = e.message; }
+}
+$('btnRefresh').onclick = loadLeads;
+
+const isHot = (l) => l.hot === true || l.hot === 'true';
+function badge(l) { return isHot(l) ? '<span class="badge hot">Hot</span>' : '<span class="badge seeker">Job seeker</span>'; }
+function filtered() {
+  const q = $('q').value.toLowerCase(), h = $('fHot').value, s = $('fSource').value, g = $('fGroup').value;
+  return leads.filter(l => (h === 'all' || (h === 'hot') === isHot(l)) && (s === 'all' || l.source === s) && (g === 'all' || l.group_name === g) &&
+    (!q || (l.full_name || '').toLowerCase().includes(q) || (l.item_text || '').toLowerCase().includes(q)));
+}
+const replyLink = (l) => l.comment_url || l.post_url || '';
+function renderLeads() {
+  const gsel = $('fGroup'), cur = gsel.value;
+  const names = [...new Set(leads.map(l => l.group_name).filter(Boolean))];
+  gsel.innerHTML = '<option value="all">All groups</option>' + names.map(n => '<option>' + esc(n) + '</option>').join('');
+  if (names.includes(cur)) gsel.value = cur;
+  $('sTotal').textContent = leads.length;
+  $('sHot').textContent = leads.filter(isHot).length;
+  $('sPosts').textContent = leads.filter(l => l.source === 'post').length;
+  $('sComments').textContent = leads.filter(l => l.source === 'comment').length;
+  // hottest first, then newest
+  const rows = filtered().sort((a, b) => (isHot(b) - isHot(a)) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  $('emptyMsg').style.display = rows.length ? 'none' : 'block';
+  let note = '';
+  if (runStats) note = 'This run read ' + runStats.posts + ' post(s) and ' + runStats.comments + ' comment(s).';
+  if (runId && !poll) note += ' ' + runLeadCount + ' new job seeker(s) from this run.';
+  else if (!runId && leads.length) note = 'Showing ' + leads.length + ' unique people from all runs.';
+  $('emptyMsg').textContent = leads.length ? 'No job seekers match these filters.' : 'No saved job seekers yet.';
+  $('runSummary').textContent = note;
+  $('leadsTbl').querySelector('tbody').innerHTML = rows.map((l, i) => `<tr class="clickable" data-i="${i}">
+    <td><b>${esc(l.full_name)}</b>${runId && l.run_id === runId ? ' <span class="badge seeker" style="margin-left:6px;font-size:10px;padding:1px 7px">New</span>' : ''}<div class="small">${l.profile_url ? '<a href="' + esc(l.profile_url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Facebook profile</a>' : '<span class="muted">no profile link</span>'}</div></td>
+    <td>${badge(l)}<div class="muted small">${l.source === 'comment' ? 'commented' : 'posted'}</div></td>
+    <td><div class="clip">${esc(l.item_text)}</div></td>
+    <td class="small">${esc(l.group_name)}</td>
+    <td>${replyLink(l) ? '<a class="btn-link" href="' + esc(replyLink(l)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open &amp; reply</a>' : ''}</td></tr>`).join('');
+  $('leadsTbl').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => openDrawer(rows[+tr.dataset.i]));
+}
+['q', 'fHot', 'fSource', 'fGroup'].forEach(id => $(id).addEventListener('input', renderLeads));
+
+function openDrawer(l) {
+  const isC = l.source === 'comment';
+  const block = (label, cls, color, text) => '<label style="color:' + color + '">' + label + '</label><div class="qbox ' + cls + '">' + esc(text) + '</div>';
+  $('dBody').innerHTML = `<h3>${esc(l.full_name)}</h3>
+    <div style="margin:6px 0 14px">${badge(l)} <span class="muted small">${isC ? 'commented' : 'posted'} in ${esc(l.group_name)}</span></div>
+    ${isC ? block('Original post', 'q-orig', 'var(--violet)', l.parent_post_text) : ''}
+    ${block(isC ? 'Their comment' : 'Their post', isC ? 'q-comment' : 'q-post', isC ? 'var(--amber)' : 'var(--blue)', l.item_text)}
+    ${block('Why this is a job seeker' + (isHot(l) ? ' (and hot)' : ''), 'q-why', 'var(--teal)', l.reasoning)}
+    ${l.draft_reply ? block('Suggested reply (edit before sending)', 'q-draft', 'var(--lime)', l.draft_reply) : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${l.draft_reply ? '<button class="ghost" id="btnCopy">Copy suggested reply</button>' : ''}
+      ${replyLink(l) ? '<a class="btn-link" target="_blank" rel="noopener" href="' + esc(replyLink(l)) + '">Open &amp; reply in the group</a>' : ''}
+    </div>`;
+  const c = $('btnCopy'); if (c) c.onclick = () => { navigator.clipboard.writeText(l.draft_reply).then(() => { c.textContent = 'Copied ✓'; }); };
+  $('drawer').classList.add('open');
+}
+$('btnClose').onclick = () => $('drawer').classList.remove('open');
+
+(async () => { try { if (!$('key').value.trim()) return; await loadLeads(); if (leads.length) { $('stats').style.display = 'grid'; $('resCard').style.display = 'block'; } } catch (e) {} })();
+
+$('btnCsv').onclick = () => {
+  const rows = filtered(); if (!rows.length) return;
+  const cols = ['full_name', 'hot', 'source', 'group_name', 'profile_url', 'comment_url', 'post_url', 'item_text', 'parent_post_text', 'reasoning', 'draft_reply', 'created_at'];
+  const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = [cols.join(','), ...rows.map(r => cols.map(c => q(r[c])).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'job-seekers-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+};
+</script>
+</body>
+</html>
