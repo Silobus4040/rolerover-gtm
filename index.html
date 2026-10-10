@@ -109,6 +109,7 @@
     <div class="row" style="margin-top:14px">
       <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
       <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
+      <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
       <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
     </div>
     <div class="status" id="st1"></div>
@@ -125,7 +126,8 @@
     <div id="groupsBox" style="display:none;margin-top:10px">
       <div class="toolbar">
         <button class="ghost" id="btnAll">Select all</button>
-        <button class="ghost" id="btnNone">Clear</button>
+        <button class="ghost" id="btnNone">Untick all</button>
+        <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
         <button class="ghost" id="btnHealth" title="Reads about 10 recent posts from up to 8 groups and shows which have real conversation">&#128269; Check which groups are alive</button>
         <span class="muted small" id="selCount"></span>
         <span class="muted small" id="healthMsg"></span>
@@ -252,10 +254,11 @@ const rolePhrases = (r) => {
   if (jobsOn) { forms.push(r.core + ' jobs'); if (remoteOn) forms.push('remote ' + r.core + ' jobs'); }
   return forms.map(t => ({ text: t, role: r.label }));
 };
+const stripCountry = (t) => { let x = String(t || '').trim(); if (country && x.toLowerCase().endsWith(country.toLowerCase())) x = x.slice(0, x.length - country.length).trim(); return x; };
 function allPhrases() {
   const list = [];
   ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => rolePhrases(r).forEach(p => { if (!dropped.has(p.text)) list.push(p); }));
-  extras.forEach(t => { if (dropped.has(t)) return; let x = t.trim(); if (x.toLowerCase().endsWith(country.toLowerCase())) x = x.slice(0, x.length - country.length).trim(); if (x) list.push({ text: x, role: 'Your phrase' }); });
+  extras.forEach(t => { const x = stripCountry(t); if (x) list.push({ text: x, role: 'Your phrase' }); });
   const seen = new Set();
   return list.filter(p => { const k = p.text.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 }
@@ -269,8 +272,16 @@ function renderPicker() {
   $('countryChips').innerHTML = COUNTRIES.map(c => '<button type="button" class="chip' + (country === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('');
   $('countryChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { country = b.dataset.c; savePicks(); renderPicker(); });
   const ph = allPhrases();
-  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' · ' + country) + ' <b class="x" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
-  $('phraseChips').querySelectorAll('.x').forEach(x => x.onclick = () => { dropped.add(x.dataset.t); renderPicker(); });
+  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' · ' + country) + ' <b class="x" data-k="' + (p.role === 'Your phrase' ? 'extra' : 'role') + '" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
+  $('phraseChips').querySelectorAll('.x').forEach(x => x.onclick = () => {
+    const t = x.dataset.t;
+    if (x.dataset.k === 'extra') { extras = extras.filter(e => stripCountry(e).toLowerCase() !== t.toLowerCase()); }
+    else {
+      dropped.add(t);
+      ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => { if (rolePhrases(r).every(p => dropped.has(p.text))) { pickedRoles.delete(r.label); rolePhrases(r).forEach(p => dropped.delete(p.text)); } });
+    }
+    savePicks(); renderPicker();
+  });
   const cost = ph.length * PER_PHRASE;
   $('costLine').textContent = ph.length ? ph.length + ' search' + (ph.length === 1 ? '' : 'es') + ' in ' + country + ', up to $' + cost.toFixed(2) + ' (all run together, about 2\u20134 minutes). Runs only when you click.' : '';
   $('btnFind').disabled = ph.length === 0;
@@ -279,6 +290,7 @@ $('btnAddRole').onclick = () => { const v = $('customRole').value.trim(); if (!v
 $('btnAddCountry').onclick = () => { const v = $('customCountry').value.trim(); if (!v) return; if (!COUNTRIES.some(c => c.toLowerCase() === v.toLowerCase())) COUNTRIES.push(v); country = v; $('customCountry').value = ''; savePicks(); renderPicker(); };
 $('btnAddPhrase').onclick = () => { const v = $('extraPhrase').value.trim(); if (!v) return; if (!extras.includes(v)) extras.push(v); $('extraPhrase').value = ''; savePicks(); renderPicker(); };
 ['customRole', 'customCountry', 'extraPhrase'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $({ customRole: 'btnAddRole', customCountry: 'btnAddCountry', extraPhrase: 'btnAddPhrase' }[id]).click(); } }));
+$('btnClearPicks').onclick = () => { pickedRoles = new Set(); extras = []; dropped = new Set(); savePicks(); renderPicker(); };
 renderPicker();
 
 const dec = (t) => { const e = document.createElement('textarea'); e.innerHTML = String(t == null ? '' : t); return e.value; };
@@ -386,6 +398,7 @@ $('btnAddLinks').onclick = () => {
 };
 $('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
 $('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
+$('btnRemoveAll').onclick = () => { groups = []; selected = new Set(); renderGroups(); status('st1', 'List emptied.'); };
 
 /* STEP 2 */
 $('btnScrape').onclick = async () => {
