@@ -272,7 +272,7 @@ function renderPicker() {
   $('countryChips').innerHTML = COUNTRIES.map(c => '<button type="button" class="chip' + (country === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('');
   $('countryChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { country = b.dataset.c; savePicks(); renderPicker(); });
   const ph = allPhrases();
-  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' · ' + country) + ' <b class="x" data-k="' + (p.role === 'Your phrase' ? 'extra' : 'role') + '" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
+  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' ' + country) + ' <b class="x" data-k="' + (p.role === 'Your phrase' ? 'extra' : 'role') + '" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
   $('phraseChips').querySelectorAll('.x').forEach(x => x.onclick = () => {
     const t = x.dataset.t;
     if (x.dataset.k === 'extra') { extras = extras.filter(e => stripCountry(e).toLowerCase() !== t.toLowerCase()); }
