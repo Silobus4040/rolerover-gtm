@@ -90,9 +90,9 @@
       <div><label for="minMembers">Min members</label><input id="minMembers" type="number" min="0" value="0"></div>
       <div style="flex:0"><button id="btnFind">Find groups</button></div>
     </div>
-    <div class="note">The group search service charges a start fee per word (about $0.09), even when nothing is found. It runs only when you click, and stops after the first failed word.</div>
+    <div class="note">The group search costs about $0.005 per word plus a tiny amount per group found. It runs only when you click, and stops after the first failed word.</div>
     <div style="margin-top:10px">
-      <div class="muted small" style="margin-bottom:6px">Ideas &mdash; click to add:</div>
+      <div class="muted small" id="chipsLabel" style="margin-bottom:6px">Ideas</div>
       <div id="chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
     <div style="margin-top:14px">
@@ -210,21 +210,55 @@ async function post(path, body) {
   try { return JSON.parse(t); } catch (e) { return { raw: t }; }
 }
 
-/* WORD IDEAS */
-const WORD_BANK = ['jobs in nigeria', 'remote jobs africa', 'job vacancies lagos', 'job seekers nigeria', 'jobs abuja', 'work from home jobs', 'unemployed graduates', 'entry level jobs', 'job hunting support', 'cv help', 'remote work africa', 'jobs in kenya', 'jobs in ghana', 'jobs in south africa'];
-const typedWords = () => $('kw').value.split(/[,;\n]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+/* WORD IDEAS: type a role and the suggestions expand it into search phrases you can keep adding */
+const GENERAL = ['remote jobs', 'jobs in {c}', 'job vacancies {c}', 'job seekers {c}', 'work from home jobs {c}', 'unemployed graduates {c}', 'entry level jobs {c}', 'job hunting support {c}', 'cv help {c}', 'remote work {c}'];
+const ROLE_FORMS = ['remote {r}', '{r} jobs', '{r} jobs {c}', '{r} vacancies', '{r} hiring', 'looking for {r} job', 'entry level {r}', '{r} job seekers', '{r} community', '{r} career group', 'remote {r} jobs {c}'];
+const termsOf = () => $('kw').value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+const typedWords = () => termsOf().map(s => s.toLowerCase());
+const fragment = () => { const p = $('kw').value.split(/[,;\n]+/); return (p[p.length - 1] || '').trim(); };
+const STRIP = /\b(remote|jobs?|vacanc(y|ies)|hiring|looking for|entry level|job seekers?|community|career group|role|position)\b/gi;
+function coreOf(text, country) {
+  let t = String(text || '');
+  const cw = country.toLowerCase().split(' ').filter(Boolean);
+  if (cw.length) t = t.split(' ').filter(x => !cw.includes(x.toLowerCase())).join(' ');
+  return t.replace(STRIP, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+function suggestions() {
+  const country = $('country').value.trim().toLowerCase();
+  const used = typedWords();
+  const frag = fragment();
+  const base = frag || (termsOf().slice(-1)[0] || '');
+  const core = coreOf(base, country);
+  let list, label;
+  if (core.length >= 3) {
+    list = ROLE_FORMS.map(f => f.replace('{r}', core).replace('{c}', country).replace(/\s+/g, ' ').trim());
+    label = 'Suggestions for "' + core + '" \u2014 click to add, then keep adding:';
+  } else {
+    list = GENERAL.map(f => f.replace('{c}', country).replace(/\s+/g, ' ').trim());
+    label = 'Ideas \u2014 click to add (or type a role, e.g. "data analyst", and suggestions will appear):';
+  }
+  list = [...new Set(list)].filter(w => !used.includes(w.toLowerCase()));
+  return { list: list.slice(0, 12), label };
+}
 function addWord(w) {
-  const have = typedWords();
-  if (!have.includes(w.toLowerCase())) have.push(w);
-  $('kw').value = have.join(', ');
-  renderChips();
+  const parts = $('kw').value.split(/[,;\n]+/).map(s => s.trim());
+  const frag = parts.pop();
+  // the half-typed fragment is replaced by the chosen phrase; completed terms stay
+  const have = parts.filter(Boolean);
+  if (!have.map(s => s.toLowerCase()).includes(w.toLowerCase())) have.push(w);
+  $('kw').value = have.join(', ') + ', ';
+  $('kw').focus(); renderChips();
 }
 function renderChips() {
-  const used = typedWords();
-  $('chips').innerHTML = WORD_BANK.filter(w => !used.includes(w)).slice(0, 14).map(w => '<button type="button" class="chip" data-w="' + esc(w) + '">' + esc(w) + '</button>').join('');
+  const s = suggestions();
+  $('chipsLabel').textContent = s.label;
+  $('chips').innerHTML = s.list.length ? s.list.map(w => '<button type="button" class="chip" data-w="' + esc(w) + '">' + esc(w) + '</button>').join('') : '<span class="muted small">No more suggestions for this. Type another role.</span>';
   $('chips').querySelectorAll('.chip').forEach(b => b.onclick = () => addWord(b.dataset.w));
 }
-$('kw').addEventListener('input', renderChips); renderChips();
+$('kw').addEventListener('input', renderChips);
+$('country').addEventListener('input', renderChips);
+renderChips();
+
 
 /* STEP 1: find groups (one call per word, like the forex page) */
 function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
