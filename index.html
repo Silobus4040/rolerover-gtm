@@ -85,7 +85,7 @@
   <!-- STEP 1 -->
   <div class="card">
     <div class="step">Step 1 &middot; Pick what you want to find</div>
-    <label>Roles (tap to select; Remote is on, so every role is searched as "remote ..." too)</label>
+    <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
     <div id="roleChips" class="chiprow"></div>
     <div class="row" style="margin-top:8px">
       <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
@@ -240,12 +240,18 @@ const ROLES = [
 ];
 const COUNTRIES = ['Nigeria', 'Kenya', 'Ghana', 'Africa'];
 const PER_PHRASE = 0.03; // worst case: $0.005 start + up to ~15 groups at $0.0019
-let pickedRoles = new Set(['General job groups', 'Software engineer']), country = 'Nigeria', extras = [], dropped = new Set(), remoteOn = true;
-try { const st = JSON.parse(localStorage.getItem('rr_picks') || 'null'); if (st) { pickedRoles = new Set(st.roles || []); remoteOn = st.remote !== false; country = st.country || country; extras = st.extras || []; ROLES.push(...(st.customRoles || []).map(l => ({ label: l, core: l.toLowerCase() }))); (st.customCountries || []).forEach(c => COUNTRIES.push(c)); } } catch (e) {}
-const savePicks = () => { try { localStorage.setItem('rr_picks', JSON.stringify({ roles: [...pickedRoles], remote: remoteOn, country, extras, customRoles: ROLES.slice(5).map(r => r.label), customCountries: COUNTRIES.slice(4) })); } catch (e) {} };
+let pickedRoles = new Set(['General job groups', 'Software engineer']), country = 'Nigeria', extras = [], dropped = new Set(), remoteOn = true, jobsOn = false;
+try { const st = JSON.parse(localStorage.getItem('rr_picks') || 'null'); if (st) { pickedRoles = new Set(st.roles || []); remoteOn = st.remote !== false; jobsOn = st.jobs === true; country = st.country || country; extras = st.extras || []; ROLES.push(...(st.customRoles || []).map(l => ({ label: l, core: l.toLowerCase() }))); (st.customCountries || []).forEach(c => COUNTRIES.push(c)); } } catch (e) {}
+const savePicks = () => { try { localStorage.setItem('rr_picks', JSON.stringify({ roles: [...pickedRoles], remote: remoteOn, jobs: jobsOn, country, extras, customRoles: ROLES.slice(5).map(r => r.label), customCountries: COUNTRIES.slice(4) })); } catch (e) {} };
 
 // The search matches every word strictly, so a role is searched by its plain name (e.g. 'data analyst Nigeria').
-const rolePhrases = (r) => (r.core === '*general*' ? ['remote jobs', 'jobs'] : (remoteOn ? ['remote ' + r.core, r.core] : [r.core])).map(t => ({ text: t, role: r.label }));
+const rolePhrases = (r) => {
+  if (r.core === '*general*') return ['remote jobs', 'jobs'].map(t => ({ text: t, role: r.label }));
+  const forms = [r.core];
+  if (remoteOn) forms.push('remote ' + r.core);
+  if (jobsOn) { forms.push(r.core + ' jobs'); if (remoteOn) forms.push('remote ' + r.core + ' jobs'); }
+  return forms.map(t => ({ text: t, role: r.label }));
+};
 function allPhrases() {
   const list = [];
   ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => rolePhrases(r).forEach(p => { if (!dropped.has(p.text)) list.push(p); }));
@@ -256,7 +262,9 @@ function allPhrases() {
 function renderPicker() {
   $('roleChips').innerHTML = ROLES.map(r => '<button type="button" class="chip' + (pickedRoles.has(r.label) ? ' on' : '') + '" data-r="' + esc(r.label) + '">' + esc(r.label) + '</button>').join('');
   $('roleChips').innerHTML += '<span style="width:14px"></span><button type="button" class="chip' + (remoteOn ? ' on' : '') + '" id="remoteChip" title="When on, every role is also searched as remote + role">' + (remoteOn ? '\u2713 ' : '') + 'Remote</button>';
+  $('roleChips').innerHTML += '<button type="button" class="chip' + (jobsOn ? ' on' : '') + '" id="jobsChip" title="When on, roles are also searched as role + jobs">' + (jobsOn ? '\u2713 ' : '') + 'Jobs</button>';
   $('remoteChip').onclick = () => { remoteOn = !remoteOn; dropped = new Set(); savePicks(); renderPicker(); };
+  $('jobsChip').onclick = () => { jobsOn = !jobsOn; dropped = new Set(); savePicks(); renderPicker(); };
   $('roleChips').querySelectorAll('.chip[data-r]').forEach(b => b.onclick = () => { const l = b.dataset.r; pickedRoles.has(l) ? pickedRoles.delete(l) : pickedRoles.add(l); dropped = new Set(); savePicks(); renderPicker(); });
   $('countryChips').innerHTML = COUNTRIES.map(c => '<button type="button" class="chip' + (country === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('');
   $('countryChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { country = b.dataset.c; savePicks(); renderPicker(); });
