@@ -51,6 +51,9 @@
   .empty{padding:26px;text-align:center;color:var(--mute)}
   .chip{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:99px;padding:3px 11px;font-size:12px;font-weight:500;cursor:pointer}
   .chip:hover{border-color:var(--lime);color:#fff}
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px}
+  .chip.on{background:#d4ff3322;border-color:var(--lime);color:#fff;font-weight:700}
+  .chip{font-size:13px;padding:5px 13px}
   .drawer{position:fixed;inset:0 0 0 auto;width:min(520px,100%);background:var(--card2);border-left:1px solid var(--line);padding:20px;overflow:auto;transform:translateX(100%);transition:transform .2s;z-index:10}
   .drawer.open{transform:none}
   .drawer h3{margin:0 0 4px}
@@ -81,20 +84,35 @@
 
   <!-- STEP 1 -->
   <div class="card">
-    <div class="step">Step 1 &middot; Find job-search groups</div>
-    <div class="row">
-      <div class="grow"><label for="kw">Words associated with the groups (up to 6, separated by commas)</label>
-        <input id="kw" placeholder="e.g. jobs in nigeria, remote jobs africa" value="jobs in nigeria" autocomplete="off"></div>
-      <div><label for="country">Country / region</label><input id="country" placeholder="e.g. Nigeria, Africa" value="Nigeria"></div>
-      <div><label for="maxGroups">How many groups</label><input id="maxGroups" type="number" min="1" max="200" value="30"></div>
-      <div><label for="minMembers">Min members</label><input id="minMembers" type="number" min="0" value="0"></div>
-      <div style="flex:0"><button id="btnFind">Find groups</button></div>
+    <div class="step">Step 1 &middot; Pick what you want to find</div>
+    <label>Roles (tap to select; the page writes the search phrases for you)</label>
+    <div id="roleChips" class="chiprow"></div>
+    <div class="row" style="margin-top:8px">
+      <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
+      <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
     </div>
-    <div class="note">The group search costs about $0.005 per word plus a tiny amount per group found. It runs only when you click, and stops after the first failed word.</div>
-    <div style="margin-top:10px">
-      <div class="muted small" id="chipsLabel" style="margin-bottom:6px">Ideas</div>
-      <div id="chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+
+    <label style="margin-top:14px">Country / region (one at a time)</label>
+    <div id="countryChips" class="chiprow"></div>
+    <div class="row" style="margin-top:8px">
+      <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
+      <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
     </div>
+
+    <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
+    <div id="phraseChips" class="chiprow"></div>
+    <div class="row" style="margin-top:8px">
+      <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
+      <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <div><label for="maxGroups">Groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
+      <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
+      <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
+    </div>
+    <div class="status" id="st1"></div>
+
     <div style="margin-top:14px">
       <label for="manualLinks">Or add public group links yourself (one per line)</label>
       <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
@@ -103,22 +121,23 @@
       </div>
       <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
     </div>
-    <div class="status" id="st1"></div>
+
     <div id="groupsBox" style="display:none;margin-top:10px">
       <div class="toolbar">
         <button class="ghost" id="btnAll">Select all</button>
         <button class="ghost" id="btnNone">Clear</button>
-        <button class="ghost" id="btnHealth" title="Reads about 10 recent posts from up to 8 groups and shows which are alive">&#128269; Check which groups are alive</button>
+        <button class="ghost" id="btnHealth" title="Reads about 10 recent posts from up to 8 groups and shows which have real conversation">&#128269; Check which groups are alive</button>
         <span class="muted small" id="selCount"></span>
         <span class="muted small" id="healthMsg"></span>
       </div>
       <div style="overflow:auto"><table id="groupsTbl">
-        <thead><tr><th></th><th>Group</th><th class="num">Members</th><th>Access</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
+        <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
         <tbody></tbody></table></div>
+      <div class="note warn">Facebook search does not tell us how big or active a group is. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
     </div>
   </div>
 
-  <!-- STEP 2 -->
+<!-- STEP 2 -->
   <div class="card">
     <div class="step">Step 2 &middot; Scrape the selected groups</div>
     <div class="row">
@@ -211,85 +230,75 @@ async function post(path, body) {
   try { return JSON.parse(t); } catch (e) { return { raw: t }; }
 }
 
-/* WORD IDEAS: type a role and the suggestions expand it into search phrases you can keep adding */
-const GENERAL = ['remote jobs', 'jobs in {c}', 'job vacancies {c}', 'job seekers {c}', 'work from home jobs {c}', 'unemployed graduates {c}', 'entry level jobs {c}', 'job hunting support {c}', 'cv help {c}', 'remote work {c}'];
-const ROLE_FORMS = ['remote {r}', '{r} jobs', '{r} jobs {c}', '{r} vacancies', '{r} hiring', 'looking for {r} job', 'entry level {r}', '{r} job seekers', '{r} community', '{r} career group', 'remote {r} jobs {c}'];
-const termsOf = () => $('kw').value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
-const typedWords = () => termsOf().map(s => s.toLowerCase());
-const fragment = () => { const p = $('kw').value.split(/[,;\n]+/); return (p[p.length - 1] || '').trim(); };
-const STRIP = /\b(remote|jobs?|vacanc(y|ies)|hiring|looking for|entry level|job seekers?|community|career group|role|position)\b/gi;
-function coreOf(text, country) {
-  let t = String(text || '');
-  const cw = country.toLowerCase().split(' ').filter(Boolean);
-  if (cw.length) t = t.split(' ').filter(x => !cw.includes(x.toLowerCase())).join(' ');
-  return t.replace(STRIP, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-}
-function suggestions() {
-  const country = $('country').value.trim().toLowerCase();
-  const used = typedWords();
-  const frag = fragment();
-  const base = frag || (termsOf().slice(-1)[0] || '');
-  const core = coreOf(base, country);
-  let list, label;
-  if (core.length >= 3) {
-    list = ROLE_FORMS.map(f => f.replace('{r}', core).replace('{c}', country).replace(/\s+/g, ' ').trim());
-    label = 'Suggestions for "' + core + '" \u2014 click to add, then keep adding:';
-  } else {
-    list = GENERAL.map(f => f.replace('{c}', country).replace(/\s+/g, ' ').trim());
-    label = 'Ideas \u2014 click to add (or type a role, e.g. "data analyst", and suggestions will appear):';
-  }
-  list = [...new Set(list)].filter(w => !used.includes(w.toLowerCase()));
-  return { list: list.slice(0, 12), label };
-}
-function addWord(w) {
-  const parts = $('kw').value.split(/[,;\n]+/).map(s => s.trim());
-  const frag = parts.pop();
-  // the half-typed fragment is replaced by the chosen phrase; completed terms stay
-  const have = parts.filter(Boolean);
-  if (!have.map(s => s.toLowerCase()).includes(w.toLowerCase())) have.push(w);
-  $('kw').value = have.join(', ') + ', ';
-  $('kw').focus(); renderChips();
-}
-function renderChips() {
-  const s = suggestions();
-  $('chipsLabel').textContent = s.label;
-  $('chips').innerHTML = s.list.length ? s.list.map(w => '<button type="button" class="chip" data-w="' + esc(w) + '">' + esc(w) + '</button>').join('') : '<span class="muted small">No more suggestions for this. Type another role.</span>';
-  $('chips').querySelectorAll('.chip').forEach(b => b.onclick = () => addWord(b.dataset.w));
-}
-$('kw').addEventListener('input', renderChips);
-$('country').addEventListener('input', renderChips);
-renderChips();
+/* STEP 1: roles x country -> phrases -> groups */
+const ROLES = [
+  { label: 'Software engineer', core: 'software engineer' },
+  { label: 'Data analyst', core: 'data analyst' },
+  { label: 'Customer rep', core: 'customer service' },
+  { label: 'Virtual assistant', core: 'virtual assistant' }
+];
+const COUNTRIES = ['Nigeria', 'Kenya', 'Ghana', 'Africa'];
+const PRICE = 0.005;
+let pickedRoles = new Set(['Software engineer']), country = 'Nigeria', extras = [], dropped = new Set();
+try { const st = JSON.parse(localStorage.getItem('rr_picks') || 'null'); if (st) { pickedRoles = new Set(st.roles || []); country = st.country || country; extras = st.extras || []; ROLES.push(...(st.customRoles || []).map(l => ({ label: l, core: l.toLowerCase() }))); (st.customCountries || []).forEach(c => COUNTRIES.push(c)); } } catch (e) {}
+const savePicks = () => { try { localStorage.setItem('rr_picks', JSON.stringify({ roles: [...pickedRoles], country, extras, customRoles: ROLES.slice(4).map(r => r.label), customCountries: COUNTRIES.slice(4) })); } catch (e) {} };
 
+const rolePhrases = (r) => ['remote ' + r.core + ' jobs', r.core + ' jobs'].map(t => ({ text: t, role: r.label }));
+function allPhrases() {
+  const list = [];
+  ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => rolePhrases(r).forEach(p => { if (!dropped.has(p.text)) list.push(p); }));
+  extras.forEach(t => { if (!dropped.has(t)) list.push({ text: t, role: 'Your phrase' }); });
+  const seen = new Set();
+  return list.filter(p => { const k = p.text.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+function renderPicker() {
+  $('roleChips').innerHTML = ROLES.map(r => '<button type="button" class="chip' + (pickedRoles.has(r.label) ? ' on' : '') + '" data-r="' + esc(r.label) + '">' + esc(r.label) + '</button>').join('');
+  $('roleChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { const l = b.dataset.r; pickedRoles.has(l) ? pickedRoles.delete(l) : pickedRoles.add(l); dropped = new Set(); savePicks(); renderPicker(); });
+  $('countryChips').innerHTML = COUNTRIES.map(c => '<button type="button" class="chip' + (country === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('');
+  $('countryChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { country = b.dataset.c; savePicks(); renderPicker(); });
+  const ph = allPhrases();
+  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' · ' + country) + ' <b class="x" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
+  $('phraseChips').querySelectorAll('.x').forEach(x => x.onclick = () => { dropped.add(x.dataset.t); renderPicker(); });
+  const cost = ph.length * PRICE;
+  $('costLine').textContent = ph.length ? ph.length + ' search' + (ph.length === 1 ? '' : 'es') + ' in ' + country + ' ≈ $' + cost.toFixed(3) + ' (about ' + Math.max(1, Math.round(ph.length * 0.4)) + ' min). Runs only when you click.' : '';
+  $('btnFind').disabled = ph.length === 0;
+}
+$('btnAddRole').onclick = () => { const v = $('customRole').value.trim(); if (!v) return; if (!ROLES.some(r => r.label.toLowerCase() === v.toLowerCase())) ROLES.push({ label: v, core: v.toLowerCase() }); pickedRoles.add(v); $('customRole').value = ''; savePicks(); renderPicker(); };
+$('btnAddCountry').onclick = () => { const v = $('customCountry').value.trim(); if (!v) return; if (!COUNTRIES.some(c => c.toLowerCase() === v.toLowerCase())) COUNTRIES.push(v); country = v; $('customCountry').value = ''; savePicks(); renderPicker(); };
+$('btnAddPhrase').onclick = () => { const v = $('extraPhrase').value.trim(); if (!v) return; if (!extras.includes(v)) extras.push(v); $('extraPhrase').value = ''; savePicks(); renderPicker(); };
+['customRole', 'customCountry', 'extraPhrase'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $({ customRole: 'btnAddRole', customCountry: 'btnAddCountry', extraPhrase: 'btnAddPhrase' }[id]).click(); } }));
+renderPicker();
 
-/* STEP 1: find groups (one call per word, like the forex page) */
 function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
 $('btnFind').onclick = async () => {
-  const words = $('kw').value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
-  if (!words.length) return status('st1', 'Type at least one word first.');
-  if (words.length > 6) return status('st1', 'Please use 6 words or fewer (you typed ' + words.length + ').');
+  const ph = allPhrases();
+  if (!ph.length) return;
   $('btnFind').disabled = true;
   try {
-    const want = +$('maxGroups').value || 30, minM = +$('minMembers').value || 0, country = $('country').value.trim();
-    const parts = [];
-    for (let i = 0; i < words.length; i++) {
-      status('st1', 'Searching "' + words[i] + '" (' + (i + 1) + ' of ' + words.length + ', about 30 seconds each)...', true);
-      const p = await post('/rr-group-finder', { keyword: words[i], country, maxGroups: want, minMembers: minM, sortBy: 'members' }).catch(e => ({ groups: [], searchError: e.message }));
-      parts.push(p);
-      if (!(p.groups || []).length && p.searchError) { status('st1', 'Stopped: ' + p.searchError + ' (stopped so no more search fees are charged).'); $('btnFind').disabled = false; return; }
+    const want = +$('maxGroups').value || 15;
+    const byId = {};
+    groups.filter(g => g.manual).forEach(g => { byId[groupId(g.url)] = g; });
+    const keepManual = Object.keys(byId).length;
+    let found = 0;
+    for (let i = 0; i < ph.length; i++) {
+      status('st1', 'Searching "' + ph[i].text + '" in ' + country + ' (' + (i + 1) + ' of ' + ph.length + ')...', true);
+      const p = await post('/rr-group-finder', { keyword: ph[i].text, country, maxGroups: want, minMembers: 0 });
+      if (p.searchError && !(p.groups || []).length) { status('st1', 'Stopped: ' + p.searchError + ' (stopped so no more search fees are charged).'); break; }
+      (p.groups || []).forEach(g => {
+        const id = groupId(g.url);
+        const cur = byId[id] || (byId[id] = { url: g.url, name: g.name, description: g.description || '', roles: [] });
+        if (!cur.roles.includes(ph[i].role)) cur.roles.push(ph[i].role);
+        if (!cur.manual) found++;
+      });
     }
-    const seen = new Set(); const all = [];
-    parts.forEach(p => (p.groups || []).forEach(g => { if (!seen.has(groupId(g.url))) { seen.add(groupId(g.url)); all.push(g); } }));
-    all.sort((a, b) => b.membersNumber - a.membersNumber);
-    const keep = groups.filter(g => g.manual);
-    groups = keep.concat(all.slice(0, want).filter(g => !keep.some(k => groupId(k.url) === groupId(g.url))));
-    selected = new Set(keep.map((_, i) => i));
+    groups = Object.values(byId);
+    selected = new Set(groups.map((g, i) => g.manual ? i : -1).filter(i => i >= 0));
     renderGroups();
-    status('st1', groups.length ? groups.length + ' groups found. Tick the ones to scrape.' : 'No groups found for those words. Try different words.');
+    status('st1', groups.length ? groups.length + ' groups found for ' + country + '. Click "Check which groups are alive", then scrape.' : 'No groups found. Try other roles or another country.');
   } catch (e) { status('st1', 'Error: ' + e.message); }
-  $('btnFind').disabled = false;
+  renderPicker();
 };
-function fmtNum(n) { return n ? n.toLocaleString() : '-'; }
-function fmtAccess(v) { const s = String(v || '').toLowerCase(); return /public|públic/.test(s) ? 'Public' : /priv|closed|cerrad/.test(s) ? 'Private' : (v || '-'); }
+
 function verdictOf(h) {
   if (!h) return null;
   if (h.posts === 0) return { t: 'Dead', c: 'other' };
@@ -302,6 +311,22 @@ function healthCells(g) {
   if (!h) return '<td class="num muted">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="muted small">not checked</td>';
   const v = verdictOf(h);
   return '<td class="num">' + h.posts + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
+}
+function renderGroups() {
+  $('groupsBox').style.display = groups.length ? 'block' : 'none';
+  const tb = $('groupsTbl').querySelector('tbody');
+  tb.innerHTML = groups.map((g, i) => `<tr>
+    <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} style="width:auto"></td>
+    <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>${g.manual ? ' <span class="muted small">(added by you)</span>' : ''}<div class="small muted clip" style="max-width:340px">${esc(g.description || '')}</div></td>
+    <td class="small">${esc((g.roles || []).join(', ')) || '-'}</td>
+    ${healthCells(g)}</tr>`).join('');
+  tb.querySelectorAll('input[type=checkbox]').forEach(cb => cb.onchange = () => { cb.checked ? selected.add(+cb.dataset.i) : selected.delete(+cb.dataset.i); updSel(); });
+  updSel();
+}
+function updSel() {
+  $('selCount').textContent = selected.size + ' selected';
+  $('btnScrape').disabled = selected.size === 0;
+  if (!runId || !poll) status('st2', selected.size ? selected.size + ' group(s) ready. Click Start scraping.' : 'Tick at least one group in Step 1 to enable Start scraping.');
 }
 $('btnHealth').onclick = async () => {
   let idx = [...selected]; if (!idx.length) idx = groups.slice(0, 8).map((_, i) => i); idx = idx.slice(0, 8);
@@ -317,24 +342,6 @@ $('btnHealth').onclick = async () => {
   } catch (e) { $('healthMsg').textContent = 'Error: ' + e.message; }
   $('btnHealth').disabled = false;
 };
-
-function renderGroups() {
-  $('groupsBox').style.display = groups.length ? 'block' : 'none';
-  const tb = $('groupsTbl').querySelector('tbody');
-  tb.innerHTML = groups.map((g, i) => `<tr>
-    <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} style="width:auto"></td>
-    <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>${g.manual ? ' <span class="muted small">(added by you)</span>' : ''}</td>
-    <td class="num">${fmtNum(g.membersNumber)}</td>
-    <td>${esc(fmtAccess(g.visibility))}</td>
-    ${healthCells(g)}</tr>`).join('');
-  tb.querySelectorAll('input[type=checkbox]').forEach(cb => cb.onchange = () => { cb.checked ? selected.add(+cb.dataset.i) : selected.delete(+cb.dataset.i); updSel(); });
-  updSel();
-}
-function updSel() {
-  $('selCount').textContent = selected.size + ' selected';
-  $('btnScrape').disabled = selected.size === 0;
-  if (!runId || !poll) status('st2', selected.size ? selected.size + ' group(s) ready. Click Start scraping.' : 'Tick at least one group in Step 1 to enable Start scraping.');
-}
 function parseGroupLinks(text) {
   const found = [], unreadable = [];
   String(text || '').split(/[\s,;]+/).filter(Boolean).forEach(tok => {
@@ -351,7 +358,7 @@ $('btnAddLinks').onclick = () => {
   found.forEach(o => {
     const id = o.id.toLowerCase();
     if (have.has(id)) { dup++; const i = groups.findIndex(g => groupId(g.url) === id); if (i >= 0) selected.add(i); return; }
-    have.add(id); groups.push({ url: o.url, name: 'Group ' + o.id, membersNumber: 0, visibility: '', manual: true }); selected.add(groups.length - 1); added++;
+    have.add(id); groups.push({ url: o.url, name: 'Group ' + o.id, description: '', roles: [], manual: true }); selected.add(groups.length - 1); added++;
   });
   renderGroups();
   const parts = [];
