@@ -164,6 +164,7 @@
     <div class="toolbar" style="margin-top:12px">
       <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
       <button class="ghost" id="btnReloadWatch">Refresh list</button>
+      <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
       <span class="muted small" id="watchMsg"></span>
     </div>
     <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
@@ -567,6 +568,25 @@ $('btnRunDaily').onclick = async () => {
     $('stats').style.display = 'grid'; $('resCard').style.display = 'block';
   } catch (e) { $('watchMsg').textContent = 'Error: ' + e.message; }
   $('btnRunDaily').disabled = false;
+};
+
+/* START FRESH */
+$('btnStartFresh').onclick = async () => {
+  const t = prompt('This permanently deletes ALL saved job seekers, the daily watch list and the memory of what was already scraped. Every group will count as never scraped.\n\nType START FRESH to confirm.');
+  if (t !== 'START FRESH') return;
+  $('btnStartFresh').disabled = true; $('watchMsg').textContent = 'Deleting...';
+  try {
+    await post('/rr-reset', { confirm: 'START FRESH' });
+    clearInterval(poll); poll = null; runId = null; runStats = null; runLeadCount = 0; runSeen = 0;
+    groups = []; selected = new Set(); leads = []; watch = [];
+    pickedRoles = new Set(); extras = []; dropped = new Set();
+    try { localStorage.removeItem('rr_picks'); } catch (e) {}
+    renderPicker(); renderGroups(); renderWatch(); renderLeads();
+    $('resCard').style.display = 'none'; $('stats').style.display = 'none';
+    status('st1', ''); status('st2', 'Tick at least one group in Step 1 to enable Start scraping.');
+    $('watchMsg').textContent = 'Everything deleted. You are starting fresh.';
+  } catch (e) { $('watchMsg').textContent = 'Error: ' + e.message; }
+  $('btnStartFresh').disabled = false;
 };
 
 (async () => { try { if ($('key').value.trim()) loadWatch(); } catch (e) {} })();
