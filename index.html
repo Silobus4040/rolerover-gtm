@@ -68,6 +68,16 @@
   .note{font-size:12px;color:var(--mute);margin-top:6px}
   .warn{color:var(--amber)}
   .banner{border:1px solid #fbbf2455;background:#fbbf2410;color:var(--amber);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:12px}
+  .step-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;margin-bottom:10px}
+  .step-toggle-btn{background:#0d1320;border:1px solid var(--line);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .step-toggle-btn:hover{border-color:var(--lime);color:#fff}
+  #finderBody.collapsed{display:none}
+  @media (max-width:768px){
+    .wrap{padding:16px 12px 40px}
+    .card{padding:14px;border-radius:12px}
+    .step-header{padding:2px 0}
+    .step-toggle-btn{padding:5px 11px;font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -83,34 +93,43 @@
   <div class="banner">RoleRover only. This page uses its own server addresses (<code>rr-*</code>) and its own saved leads. It never touches the forex / investing data.</div>
 
   <!-- STEP 1 -->
-  <div class="card">
-    <div class="step">Step 1 &middot; Pick what you want to find</div>
-    <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
-    <div id="roleChips" class="chiprow"></div>
-    <div class="row" style="margin-top:8px">
-      <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
-      <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
+  <div class="card" id="step1Card">
+    <div class="step-header" id="step1Header" role="button" aria-expanded="true" aria-controls="finderBody" tabindex="0">
+      <div class="step" style="margin-bottom:0">Step 1 &middot; Pick what you want to find</div>
+      <button type="button" class="step-toggle-btn" id="btnToggleFinder" aria-label="Toggle group finder">
+        <span id="finderToggleText">Collapse</span>
+        <span id="finderToggleIcon" style="font-size:9px">&#9650;</span>
+      </button>
     </div>
 
-    <label style="margin-top:14px">Country / region (one at a time)</label>
-    <div id="countryChips" class="chiprow"></div>
-    <div class="row" style="margin-top:8px">
-      <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
-      <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
-    </div>
+    <div id="finderBody">
+      <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
+      <div id="roleChips" class="chiprow"></div>
+      <div class="row" style="margin-top:8px">
+        <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
+        <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
+      </div>
 
-    <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
-    <div id="phraseChips" class="chiprow"></div>
-    <div class="row" style="margin-top:8px">
-      <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
-      <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
-    </div>
+      <label style="margin-top:14px">Country / region (one at a time)</label>
+      <div id="countryChips" class="chiprow"></div>
+      <div class="row" style="margin-top:8px">
+        <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
+        <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
+      </div>
 
-    <div class="row" style="margin-top:14px">
-      <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
-      <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
-      <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
-      <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
+      <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
+      <div id="phraseChips" class="chiprow"></div>
+      <div class="row" style="margin-top:8px">
+        <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
+        <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
+        <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
+        <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
+        <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
+      </div>
     </div>
     <div class="status" id="st1"></div>
 
@@ -307,11 +326,40 @@ $('btnAddPhrase').onclick = () => { const v = $('extraPhrase').value.trim(); if 
 $('btnClearPicks').onclick = () => { pickedRoles = new Set(); extras = []; dropped = new Set(); savePicks(); renderPicker(); };
 renderPicker();
 
+function toggleFinder(collapse) {
+  const fb = $('finderBody');
+  if (!fb) return;
+  const isCollapsed = collapse !== undefined ? collapse : !fb.classList.contains('collapsed');
+  if (isCollapsed) {
+    fb.classList.add('collapsed');
+    $('step1Header')?.setAttribute('aria-expanded', 'false');
+    if ($('finderToggleText')) $('finderToggleText').textContent = 'Expand';
+    if ($('finderToggleIcon')) $('finderToggleIcon').innerHTML = '&#9660;';
+  } else {
+    fb.classList.remove('collapsed');
+    $('step1Header')?.setAttribute('aria-expanded', 'true');
+    if ($('finderToggleText')) $('finderToggleText').textContent = 'Collapse';
+    if ($('finderToggleIcon')) $('finderToggleIcon').innerHTML = '&#9650;';
+  }
+}
+$('step1Header')?.addEventListener('click', (e) => {
+  if (e.target && e.target.closest('#btnToggleFinder')) return;
+  toggleFinder();
+});
+$('step1Header')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFinder(); }
+});
+$('btnToggleFinder')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleFinder();
+});
+
 const dec = (t) => { const e = document.createElement('textarea'); e.innerHTML = String(t == null ? '' : t); return e.value; };
 function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
 $('btnFind').onclick = async () => {
   const ph = allPhrases();
   if (!ph.length) return;
+  if (window.innerWidth <= 768) toggleFinder(true);
   $('btnFind').disabled = true;
   try {
     const want = +$('maxGroups').value || 15;
