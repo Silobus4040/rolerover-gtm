@@ -75,189 +75,360 @@
   .btn-link.viewed{opacity:.88;background:#111a28;color:var(--teal)!important;border:1px solid #00ffcc66}
   .btn-link.viewed:hover{opacity:1;border-color:var(--teal)}
   .eye-icon{margin-right:5px;font-size:13px;vertical-align:-1px;display:inline-block}
+
+  /* App Navigation & Layout */
+  .app-header{position:sticky;top:0;z-index:40;background:rgba(11,15,23,0.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .menu-btn{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 11px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .menu-btn:hover{border-color:var(--lime);color:#fff}
+  .app-title-group{display:flex;align-items:center;gap:8px}
+  .app-brand{font-size:15px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+  .view-tag{font-size:11px;background:#162032;color:var(--teal);border:1px solid #00ffcc33;padding:2px 8px;border-radius:99px;font-weight:600;white-space:nowrap}
+  .header-right{display:flex;align-items:center;gap:8px}
+  .top-status-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);background:#0d1320;border:1px solid var(--line);padding:4px 10px;border-radius:99px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--mute);display:inline-block}
+  .dot.busy{background:var(--lime);box-shadow:0 0 8px var(--lime);animation:pulse 1.2s infinite}
+  @keyframes pulse{0%{transform:scale(0.9);opacity:.7}50%{transform:scale(1.3);opacity:1}100%{transform:scale(0.9);opacity:.7}}
+
+  /* Navigation Drawer */
+  .nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:90;opacity:0;pointer-events:none;transition:opacity .25s ease}
+  .nav-backdrop.open{opacity:1;pointer-events:auto}
+  .nav-drawer{position:fixed;inset:0 auto 0 0;width:min(320px,86vw);background:var(--card2);border-right:1px solid var(--line);z-index:100;transform:translateX(-100%);transition:transform .25s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;box-shadow:10px 0 30px rgba(0,0,0,.6)}
+  .nav-drawer.open{transform:translateX(0)}
+  .nav-drawer-header{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .nav-items{padding:12px 10px;display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto}
+  .nav-item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;background:transparent;border:1px solid transparent;border-radius:10px;color:var(--text);font-size:13px;font-weight:600;text-align:left;cursor:pointer;transition:all .15s ease}
+  .nav-item:hover{background:#111a28;border-color:var(--line)}
+  .nav-item.active{background:linear-gradient(90deg,#d4ff3318,#00ffcc12);border-color:#d4ff3344;color:#fff}
+  .nav-icon{font-size:16px;width:20px;text-align:center}
+  .nav-title{flex:1}
+  .nav-pill{font-size:11px;background:#0d1320;border:1px solid var(--line);padding:2px 8px;border-radius:99px;color:var(--mute);font-variant-numeric:tabular-nums}
+  .nav-item.active .nav-pill{border-color:var(--lime);color:var(--lime)}
+  .nav-drawer-footer{padding:14px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--mute);display:flex;justify-content:space-between;align-items:center}
+
+  /* Bottom Navigation for Mobile */
+  .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(11,15,23,0.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:40;padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));justify-content:space-around}
+  .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;background:transparent;border:0;color:var(--mute);font-size:10px;font-weight:600;cursor:pointer;position:relative}
+  .bottom-nav-item .b-icon{font-size:16px;line-height:1}
+  .bottom-nav-item.active{color:var(--lime)}
+  .bottom-nav-item .b-badge{position:absolute;top:1px;right:22%;background:var(--lime);color:#0b0f17;font-size:9px;font-weight:800;border-radius:99px;padding:0 4px;min-width:14px;height:14px;line-height:14px;text-align:center;display:none}
+  .bottom-nav-item .b-badge.visible{display:inline-block}
+
+  /* App Views */
+  .app-view{display:none}
+  .app-view.active{display:block;animation:viewFade .2s ease}
+  @keyframes viewFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Mobile responsiveness */
   @media (max-width:768px){
-    .wrap{padding:16px 12px 40px}
+    .bottom-nav{display:flex}
+    .wrap{padding:16px 12px 80px}
     .card{padding:14px;border-radius:12px}
     .step-header{padding:2px 0}
     .step-toggle-btn{padding:5px 11px;font-size:12px}
+    .top-status-pill{max-width:120px}
+  }
+
+  /* Mobile Lead Cards */
+  @media (max-width:680px){
+    #leadsTbl thead{display:none}
+    #leadsTbl tbody tr{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;padding:12px}
+    #leadsTbl tbody td{display:block;padding:6px 0;border-bottom:0}
+    #leadsTbl tbody td:first-child{border-bottom:1px solid #1a2236;padding-bottom:8px;margin-bottom:6px}
+    #leadsTbl tbody td:last-child{margin-top:8px;padding-top:8px;border-top:1px solid #1a2236}
+    #leadsTbl tbody td:last-child a.btn-link{display:block;width:100%;text-align:center;padding:9px;font-size:13px}
+    .clip{max-width:100%;-webkit-line-clamp:4}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">R</div>
-    <div>
-      <h1>RoleRover Job Seeker Finder</h1>
-      <div class="sub">Find job-search groups by words and country &rarr; pick the public ones &rarr; scrape posts &amp; comments &rarr; get job seekers, hottest first, with a link to reply</div>
+<!-- Fixed Sticky Header with Hamburger -->
+<header class="app-header">
+  <div class="header-left">
+    <button type="button" class="menu-btn" id="btnMenu" aria-label="Open menu">&#9776;</button>
+    <div class="logo" style="width:32px;height:32px;font-size:14px;border-radius:9px">R</div>
+    <div class="app-title-group">
+      <span class="app-brand">RoleRover</span>
+      <span class="view-tag" id="activeViewTag">Job Seekers</span>
     </div>
-  </header>
+  </div>
+  <div class="header-right">
+    <div class="top-status-pill" id="topStatusPill" title="Background system status">
+      <span class="dot" id="topStatusDot"></span>
+      <span id="topStatusText">Ready</span>
+    </div>
+  </div>
+</header>
 
+<!-- Backdrop & Hamburger Navigation Drawer -->
+<div class="nav-backdrop" id="navBackdrop"></div>
+<aside class="nav-drawer" id="navDrawer" aria-label="Application Navigation">
+  <div class="nav-drawer-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="logo">R</div>
+      <div>
+        <div style="font-weight:800;font-size:15px">RoleRover GTM</div>
+        <div style="font-size:11px;color:var(--mute)">Job Seeker Finder</div>
+      </div>
+    </div>
+    <button type="button" class="ghost" id="btnCloseNav" style="padding:6px 10px;font-size:14px" aria-label="Close menu">&times;</button>
+  </div>
+  <nav class="nav-items">
+    <button type="button" class="nav-item active" data-view="leads">
+      <span class="nav-icon">&#128101;</span>
+      <span class="nav-title">Job Seekers</span>
+      <span class="nav-pill" id="navCountLeads">0</span>
+    </button>
+    <button type="button" class="nav-item" data-view="finder">
+      <span class="nav-icon">&#128269;</span>
+      <span class="nav-title">Step 1 &middot; Find Groups</span>
+    </button>
+    <button type="button" class="nav-item" data-view="add-links">
+      <span class="nav-icon">&#128279;</span>
+      <span class="nav-title">Step 1.1 &middot; Add Group Links</span>
+    </button>
+    <button type="button" class="nav-item" data-view="groups">
+      <span class="nav-icon">&#128203;</span>
+      <span class="nav-title">Found Groups</span>
+      <span class="nav-pill" id="navCountGroups">0</span>
+    </button>
+    <button type="button" class="nav-item" data-view="scrape">
+      <span class="nav-icon">&#9889;</span>
+      <span class="nav-title">Step 2 &middot; Scrape Groups</span>
+    </button>
+    <button type="button" class="nav-item" data-view="watch">
+      <span class="nav-icon">&#9200;</span>
+      <span class="nav-title">Step 3 &middot; Daily Watch</span>
+      <span class="nav-pill" id="navCountWatch">0</span>
+    </button>
+    <button type="button" class="nav-item" data-view="settings">
+      <span class="nav-icon">&#9881;&#65039;</span>
+      <span class="nav-title">Settings &amp; Server</span>
+    </button>
+  </nav>
+  <div class="nav-drawer-footer">
+    <span>gtm.myrolerover.com</span>
+    <span class="badge seeker" style="font-size:10px;padding:2px 8px">Connected</span>
+  </div>
+</aside>
+
+<!-- Bottom Nav for Mobile -->
+<nav class="bottom-nav" id="bottomNav">
+  <button type="button" class="bottom-nav-item active" data-view="leads">
+    <span class="b-icon">&#128101;</span>
+    <span>Leads</span>
+    <span class="b-badge" id="botBadgeLeads"></span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-view="finder">
+    <span class="b-icon">&#128269;</span>
+    <span>Finder</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-view="groups">
+    <span class="b-icon">&#128203;</span>
+    <span>Groups</span>
+    <span class="b-badge" id="botBadgeGroups"></span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-view="scrape">
+    <span class="b-icon">&#9889;</span>
+    <span>Scrape</span>
+  </button>
+  <button type="button" class="bottom-nav-item" data-view="watch">
+    <span class="b-icon">&#9200;</span>
+    <span>Watch</span>
+  </button>
+</nav>
+
+<div class="wrap">
   <div class="banner">RoleRover only. This page uses its own server addresses (<code>rr-*</code>) and its own saved leads. It never touches the forex / investing data.</div>
 
-  <!-- STEP 1 -->
-  <div class="card" id="step1Card">
-    <div class="step-header" id="step1Header" role="button" aria-expanded="true" aria-controls="finderBody" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 1 &middot; Pick what you want to find</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleFinder" aria-label="Toggle group finder">
-        <span id="finderToggleText">Collapse</span>
-        <span id="finderToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
+  <!-- VIEW: JOB SEEKERS / LEADS (Default View) -->
+  <section class="app-view active" id="view-leads">
+    <div class="stats" id="stats">
+      <div class="stat"><b id="sTotal">0</b><span class="muted">Job seekers</span></div>
+      <div class="stat"><b id="sHot" style="color:var(--red)">0</b><span class="muted">Hot (struggling)</span></div>
+      <div class="stat"><b id="sPosts" style="color:var(--blue)">0</b><span class="muted">From posts</span></div>
+      <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From comments</span></div>
     </div>
 
-    <div id="finderBody">
-      <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
-      <div id="roleChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
+    <div class="card" id="resCard">
+      <div class="step-header">
+        <div class="step" style="margin-bottom:0">Job seekers inbox</div>
+        <div style="display:flex;gap:6px">
+          <button class="ghost" id="btnRefresh" style="padding:5px 11px;font-size:12px">&#8635; Refresh</button>
+          <button class="ghost" id="btnCsv" style="padding:5px 11px;font-size:12px">CSV</button>
+        </div>
+      </div>
+      <div class="note" id="runSummary" style="margin:-4px 0 10px"></div>
+      <div class="toolbar">
+        <div><label>Search</label><input id="q" placeholder="name or text"></div>
+        <div><label>Temperature</label><select id="fHot"><option value="all">All</option><option value="hot">Hot only</option><option value="seeker">Not hot</option></select></div>
+        <div><label>From</label><select id="fSource"><option value="all">Posts &amp; comments</option><option value="post">Posts</option><option value="comment">Comments</option></select></div>
+        <div><label>Group</label><select id="fGroup"><option value="all">All groups</option></select></div>
+      </div>
+      <div style="overflow:auto"><table id="leadsTbl">
+        <thead><tr><th>Person</th><th>Type</th><th>What they said</th><th>Group</th><th>Reply</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="empty" id="emptyMsg" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- VIEW: STEP 1 FINDER -->
+  <section class="app-view" id="view-finder">
+    <div class="card" id="step1Card">
+      <div class="step-header" id="step1Header" role="button" aria-expanded="true" aria-controls="finderBody" tabindex="0">
+        <div class="step" style="margin-bottom:0">Step 1 &middot; Pick what you want to find</div>
+        <button type="button" class="step-toggle-btn" id="btnToggleFinder" aria-label="Toggle group finder">
+          <span id="finderToggleText">Collapse</span>
+          <span id="finderToggleIcon" style="font-size:9px">&#9650;</span>
+        </button>
       </div>
 
-      <label style="margin-top:14px">Country / region (one at a time)</label>
-      <div id="countryChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
+      <div id="finderBody">
+        <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
+        <div id="roleChips" class="chiprow"></div>
+        <div class="row" style="margin-top:8px">
+          <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
+          <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
+        </div>
+
+        <label style="margin-top:14px">Country / region (one at a time)</label>
+        <div id="countryChips" class="chiprow"></div>
+        <div class="row" style="margin-top:8px">
+          <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
+          <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
+        </div>
+
+        <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
+        <div id="phraseChips" class="chiprow"></div>
+        <div class="row" style="margin-top:8px">
+          <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
+          <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
+          <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
+          <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
+          <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
+        </div>
       </div>
+      <div class="status" id="st1"></div>
+    </div>
+  </section>
 
-      <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
-      <div id="phraseChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
+  <!-- VIEW: STEP 1.1 ADD LINKS -->
+  <section class="app-view" id="view-add-links">
+    <div class="card" id="step11Card">
+      <div class="step-header" id="step11Header" role="button" aria-expanded="true" aria-controls="step11Body" tabindex="0">
+        <div class="step" style="margin-bottom:0">Step 1.1 &middot; Add public group links</div>
+        <button type="button" class="step-toggle-btn" id="btnToggleStep11" aria-label="Toggle step 1.1">
+          <span id="step11ToggleText">Collapse</span>
+          <span id="step11ToggleIcon" style="font-size:9px">&#9650;</span>
+        </button>
       </div>
-
-      <div class="row" style="margin-top:14px">
-        <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
-        <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
-        <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
-        <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
+      <div id="step11Body">
+        <label for="manualLinks">Or add public group links yourself (one per line)</label>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+          <textarea id="manualLinks" rows="3" placeholder="https://www.facebook.com/groups/123456789/" style="flex:1;min-width:240px"></textarea>
+          <button class="ghost" id="btnAddLinks" style="white-space:nowrap">Add these groups</button>
+        </div>
+        <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
       </div>
     </div>
-    <div class="status" id="st1"></div>
-  </div>
+  </section>
 
-  <!-- STEP 1.1 -->
-  <div class="card" id="step11Card">
-    <div class="step-header" id="step11Header" role="button" aria-expanded="true" aria-controls="step11Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 1.1 &middot; Add public group links</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep11" aria-label="Toggle step 1.1">
-        <span id="step11ToggleText">Collapse</span>
-        <span id="step11ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step11Body">
-      <label for="manualLinks">Or add public group links yourself (one per line)</label>
-      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
-        <textarea id="manualLinks" rows="3" placeholder="https://www.facebook.com/groups/123456789/" style="flex:1;min-width:240px"></textarea>
-        <button class="ghost" id="btnAddLinks" style="white-space:nowrap">Add these groups</button>
+  <!-- VIEW: GROUPS -->
+  <section class="app-view" id="view-groups">
+    <div class="card" id="groupsBox">
+      <div class="step-header">
+        <div class="step" style="margin-bottom:0">Found &middot; Added groups</div>
+        <div style="display:flex;gap:6px">
+          <button class="ghost" onclick="switchView('finder')" style="padding:4px 10px;font-size:11px">+ Find More</button>
+          <button class="ghost" onclick="switchView('scrape')" style="padding:4px 10px;font-size:11px;color:var(--lime);border-color:#d4ff3355">Scrape &rarr;</button>
+        </div>
       </div>
-      <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
-    </div>
-  </div>
-
-  <!-- GROUPS LIST (shown when groups exist from Step 1 or Step 1.1) -->
-  <div class="card" id="groupsBox" style="display:none">
-    <div class="step">Found &middot; Added groups</div>
-    <div class="toolbar">
-      <button class="ghost" id="btnAll">Select all</button>
-      <button class="ghost" id="btnNone">Untick all</button>
-      <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
-      <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
-      <span class="muted small" id="selCount"></span>
-      <span class="muted small" id="healthMsg"></span>
-    </div>
-    <div style="overflow:auto"><table id="groupsTbl">
-      <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
-      <tbody></tbody></table></div>
-    <div class="note warn">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="card" id="step2Card">
-    <div class="step-header" id="step2Header" role="button" aria-expanded="true" aria-controls="step2Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 2 &middot; Scrape the selected groups</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep2" aria-label="Toggle step 2">
-        <span id="step2ToggleText">Collapse</span>
-        <span id="step2ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step2Body">
-      <div class="row">
-        <div><label for="maxPosts">Posts per group (blank = all in the window)</label><input id="maxPosts" type="number" min="1" value="" placeholder="all"></div>
-        <div><label for="hours">Posts newer than</label>
-          <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="30"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
-        <div><label for="viewOption">Sorting order</label>
-          <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
-        <div><label for="cpp">Comments per post (blank = all)</label><input id="cpp" type="number" min="1" value="" placeholder="all"></div>
-        <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
-        <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+      <div class="toolbar">
+        <button class="ghost" id="btnAll">Select all</button>
+        <button class="ghost" id="btnNone">Untick all</button>
+        <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
+        <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
+        <span class="muted small" id="selCount"></span>
+        <span class="muted small" id="healthMsg"></span>
       </div>
-      <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
-      <div class="note">Blank means everything: all posts in the time window and all their comments. Posts cost about $0.005 each and comments $0.0005 each, so a busy group over 30 days can be a few dollars. A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
+      <div id="groupsEmptyNotice" class="empty" style="display:none">No groups loaded yet. Use <a href="#finder" onclick="switchView('finder')">Step 1 &middot; Find groups</a> or <a href="#add-links" onclick="switchView('add-links')">Step 1.1 &middot; Add links</a> to find groups.</div>
+      <div style="overflow:auto"><table id="groupsTbl">
+        <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="note warn" style="margin-top:10px">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
     </div>
-  </div>
+  </section>
 
-  <!-- STEP 3 -->
-  <div class="card" id="watchCard">
-    <div class="step-header" id="step3Header" role="button" aria-expanded="true" aria-controls="step3Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 3 &middot; Daily watch</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep3" aria-label="Toggle step 3">
-        <span id="step3ToggleText">Collapse</span>
-        <span id="step3ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step3Body">
-      <div class="note" style="margin:-4px 0 10px">Every group you scrape is added here. Each day the server scrapes the last 30 hours of every group in this list and re-checks the comments on the last 7 days of posts. Delete a group to stop watching it (you can restore it).</div>
-      <div id="watchList"><span class="muted small">Save your access key in Settings (bottom of the page) to load this list.</span></div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
-        <button class="ghost" id="btnReloadWatch">Refresh list</button>
-        <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
-        <span class="muted small" id="watchMsg"></span>
+  <!-- VIEW: STEP 2 SCRAPE -->
+  <section class="app-view" id="view-scrape">
+    <div class="card" id="step2Card">
+      <div class="step-header" id="step2Header" role="button" aria-expanded="true" aria-controls="step2Body" tabindex="0">
+        <div class="step" style="margin-bottom:0">Step 2 &middot; Scrape the selected groups</div>
+        <button type="button" class="step-toggle-btn" id="btnToggleStep2" aria-label="Toggle step 2">
+          <span id="step2ToggleText">Collapse</span>
+          <span id="step2ToggleIcon" style="font-size:9px">&#9650;</span>
+        </button>
       </div>
-      <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
+      <div id="step2Body">
+        <div class="row">
+          <div><label for="maxPosts">Posts per group (blank = all in the window)</label><input id="maxPosts" type="number" min="1" value="" placeholder="all"></div>
+          <div><label for="hours">Posts newer than</label>
+            <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="30"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
+          <div><label for="viewOption">Sorting order</label>
+            <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
+          <div><label for="cpp">Comments per post (blank = all)</label><input id="cpp" type="number" min="1" value="" placeholder="all"></div>
+          <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
+          <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+        </div>
+        <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+        <div class="note">Blank means everything: all posts in the time window and all their comments. Posts cost about $0.005 each and comments $0.0005 each, so a busy group over 30 days can be a few dollars. A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <details class="cfg" id="cfgBox">
-    <summary class="muted small" style="cursor:pointer">Settings (for the person who set this up)</summary>
-    <label style="margin-top:8px">Access key</label>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input id="key" type="password" placeholder="paste the access key" autocomplete="off">
-      <button class="ghost" id="btnSaveKey" style="white-space:nowrap">Save key</button>
-      <span id="keyMsg" class="small" style="white-space:nowrap"></span>
+  <!-- VIEW: STEP 3 DAILY WATCH -->
+  <section class="app-view" id="view-watch">
+    <div class="card" id="watchCard">
+      <div class="step-header" id="step3Header" role="button" aria-expanded="true" aria-controls="step3Body" tabindex="0">
+        <div class="step" style="margin-bottom:0">Step 3 &middot; Daily watch</div>
+        <button type="button" class="step-toggle-btn" id="btnToggleStep3" aria-label="Toggle step 3">
+          <span id="step3ToggleText">Collapse</span>
+          <span id="step3ToggleIcon" style="font-size:9px">&#9650;</span>
+        </button>
+      </div>
+      <div id="step3Body">
+        <div class="note" style="margin:-4px 0 10px">Every group you scrape is added here. Each day the server scrapes the last 30 hours of every group in this list and re-checks the comments on the last 7 days of posts. Delete a group to stop watching it (you can restore it).</div>
+        <div id="watchList"><span class="muted small">Save your access key in Settings to load this list.</span></div>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
+          <button class="ghost" id="btnReloadWatch">Refresh list</button>
+          <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
+          <span class="muted small" id="watchMsg"></span>
+        </div>
+        <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
+      </div>
     </div>
-    <label style="margin-top:8px">Server address</label>
-    <input id="base" value="https://n8n.leadscompass.ai/webhook">
-    <div class="note">Leave this as it is unless you were told to change it.</div>
-  </details>
+  </section>
 
-  <!-- RESULTS -->
-  <div style="height:16px"></div>
-  <div class="stats" id="stats" style="display:none">
-    <div class="stat"><b id="sTotal">0</b><span class="muted">Job seekers</span></div>
-    <div class="stat"><b id="sHot" style="color:var(--red)">0</b><span class="muted">Hot (struggling)</span></div>
-    <div class="stat"><b id="sPosts" style="color:var(--blue)">0</b><span class="muted">From posts</span></div>
-    <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From comments</span></div>
-  </div>
-
-  <div class="card" id="resCard" style="display:none">
-    <div class="step">Job seekers</div>
-    <div class="note" id="runSummary" style="margin:-4px 0 10px"></div>
-    <div class="toolbar">
-      <div><label>Search</label><input id="q" placeholder="name or text"></div>
-      <div><label>Temperature</label><select id="fHot"><option value="all">All</option><option value="hot">Hot only</option><option value="seeker">Not hot</option></select></div>
-      <div><label>From</label><select id="fSource"><option value="all">Posts &amp; comments</option><option value="post">Posts</option><option value="comment">Comments</option></select></div>
-      <div><label>Group</label><select id="fGroup"><option value="all">All groups</option></select></div>
-      <div style="flex:0"><button class="ghost" id="btnRefresh">Refresh</button></div>
-      <div style="flex:0"><button class="ghost" id="btnCsv">Download CSV</button></div>
+  <!-- VIEW: SETTINGS -->
+  <section class="app-view" id="view-settings">
+    <div class="card" id="settingsCard">
+      <div class="step">Settings &middot; Server Connection</div>
+      <label style="margin-top:8px">Access key</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="key" type="password" placeholder="paste the access key" autocomplete="off">
+        <button class="ghost" id="btnSaveKey" style="white-space:nowrap">Save key</button>
+        <span id="keyMsg" class="small" style="white-space:nowrap"></span>
+      </div>
+      <label style="margin-top:14px">Server address</label>
+      <input id="base" value="https://n8n.leadscompass.ai/webhook">
+      <div class="note">Leave this as it is unless you were told to change it.</div>
     </div>
-    <div style="overflow:auto"><table id="leadsTbl">
-      <thead><tr><th>Person</th><th>Type</th><th>What they said</th><th>Group</th><th>Reply</th></tr></thead>
-      <tbody></tbody></table></div>
-    <div class="empty" id="emptyMsg" style="display:none"></div>
-  </div>
+  </section>
 </div>
 
 <div class="drawer" id="drawer">
@@ -285,7 +456,11 @@ $('btnSaveKey').onclick = saveKey;
 try { if (!$('key').value.trim()) $('cfgBox').open = true; } catch (e) {}
 $('key').addEventListener('change', saveKey);
 
-function status(id, msg, busy) { $(id).innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(msg) + '</span>'; }
+function status(id, msg, busy) {
+  if ($(id)) $(id).innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(msg) + '</span>';
+  if ($('topStatusText')) $('topStatusText').textContent = msg ? (msg.length > 28 ? msg.slice(0, 26) + '...' : msg) : 'Ready';
+  if ($('topStatusDot')) $('topStatusDot').classList.toggle('busy', !!busy);
+}
 
 async function post(path, body) {
   const r = await fetch(base() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ key: $('key').value.trim() }, body)) });
@@ -394,6 +569,53 @@ function makeCollapsible(headerId, bodyId, toggleBtnId, textId, iconId, defaultE
   return setCollapsed;
 }
 
+const VIEW_TITLES = {
+  leads: 'Job Seekers',
+  finder: 'Find Groups',
+  'add-links': 'Add Links',
+  groups: 'Found Groups',
+  scrape: 'Scrape Setup',
+  watch: 'Daily Watch',
+  settings: 'Settings'
+};
+
+function switchView(viewName) {
+  if (!viewName) return;
+  document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+  const target = $('view-' + viewName);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === viewName);
+  });
+  document.querySelectorAll('.bottom-nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === viewName);
+  });
+  if ($('activeViewTag')) $('activeViewTag').textContent = VIEW_TITLES[viewName] || viewName;
+  closeNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  try { location.hash = viewName; } catch (e) {}
+}
+
+function openNav() {
+  $('navDrawer')?.classList.add('open');
+  $('navBackdrop')?.classList.add('open');
+}
+function closeNav() {
+  $('navDrawer')?.classList.remove('open');
+  $('navBackdrop')?.classList.remove('open');
+}
+$('btnMenu')?.addEventListener('click', openNav);
+$('btnCloseNav')?.addEventListener('click', closeNav);
+$('navBackdrop')?.addEventListener('click', closeNav);
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.onclick = () => switchView(btn.dataset.view);
+});
+document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+  btn.onclick = () => switchView(btn.dataset.view);
+});
+
 const toggleStep1 = makeCollapsible('step1Header', 'finderBody', 'btnToggleFinder', 'finderToggleText', 'finderToggleIcon', true);
 const toggleStep11 = makeCollapsible('step11Header', 'step11Body', 'btnToggleStep11', 'step11ToggleText', 'step11ToggleIcon', true);
 const toggleStep2 = makeCollapsible('step2Header', 'step2Body', 'btnToggleStep2', 'step2ToggleText', 'step2ToggleIcon', true);
@@ -436,6 +658,7 @@ $('btnFind').onclick = async () => {
     groups = Object.values(byId);
     selected = new Set(groups.map((g, i) => g.manual ? i : -1).filter(i => i >= 0));
     renderGroups();
+    if (groups.length) switchView('groups');
     status('st1', groups.length ? groups.length + ' groups found for ' + country + '. Click "Check which groups are alive", then scrape.' : 'No groups found. Try other roles or another country.');
   } catch (e) { status('st1', 'Error: ' + e.message); }
   renderPicker();
@@ -457,7 +680,14 @@ function healthCells(g) {
   return '<td class="small">' + lastPostText(h) + '</td><td class="num">' + (h.posts7d != null ? h.posts7d : h.posts) + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
 }
 function renderGroups() {
-  $('groupsBox').style.display = groups.length ? 'block' : 'none';
+  $('groupsBox').style.display = 'block';
+  if ($('navCountGroups')) $('navCountGroups').textContent = groups.length;
+  if ($('botBadgeGroups')) {
+    $('botBadgeGroups').textContent = groups.length > 99 ? '99+' : groups.length;
+    $('botBadgeGroups').classList.toggle('visible', groups.length > 0);
+  }
+  if ($('groupsEmptyNotice')) $('groupsEmptyNotice').style.display = groups.length ? 'none' : 'block';
+  if ($('groupsTbl')) $('groupsTbl').style.display = groups.length ? 'table' : 'none';
   const tb = $('groupsTbl').querySelector('tbody');
   tb.innerHTML = groups.map((g, i) => `<tr>
     <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} style="width:auto"></td>
@@ -518,6 +748,7 @@ $('btnAddLinks').onclick = () => {
   if (added) {
     $('manualLinks').value = '';
     if (window.innerWidth <= 768) toggleStep11(true);
+    switchView('groups');
   }
 };
 $('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
@@ -530,6 +761,7 @@ $('btnScrape').onclick = async () => {
   if (window.innerWidth <= 768) toggleStep2(true);
   $('btnScrape').disabled = true;
   status('st2', 'Starting scrape of ' + picked.length + ' group(s)...', true);
+  switchView('leads');
   try {
     const d = await post('/rr-scrape', {
       groupUrls: picked, maxPosts: +$('maxPosts').value || 0, newerThan: (+$('hours').value || 30) + ' ' + $('unit').value,
@@ -615,6 +847,11 @@ function renderLeads() {
   $('sHot').textContent = leads.filter(isHot).length;
   $('sPosts').textContent = leads.filter(l => l.source === 'post').length;
   $('sComments').textContent = leads.filter(l => l.source === 'comment').length;
+  if ($('navCountLeads')) $('navCountLeads').textContent = leads.length;
+  if ($('botBadgeLeads')) {
+    $('botBadgeLeads').textContent = leads.length > 99 ? '99+' : leads.length;
+    $('botBadgeLeads').classList.toggle('visible', leads.length > 0);
+  }
   // hottest first, then newest
   const rows = filtered().sort((a, b) => (isHot(b) - isHot(a)) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
   $('emptyMsg').style.display = rows.length ? 'none' : 'block';
@@ -667,6 +904,7 @@ async function loadWatch() {
 }
 function renderWatch() {
   const act = watch.filter(g => g.status === 'active'), del = watch.filter(g => g.status !== 'active');
+  if ($('navCountWatch')) $('navCountWatch').textContent = act.length;
   let h = act.length ? '<div style="overflow:auto"><table><thead><tr><th>Watched group</th><th></th></tr></thead><tbody>' + act.map(g => '<tr><td><a href="' + esc(g.url) + '" target="_blank" rel="noopener">' + esc(g.name || g.url) + '</a></td><td style="text-align:right"><button class="ghost" data-del="' + esc(g.url) + '">Delete</button></td></tr>').join('') + '</tbody></table></div>' : '<div class="empty">No groups are being watched yet. Scrape a group and it will appear here.</div>';
   if (del.length) h += '<details style="margin-top:10px"><summary class="muted small" style="cursor:pointer">' + del.length + ' deleted group' + (del.length === 1 ? '' : 's') + ' (not scraped daily)</summary>' + del.map(g => '<div style="display:flex;gap:10px;align-items:center;padding:4px 0"><span class="muted small" style="flex:1">' + esc(g.name || g.url) + '</span><button class="ghost" data-res="' + esc(g.url) + '">Restore</button></div>').join('') + '</details>';
   $('watchList').innerHTML = h;
@@ -716,8 +954,26 @@ $('btnStartFresh').onclick = async () => {
   $('btnStartFresh').disabled = false;
 };
 
-(async () => { try { if ($('key').value.trim()) loadWatch(); } catch (e) {} })();
-(async () => { try { if (!$('key').value.trim()) return; await loadLeads(); if (leads.length) { $('stats').style.display = 'grid'; $('resCard').style.display = 'block'; } } catch (e) {} })();
+(async () => {
+  try {
+    const hasKey = !!$('key').value.trim();
+    if (hasKey) loadWatch();
+    if (!hasKey) {
+      switchView('settings');
+      return;
+    }
+    await loadLeads();
+    const initialHash = (location.hash || '').replace('#', '');
+    if (['leads', 'finder', 'add-links', 'groups', 'scrape', 'watch', 'settings'].includes(initialHash)) {
+      switchView(initialHash);
+    } else {
+      switchView(leads.length ? 'leads' : 'finder');
+    }
+  } catch (e) {
+    const initialHash = (location.hash || '').replace('#', '');
+    if (initialHash) switchView(initialHash);
+  }
+})();
 
 $('btnCsv').onclick = () => {
   const rows = filtered(); if (!rows.length) return;
