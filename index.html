@@ -71,7 +71,10 @@
   .step-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;margin-bottom:10px}
   .step-toggle-btn{background:#0d1320;border:1px solid var(--line);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
   .step-toggle-btn:hover{border-color:var(--lime);color:#fff}
-  #finderBody.collapsed{display:none}
+  #finderBody.collapsed, #step11Body.collapsed, #step2Body.collapsed, #step3Body.collapsed, .collapsible-body.collapsed{display:none}
+  .btn-link.viewed{opacity:.88;background:#111a28;color:var(--teal)!important;border:1px solid #00ffcc66}
+  .btn-link.viewed:hover{opacity:1;border-color:var(--teal)}
+  .eye-icon{margin-right:5px;font-size:13px;vertical-align:-1px;display:inline-block}
   @media (max-width:768px){
     .wrap{padding:16px 12px 40px}
     .card{padding:14px;border-radius:12px}
@@ -132,8 +135,18 @@
       </div>
     </div>
     <div class="status" id="st1"></div>
+  </div>
 
-    <div style="margin-top:14px">
+  <!-- STEP 1.1 -->
+  <div class="card" id="step11Card">
+    <div class="step-header" id="step11Header" role="button" aria-expanded="true" aria-controls="step11Body" tabindex="0">
+      <div class="step" style="margin-bottom:0">Step 1.1 &middot; Add public group links</div>
+      <button type="button" class="step-toggle-btn" id="btnToggleStep11" aria-label="Toggle step 1.1">
+        <span id="step11ToggleText">Collapse</span>
+        <span id="step11ToggleIcon" style="font-size:9px">&#9650;</span>
+      </button>
+    </div>
+    <div id="step11Body">
       <label for="manualLinks">Or add public group links yourself (one per line)</label>
       <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
         <textarea id="manualLinks" rows="3" placeholder="https://www.facebook.com/groups/123456789/" style="flex:1;min-width:240px"></textarea>
@@ -141,52 +154,70 @@
       </div>
       <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
     </div>
-
-    <div id="groupsBox" style="display:none;margin-top:10px">
-      <div class="toolbar">
-        <button class="ghost" id="btnAll">Select all</button>
-        <button class="ghost" id="btnNone">Untick all</button>
-        <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
-        <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
-        <span class="muted small" id="selCount"></span>
-        <span class="muted small" id="healthMsg"></span>
-      </div>
-      <div style="overflow:auto"><table id="groupsTbl">
-        <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
-        <tbody></tbody></table></div>
-      <div class="note warn">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
-    </div>
   </div>
 
-<!-- STEP 2 -->
-  <div class="card">
-    <div class="step">Step 2 &middot; Scrape the selected groups</div>
-    <div class="row">
-      <div><label for="maxPosts">Posts per group (blank = all in the window)</label><input id="maxPosts" type="number" min="1" value="" placeholder="all"></div>
-      <div><label for="hours">Posts newer than</label>
-        <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="30"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
-      <div><label for="viewOption">Sorting order</label>
-        <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
-      <div><label for="cpp">Comments per post (blank = all)</label><input id="cpp" type="number" min="1" value="" placeholder="all"></div>
-      <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
-      <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+  <!-- GROUPS LIST (shown when groups exist from Step 1 or Step 1.1) -->
+  <div class="card" id="groupsBox" style="display:none">
+    <div class="step">Found &middot; Added groups</div>
+    <div class="toolbar">
+      <button class="ghost" id="btnAll">Select all</button>
+      <button class="ghost" id="btnNone">Untick all</button>
+      <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
+      <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
+      <span class="muted small" id="selCount"></span>
+      <span class="muted small" id="healthMsg"></span>
     </div>
-    <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
-    <div class="note">Blank means everything: all posts in the time window and all their comments. Posts cost about $0.005 each and comments $0.0005 each, so a busy group over 30 days can be a few dollars. A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
+    <div style="overflow:auto"><table id="groupsTbl">
+      <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
+      <tbody></tbody></table></div>
+    <div class="note warn">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card" id="step2Card">
+    <div class="step-header" id="step2Header" role="button" aria-expanded="true" aria-controls="step2Body" tabindex="0">
+      <div class="step" style="margin-bottom:0">Step 2 &middot; Scrape the selected groups</div>
+      <button type="button" class="step-toggle-btn" id="btnToggleStep2" aria-label="Toggle step 2">
+        <span id="step2ToggleText">Collapse</span>
+        <span id="step2ToggleIcon" style="font-size:9px">&#9650;</span>
+      </button>
+    </div>
+    <div id="step2Body">
+      <div class="row">
+        <div><label for="maxPosts">Posts per group (blank = all in the window)</label><input id="maxPosts" type="number" min="1" value="" placeholder="all"></div>
+        <div><label for="hours">Posts newer than</label>
+          <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="30"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
+        <div><label for="viewOption">Sorting order</label>
+          <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
+        <div><label for="cpp">Comments per post (blank = all)</label><input id="cpp" type="number" min="1" value="" placeholder="all"></div>
+        <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
+        <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+      </div>
+      <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+      <div class="note">Blank means everything: all posts in the time window and all their comments. Posts cost about $0.005 each and comments $0.0005 each, so a busy group over 30 days can be a few dollars. A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
+    </div>
   </div>
 
   <!-- STEP 3 -->
   <div class="card" id="watchCard">
-    <div class="step">Step 3 &middot; Daily watch</div>
-    <div class="note" style="margin:-4px 0 10px">Every group you scrape is added here. Each day the server scrapes the last 30 hours of every group in this list and re-checks the comments on the last 7 days of posts. Delete a group to stop watching it (you can restore it).</div>
-    <div id="watchList"><span class="muted small">Save your access key in Settings (bottom of the page) to load this list.</span></div>
-    <div class="toolbar" style="margin-top:12px">
-      <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
-      <button class="ghost" id="btnReloadWatch">Refresh list</button>
-      <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
-      <span class="muted small" id="watchMsg"></span>
+    <div class="step-header" id="step3Header" role="button" aria-expanded="true" aria-controls="step3Body" tabindex="0">
+      <div class="step" style="margin-bottom:0">Step 3 &middot; Daily watch</div>
+      <button type="button" class="step-toggle-btn" id="btnToggleStep3" aria-label="Toggle step 3">
+        <span id="step3ToggleText">Collapse</span>
+        <span id="step3ToggleIcon" style="font-size:9px">&#9650;</span>
+      </button>
     </div>
-    <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
+    <div id="step3Body">
+      <div class="note" style="margin:-4px 0 10px">Every group you scrape is added here. Each day the server scrapes the last 30 hours of every group in this list and re-checks the comments on the last 7 days of posts. Delete a group to stop watching it (you can restore it).</div>
+      <div id="watchList"><span class="muted small">Save your access key in Settings (bottom of the page) to load this list.</span></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
+        <button class="ghost" id="btnReloadWatch">Refresh list</button>
+        <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
+        <span class="muted small" id="watchMsg"></span>
+      </div>
+      <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
+    </div>
   </div>
 
   <details class="cfg" id="cfgBox">
@@ -326,40 +357,54 @@ $('btnAddPhrase').onclick = () => { const v = $('extraPhrase').value.trim(); if 
 $('btnClearPicks').onclick = () => { pickedRoles = new Set(); extras = []; dropped = new Set(); savePicks(); renderPicker(); };
 renderPicker();
 
-function toggleFinder(collapse) {
-  const fb = $('finderBody');
-  if (!fb) return;
-  const isCollapsed = collapse !== undefined ? collapse : !fb.classList.contains('collapsed');
-  if (isCollapsed) {
-    fb.classList.add('collapsed');
-    $('step1Header')?.setAttribute('aria-expanded', 'false');
-    if ($('finderToggleText')) $('finderToggleText').textContent = 'Expand';
-    if ($('finderToggleIcon')) $('finderToggleIcon').innerHTML = '&#9660;';
-  } else {
-    fb.classList.remove('collapsed');
-    $('step1Header')?.setAttribute('aria-expanded', 'true');
-    if ($('finderToggleText')) $('finderToggleText').textContent = 'Collapse';
-    if ($('finderToggleIcon')) $('finderToggleIcon').innerHTML = '&#9650;';
+function makeCollapsible(headerId, bodyId, toggleBtnId, textId, iconId, defaultExpanded = true) {
+  const header = $(headerId), body = $(bodyId), btn = $(toggleBtnId), text = $(textId), icon = $(iconId);
+  if (!header || !body) return () => {};
+
+  function setCollapsed(collapse) {
+    const isCollapsed = collapse !== undefined ? collapse : !body.classList.contains('collapsed');
+    if (isCollapsed) {
+      body.classList.add('collapsed');
+      header.setAttribute('aria-expanded', 'false');
+      if (text) text.textContent = 'Expand';
+      if (icon) icon.innerHTML = '&#9660;';
+    } else {
+      body.classList.remove('collapsed');
+      header.setAttribute('aria-expanded', 'true');
+      if (text) text.textContent = 'Collapse';
+      if (icon) icon.innerHTML = '&#9650;';
+    }
   }
+
+  header.addEventListener('click', (e) => {
+    if (btn && (e.target === btn || btn.contains(e.target))) return;
+    setCollapsed();
+  });
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCollapsed(); }
+  });
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setCollapsed();
+    });
+  }
+
+  if (!defaultExpanded) setCollapsed(true);
+  return setCollapsed;
 }
-$('step1Header')?.addEventListener('click', (e) => {
-  if (e.target && e.target.closest('#btnToggleFinder')) return;
-  toggleFinder();
-});
-$('step1Header')?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFinder(); }
-});
-$('btnToggleFinder')?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleFinder();
-});
+
+const toggleStep1 = makeCollapsible('step1Header', 'finderBody', 'btnToggleFinder', 'finderToggleText', 'finderToggleIcon', true);
+const toggleStep11 = makeCollapsible('step11Header', 'step11Body', 'btnToggleStep11', 'step11ToggleText', 'step11ToggleIcon', true);
+const toggleStep2 = makeCollapsible('step2Header', 'step2Body', 'btnToggleStep2', 'step2ToggleText', 'step2ToggleIcon', true);
+const toggleStep3 = makeCollapsible('step3Header', 'step3Body', 'btnToggleStep3', 'step3ToggleText', 'step3ToggleIcon', true);
 
 const dec = (t) => { const e = document.createElement('textarea'); e.innerHTML = String(t == null ? '' : t); return e.value; };
 function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
 $('btnFind').onclick = async () => {
   const ph = allPhrases();
   if (!ph.length) return;
-  if (window.innerWidth <= 768) toggleFinder(true);
+  if (window.innerWidth <= 768) toggleStep1(true);
   $('btnFind').disabled = true;
   try {
     const want = +$('maxGroups').value || 15;
@@ -470,7 +515,10 @@ $('btnAddLinks').onclick = () => {
   if (!found.length && !unreadable.length) parts.push('No group links found. Paste addresses that look like facebook.com/groups/...');
   $('manualMsg').className = 'note' + (unreadable.length || !found.length ? ' warn' : '');
   $('manualMsg').textContent = parts.join('. ') + '.';
-  if (added) $('manualLinks').value = '';
+  if (added) {
+    $('manualLinks').value = '';
+    if (window.innerWidth <= 768) toggleStep11(true);
+  }
 };
 $('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
 $('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
@@ -479,6 +527,7 @@ $('btnRemoveAll').onclick = () => { groups = []; selected = new Set(); renderGro
 /* STEP 2 */
 $('btnScrape').onclick = async () => {
   const picked = [...selected].map(i => ({ url: groups[i].url, name: groups[i].name }));
+  if (window.innerWidth <= 768) toggleStep2(true);
   $('btnScrape').disabled = true;
   status('st2', 'Starting scrape of ' + picked.length + ' group(s)...', true);
   try {
@@ -534,6 +583,29 @@ function filtered() {
     (!q || (l.full_name || '').toLowerCase().includes(q) || (l.item_text || '').toLowerCase().includes(q)));
 }
 const replyLink = (l) => l.comment_url || l.post_url || '';
+const leadKey = (l) => String(l.id || l.comment_url || l.post_url || (l.full_name + '_' + (l.created_at || '') + '_' + (l.item_text || '').slice(0, 30)));
+let viewedLeads = new Set();
+try {
+  const v = JSON.parse(localStorage.getItem('rr_viewed_leads') || '[]');
+  if (Array.isArray(v)) viewedLeads = new Set(v);
+} catch (e) {}
+
+function markLeadViewed(k) {
+  if (!k) return;
+  viewedLeads.add(k);
+  try { localStorage.setItem('rr_viewed_leads', JSON.stringify([...viewedLeads])); } catch (e) {}
+}
+
+function onReplyClick(e, el, k) {
+  markLeadViewed(k);
+  document.querySelectorAll(`a.btn-link[data-k="${k}"]`).forEach(btn => {
+    btn.classList.add('viewed');
+    if (!btn.querySelector('.eye-icon')) {
+      btn.insertAdjacentHTML('afterbegin', '<span class="eye-icon">&#128065;</span>');
+    }
+  });
+}
+
 function renderLeads() {
   const gsel = $('fGroup'), cur = gsel.value;
   const names = [...new Set(leads.map(l => l.group_name).filter(Boolean))];
@@ -552,18 +624,24 @@ function renderLeads() {
   else if (!runId && leads.length) note = 'Showing ' + leads.length + ' unique people from all runs.';
   $('emptyMsg').textContent = leads.length ? 'No job seekers match these filters.' : 'No saved job seekers yet.';
   $('runSummary').textContent = note;
-  $('leadsTbl').querySelector('tbody').innerHTML = rows.map((l, i) => `<tr class="clickable" data-i="${i}">
+  $('leadsTbl').querySelector('tbody').innerHTML = rows.map((l, i) => {
+    const k = leadKey(l);
+    const seen = viewedLeads.has(k);
+    return `<tr class="clickable" data-i="${i}">
     <td><b>${esc(l.full_name)}</b>${runId && l.run_id === runId ? ' <span class="badge seeker" style="margin-left:6px;font-size:10px;padding:1px 7px">New</span>' : ''}<div class="small">${l.profile_url ? '<a href="' + esc(l.profile_url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Facebook profile</a>' : '<span class="muted">no profile link</span>'}</div></td>
     <td>${badge(l)}<div class="muted small">${l.source === 'comment' ? 'commented' : 'posted'}</div></td>
     <td><div class="clip">${esc(l.item_text)}</div></td>
     <td class="small">${esc(l.group_name)}</td>
-    <td>${replyLink(l) ? '<a class="btn-link" href="' + esc(replyLink(l)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open &amp; reply</a>' : ''}</td></tr>`).join('');
+    <td>${replyLink(l) ? `<a class="btn-link ${seen ? 'viewed' : ''}" data-k="${esc(k)}" href="${esc(replyLink(l))}" target="_blank" rel="noopener" onclick="onReplyClick(event, this, '${esc(k)}'); event.stopPropagation()">${seen ? '<span class="eye-icon">&#128065;</span>' : ''}Open &amp; reply</a>` : ''}</td></tr>`;
+  }).join('');
   $('leadsTbl').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => openDrawer(rows[+tr.dataset.i]));
 }
 ['q', 'fHot', 'fSource', 'fGroup'].forEach(id => $(id).addEventListener('input', renderLeads));
 
 function openDrawer(l) {
   const isC = l.source === 'comment';
+  const k = leadKey(l);
+  const seen = viewedLeads.has(k);
   const block = (label, cls, color, text) => '<label style="color:' + color + '">' + label + '</label><div class="qbox ' + cls + '">' + esc(text) + '</div>';
   $('dBody').innerHTML = `<h3>${esc(l.full_name)}</h3>
     <div style="margin:6px 0 14px">${badge(l)} <span class="muted small">${isC ? 'commented' : 'posted'} in ${esc(l.group_name)}</span></div>
@@ -573,7 +651,7 @@ function openDrawer(l) {
     ${l.draft_reply ? block('Suggested reply (edit before sending)', 'q-draft', 'var(--lime)', l.draft_reply) : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${l.draft_reply ? '<button class="ghost" id="btnCopy">Copy suggested reply</button>' : ''}
-      ${replyLink(l) ? '<a class="btn-link" target="_blank" rel="noopener" href="' + esc(replyLink(l)) + '">Open &amp; reply in the group</a>' : ''}
+      ${replyLink(l) ? `<a class="btn-link ${seen ? 'viewed' : ''}" data-k="${esc(k)}" target="_blank" rel="noopener" href="${esc(replyLink(l))}" onclick="onReplyClick(event, this, '${esc(k)}')">${seen ? '<span class="eye-icon">&#128065;</span>' : ''}Open &amp; reply in the group</a>` : ''}
     </div>`;
   const c = $('btnCopy'); if (c) c.onclick = () => { navigator.clipboard.writeText(l.draft_reply).then(() => { c.textContent = 'Copied ✓'; }); };
   $('drawer').classList.add('open');
@@ -628,7 +706,8 @@ $('btnStartFresh').onclick = async () => {
     clearInterval(poll); poll = null; runId = null; runStats = null; runLeadCount = 0; runSeen = 0;
     groups = []; selected = new Set(); leads = []; watch = [];
     pickedRoles = new Set(); extras = []; dropped = new Set();
-    try { localStorage.removeItem('rr_picks'); } catch (e) {}
+    viewedLeads.clear();
+    try { localStorage.removeItem('rr_picks'); localStorage.removeItem('rr_viewed_leads'); } catch (e) {}
     renderPicker(); renderGroups(); renderWatch(); renderLeads();
     $('resCard').style.display = 'none'; $('stats').style.display = 'none';
     status('st1', ''); status('st2', 'Tick at least one group in Step 1 to enable Start scraping.');
