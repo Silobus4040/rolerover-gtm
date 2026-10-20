@@ -239,6 +239,16 @@
       </div>
       <button type="submit" id="btnAuthSubmit" style="width:100%;padding:11px">Log In</button>
       <div id="authMsg" class="note" style="margin-top:10px;min-height:20px;text-align:center"></div>
+
+      <!-- OTP Verification Code (shown if email code was dispatched) -->
+      <div id="otpSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)">
+        <label for="authOtp" style="color:var(--lime)">Enter Verification Code (sent to your email)</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input id="authOtp" type="text" placeholder="e.g. 97755227" autocomplete="one-time-code" style="font-size:16px;letter-spacing:2px;font-weight:700;text-align:center">
+          <button type="button" id="btnVerifyOtp" style="white-space:nowrap;padding:9px 16px">Verify &amp; Enter</button>
+        </div>
+        <div id="otpMsg" class="note" style="margin-top:6px;min-height:18px"></div>
+      </div>
     </form>
   </div>
 
@@ -457,12 +467,39 @@ async function handleAuthSubmit(e) {
     if (isSignUpMode) {
       res = await sb.auth.signUp({ email, password });
       if (res.error) throw res.error;
-      $('authMsg').style.color = 'var(--teal)';
-      $('authMsg').textContent = 'Account created! Logging you in...';
-      if (res.data?.session) applySession(res.data.session.user);
+
+      // If session exists immediately, log in
+      if (res.data?.session) {
+        $('authMsg').style.color = 'var(--teal)';
+        $('authMsg').textContent = 'Account created! Logging you in...';
+        applySession(res.data.session.user);
+        return;
+      }
+
+      // Try direct password login
+      const loginTry = await sb.auth.signInWithPassword({ email, password });
+      if (loginTry.data?.session) {
+        applySession(loginTry.data.session.user);
+        return;
+      }
+
+      // If email confirmation is required, reveal OTP code section
+      $('authMsg').style.color = 'var(--lime)';
+      $('authMsg').textContent = 'Account created! Enter the 8-digit verification code sent to your email below:';
+      $('otpSection').style.display = 'block';
+      $('authOtp').focus();
     } else {
       res = await sb.auth.signInWithPassword({ email, password });
-      if (res.error) throw res.error;
+      if (res.error) {
+        if (res.error.message?.toLowerCase().includes('confirm') || res.error.message?.toLowerCase().includes('verified')) {
+          $('authMsg').style.color = 'var(--lime)';
+          $('authMsg').textContent = 'Email confirmation required. Enter the 8-digit verification code sent to your email:';
+          $('otpSection').style.display = 'block';
+          $('authOtp').focus();
+          return;
+        }
+        throw res.error;
+      }
       applySession(res.data.user);
     }
   } catch (err) {
@@ -472,6 +509,45 @@ async function handleAuthSubmit(e) {
     $('btnAuthSubmit').disabled = false;
   }
 }
+
+$('btnVerifyOtp').onclick = async () => {
+  if (!sb) return;
+  const email = $('authEmail').value.trim();
+  const token = $('authOtp').value.trim();
+  if (!email || !token) {
+    $('otpMsg').style.color = 'var(--red)';
+    $('otpMsg').textContent = 'Please enter both your email and the verification code.';
+    return;
+  }
+  $('btnVerifyOtp').disabled = true;
+  $('otpMsg').style.color = 'var(--mute)';
+  $('otpMsg').textContent = 'Verifying code...';
+
+  try {
+    let res = await sb.auth.verifyOtp({ email, token, type: 'signup' });
+    if (res.error) {
+      res = await sb.auth.verifyOtp({ email, token, type: 'email' });
+    }
+    if (res.error) throw res.error;
+
+    $('otpMsg').style.color = 'var(--teal)';
+    $('otpMsg').textContent = 'Verified! Entering dashboard...';
+    if (res.data?.session) {
+      applySession(res.data.session.user);
+    } else {
+      const p = $('authPassword').value;
+      if (p) {
+        const signinRes = await sb.auth.signInWithPassword({ email, password: p });
+        if (signinRes.data?.session) applySession(signinRes.data.session.user);
+      }
+    }
+  } catch (err) {
+    $('otpMsg').style.color = 'var(--red)';
+    $('otpMsg').textContent = err.message || 'Invalid verification code. Please check and retype.';
+  } finally {
+    $('btnVerifyOtp').disabled = false;
+  }
+};
 
 function applySession(user) {
   currentUser = user;
