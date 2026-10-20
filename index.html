@@ -6,17 +6,18 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>RoleRover Job Seeker Finder</title>
+<title>RoleRover &middot; Job Seeker Intent &amp; Outreach</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#0b0f17; --card:#121826; --card2:#161d2d; --line:#232c40; --text:#e8ecf4; --mute:#8b96ad;
-    --lime:#D4FF33; --teal:#00FFCC; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --violet:#a78bfa;
+    --lime:#D4FF33; --teal:#00FFCC; --red:#f87171; --orange:#fb923c; --blue:#60a5fa; --amber:#fbbf24;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lime),var(--teal));display:grid;place-items:center;font-weight:800;color:#0b0f17;box-shadow:0 6px 20px #d4ff3322}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lime),var(--teal));display:grid;place-items:center;font-weight:800;color:#0b0f17;box-shadow:0 6px 20px #d4ff3333}
   h1{font-size:22px;margin:0} .sub{color:var(--mute);font-size:13px}
   .card{background:linear-gradient(90deg,#d4ff330d,transparent),var(--card);border:1px solid #d4ff3329;border-radius:14px;padding:18px;margin-bottom:16px}
   .step{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:700;margin-bottom:10px}
@@ -41,23 +42,25 @@
   .badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid}
   .hot{background:#f8717126;color:var(--red);border-color:#f8717155}
   .seeker{background:#00ffcc1f;color:var(--teal);border-color:#00ffcc55}
+  .warm{background:#fb923c26;color:var(--orange);border-color:#fb923c55}
+  .other{background:#60a5fa26;color:var(--blue);border-color:#60a5fa55}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
   .stat b{display:block;font-size:26px}
-  a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
-  .btn-link{display:inline-block;background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17!important;padding:5px 11px;border-radius:8px;font-weight:700;font-size:12px;white-space:nowrap}
+  a{color:var(--teal);text-decoration:none} a:hover{text-decoration:underline}
+  .btn-link{display:inline-block;background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17!important;padding:5px 12px;border-radius:8px;font-weight:700;font-size:12px;white-space:nowrap}
   .btn-link:hover{text-decoration:none;opacity:.9}
+  .btn-link.replied{background:#111a28;color:var(--teal)!important;border:1px solid #00ffcc66}
+  .btn-link.replied:hover{opacity:1;border-color:var(--teal)}
   .muted{color:var(--mute)} .small{font-size:12px}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
   .toolbar>div{min-width:150px}
   .clip{max-width:380px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
   .empty{padding:26px;text-align:center;color:var(--mute)}
-  .chip{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:99px;padding:3px 11px;font-size:12px;font-weight:500;cursor:pointer}
+  .chip{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:500;cursor:pointer}
   .chip:hover{border-color:var(--lime);color:#fff}
-  .chiprow{display:flex;flex-wrap:wrap;gap:8px}
   .chip.on{background:#d4ff3322;border-color:var(--lime);color:#fff;font-weight:700}
-  .chip{font-size:13px;padding:5px 13px}
-  .drawer{position:fixed;inset:0 0 0 auto;width:min(520px,100%);background:var(--card2);border-left:1px solid var(--line);padding:20px;overflow:auto;transform:translateX(100%);transition:transform .2s;z-index:50}
+  .drawer{position:fixed;inset:0 0 0 auto;width:min(540px,100%);background:var(--card2);border-left:1px solid var(--line);padding:20px;overflow:auto;transform:translateX(100%);transition:transform .2s;z-index:100}
   .drawer.open{transform:none}
   .drawer h3{margin:0 0 4px}
   .qbox{border:1px solid;border-left-width:4px;border-radius:10px;padding:10px 12px;white-space:pre-wrap;margin:6px 0 16px}
@@ -65,863 +68,870 @@
   .q-comment{background:#fbbf2414;border-color:#fbbf2444;border-left-color:#fbbf24}
   .q-post{background:#60a5fa14;border-color:#60a5fa44;border-left-color:#60a5fa}
   .q-why{background:#00ffcc12;border-color:#00ffcc44;border-left-color:#00ffcc}
-  .q-draft{background:#d4ff3312;border-color:#d4ff3344;border-left-color:#D4FF33}
-  .cfg{margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px;font-size:12px}
-  .cfg input{margin-top:4px}
+  .q-draft{background:#d4ff3315;border-color:#d4ff3355;border-left-color:var(--lime)}
   .note{font-size:12px;color:var(--mute);margin-top:6px}
   .warn{color:var(--amber)}
-  .banner{border:1px solid #fbbf2455;background:#fbbf2410;color:var(--amber);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:12px}
-  .step-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;margin-bottom:10px}
-  .step-toggle-btn{background:#0d1320;border:1px solid var(--line);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-  .step-toggle-btn:hover{border-color:var(--lime);color:#fff}
-  #finderBody.collapsed, #step11Body.collapsed, #step2Body.collapsed, #step3Body.collapsed, .collapsible-body.collapsed{display:none}
-  .btn-link.viewed{opacity:.88;background:#111a28;color:var(--teal)!important;border:1px solid #00ffcc66}
-  .btn-link.viewed:hover{opacity:1;border-color:var(--teal)}
-  .eye-icon{margin-right:5px;font-size:13px;vertical-align:-1px;display:inline-block}
 
-  /* App Navigation & Sticky Header */
-  .app-header{position:sticky;top:0;z-index:40;background:rgba(11,15,23,0.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .header-left{display:flex;align-items:center;gap:12px}
-  .menu-btn{background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;min-width:44px;min-height:38px}
-  .menu-btn:hover{border-color:var(--lime);color:var(--lime)}
-  .app-brand{font-size:16px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
-  .header-right{display:flex;align-items:center;gap:8px}
-  .top-status-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);background:#0d1320;border:1px solid var(--line);padding:5px 11px;border-radius:99px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--mute);display:inline-block}
-  .dot.busy{background:var(--lime);box-shadow:0 0 8px var(--lime);animation:pulse 1.2s infinite}
-  @keyframes pulse{0%{transform:scale(0.9);opacity:.7}50%{transform:scale(1.3);opacity:1}100%{transform:scale(0.9);opacity:.7}}
+  /* Auth styling */
+  .auth-card{max-width:440px;margin:40px auto 20px;background:var(--card);border:1px solid #d4ff3333;border-radius:16px;padding:26px;box-shadow:0 12px 36px rgba(0,0,0,.5)}
+  .auth-tabs{display:flex;gap:8px;margin-bottom:18px}
+  .auth-tabs button{flex:1;background:#0d1320;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer}
+  .auth-tabs button.active{background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17;border-color:transparent}
 
-  /* Quick Jump Navigation Drawer */
-  .nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:90;opacity:0;pointer-events:none;transition:opacity .25s ease}
-  .nav-backdrop.open{opacity:1;pointer-events:auto}
-  .nav-drawer{position:fixed;inset:0 auto 0 0;width:min(320px,86vw);background:var(--card2);border-right:1px solid var(--line);z-index:100;transform:translateX(-100%);transition:transform .25s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;box-shadow:10px 0 30px rgba(0,0,0,.6)}
-  .nav-drawer.open{transform:translateX(0)}
-  .nav-drawer-header{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-  .nav-items{padding:12px 10px;display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto}
-  .nav-item{width:100%;display:flex;align-items:center;gap:12px;padding:11px 14px;background:transparent;border:1px solid transparent;border-radius:10px;color:var(--text);font-size:13px;font-weight:600;text-align:left;cursor:pointer;transition:all .15s ease}
-  .nav-item:hover{background:#111a28;border-color:var(--line);color:var(--lime)}
-  .nav-icon{font-size:16px;width:20px;text-align:center}
-  .nav-title{flex:1}
-  .nav-pill{font-size:11px;background:#0d1320;border:1px solid var(--line);padding:2px 8px;border-radius:99px;color:var(--mute);font-variant-numeric:tabular-nums}
-  .nav-drawer-footer{padding:12px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--mute);display:flex;gap:8px}
+  /* APP SHELL: sidebar + hamburger */
+  .app-layout{display:flex;min-height:100vh}
+  .app-sidebar{width:240px;min-width:240px;background:#0d121d;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sidebar-logo-area{display:flex;align-items:center;gap:12px;min-height:76px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .sidebar-logo-area .logo{width:36px;height:36px;border-radius:10px;flex-shrink:0}
+  .sidebar-logo-area b{display:block;font-size:15px;line-height:1.2}
+  .sidebar-logo-area span{display:block;font-size:11px;color:var(--mute)}
+  .sidebar-close{display:none;margin-left:auto;background:none;border:0;color:var(--mute);font-size:20px;padding:4px 8px}
+  .sidebar-nav{padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex:1}
+  .sidebar-nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:9px;border:0;border-left:3px solid transparent;background:transparent;color:var(--mute);font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer;position:relative}
+  .sidebar-nav-item:hover{background:#ffffff0a;color:var(--text)}
+  .sidebar-nav-item.active{background:#d4ff3314;color:var(--text);font-weight:700;border-left-color:var(--lime)}
+  .sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .sidebar-nav-item.active svg{stroke:var(--lime)}
+  .sidebar-badge{margin-left:auto;background:var(--teal);color:#0b0f17;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;min-width:22px;text-align:center}
+  .sidebar-foot{padding:14px 14px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;font-size:12px}
+  .sidebar-foot .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:#00000099;z-index:199;backdrop-filter:blur(3px)}
+  .app-main{flex:1;min-width:0}
+  .topbar{display:flex;align-items:center;gap:12px;padding:18px 16px 0;max-width:1180px;margin:0 auto}
+  .topbar h2{margin:0;font-size:22px}
+  .hamburger-btn{display:none;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 11px;font-size:20px;line-height:1}
+  .intent-tag{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#d4ff3310;border:1px solid #d4ff3333;border-left:4px solid var(--lime);border-radius:10px;padding:11px 15px;margin-bottom:16px}
+  .intent-tag-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--lime);white-space:nowrap}
+  .intent-tag-value{color:var(--text);font-weight:600;font-size:13px}
+  body:not(.authed) .app-sidebar,body:not(.authed) .topbar{display:none}
+  .page{display:none}
+  .page.active{display:block}
+  .next-row{display:flex;justify-content:flex-end;margin-top:6px}
 
-  /* Mobile responsiveness */
+  /* FREELANCER DAILY REPLY ACCOUNTABILITY */
+  .goal-card{background:linear-gradient(135deg,#131b2e 0%,#0e1524 100%);border:1px solid #00ffcc44;border-radius:14px;padding:18px;margin-bottom:16px}
+  .goal-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .goal-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--teal)}
+  .goal-count{font-size:20px;font-weight:800;color:var(--text)}
+  .goal-bar-wrap{height:10px;background:#1a2336;border-radius:99px;overflow:hidden;margin-bottom:8px}
+  .goal-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--lime),var(--teal));border-radius:99px;transition:width .4s ease}
+  .goal-sub{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mute)}
+
+  /* PROSPECT FLIP CARDS WITH UGC ROLE ROVER REPLY */
+  .lead-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:16px}
+  .fcard{perspective:1200px}
+  .fcard-inner{display:grid;transition:transform .6s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+  .fcard.flipped .fcard-inner{transform:rotateY(180deg)}
+  .fface{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:260px;max-height:440px;overflow:auto}
+  .fface.front{cursor:pointer}
+  .fface.front:hover{border-color:#d4ff3366}
+  .fface.back{transform:rotateY(180deg);border-color:#00ffcc55}
+  .fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .fsnip{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)}
+  .ffoot{margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px solid #1a2336}
+  .flip-btn{white-space:nowrap;flex-shrink:0;background:#0d1320;border:1px solid var(--line);color:var(--text);font-weight:700;font-size:12px;padding:5px 12px;border-radius:99px}
+  .flip-btn:hover{border-color:var(--lime);color:var(--lime)}
+  .fback-head{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .fface .qbox{margin:4px 0 8px;font-size:13px}
+  .copy-ugc-btn{background:#0d1320;border:1px solid var(--lime);color:var(--lime);font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+  .copy-ugc-btn:hover{background:var(--lime);color:#0b0f17}
+
+  /* WATCHLIST */
+  .wl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 2px;border-bottom:1px solid #1a2236}
+  .wl-row:last-child{border-bottom:0}
+  .wl-main{flex:1;min-width:200px}
+  .wl-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .wl-actions button{font-size:12px;padding:7px 13px}
+  .wl-switch-wrap{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mute);font-weight:600}
+  .wl-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+  .wl-switch input{opacity:0;width:0;height:0}
+  .wl-switch-slider{position:absolute;inset:0;background:#2a3348;border-radius:99px;cursor:pointer;transition:.2s}
+  .wl-switch-slider::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .wl-switch input:checked + .wl-switch-slider{background:var(--teal)}
+  .wl-switch input:checked + .wl-switch-slider::before{transform:translateX(16px)}
+
+  /* LIVE RUN PROGRESS TRACKER */
+  .run-tracker{margin-top:14px;background:#0d1424;border:1px solid #d4ff3333;border-radius:12px;padding:16px 18px;display:none}
+  .run-tracker.active{display:block;animation:fadeIn .3s ease}
+  .run-tracker-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .run-tracker-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--lime)}
+  .run-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+  .run-stage-pill{background:#131a29;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;display:flex;flex-direction:column;gap:3px;transition:all .2s ease}
+  .run-stage-pill.active{border-color:var(--lime);background:#d4ff3314;box-shadow:0 0 10px #d4ff3322}
+  .run-stage-pill.done{border-color:#00ffcc66;background:#00ffcc14}
+  .run-stage-pill .stage-name{font-weight:700;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  .run-stage-pill.active .stage-name{color:var(--lime)}
+  .run-stage-pill.done .stage-name{color:var(--teal)}
+  .run-stage-pill .stage-detail{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--lime);display:inline-block;box-shadow:0 0 8px var(--lime);animation:pulseDot 1.4s infinite;flex-shrink:0}
+  @keyframes pulseDot{0%{transform:scale(.8);opacity:.5}50%{transform:scale(1.3);opacity:1}100%{transform:scale(.8);opacity:.5}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
   @media (max-width:768px){
-    .wrap{padding:16px 12px 40px}
-    .card{padding:14px;border-radius:12px}
-    .step-header{padding:2px 0}
-    .step-toggle-btn{padding:5px 11px;font-size:12px}
-    .top-status-pill{max-width:130px}
+    .hamburger-btn{display:block}
+    .sidebar-close{display:block}
+    .app-sidebar{position:fixed;top:0;left:0;width:min(82vw,260px);min-width:0;height:100dvh;z-index:200;transition:transform .3s ease;transform:translateX(-100%);box-shadow:4px 0 25px #00000080}
+    .app-sidebar.open{transform:none}
+    .sidebar-overlay.open{display:block}
+    .wrap{padding-top:14px}
+    .stats{grid-template-columns:repeat(2,1fr);gap:8px}
   }
-
-  /* Mobile Lead Cards */
-  @media (max-width:680px){
-    #leadsTbl thead{display:none}
-    #leadsTbl tbody tr{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;padding:12px}
-    #leadsTbl tbody td{display:block;padding:6px 0;border-bottom:0}
-    #leadsTbl tbody td:first-child{border-bottom:1px solid #1a2236;padding-bottom:8px;margin-bottom:6px}
-    #leadsTbl tbody td:last-child{margin-top:8px;padding-top:8px;border-top:1px solid #1a2236}
-    #leadsTbl tbody td:last-child a.btn-link{display:block;width:100%;text-align:center;padding:9px;font-size:13px}
-    .clip{max-width:100%;-webkit-line-clamp:4}
-  }
+  @media (prefers-reduced-motion:reduce){.fcard-inner,.app-sidebar{transition:none}}
 </style>
 </head>
 <body>
-<!-- Fixed Sticky Header with Hamburger -->
-<header class="app-header">
-  <div class="header-left">
-    <button type="button" class="menu-btn" id="btnMenu" aria-label="Open navigation menu">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-    </button>
-    <div class="logo" style="width:32px;height:32px;font-size:14px;border-radius:9px">R</div>
-    <span class="app-brand">RoleRover GTM</span>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="app-layout">
+<aside class="app-sidebar" id="appSidebar">
+  <div class="sidebar-logo-area">
+    <div class="logo">R</div>
+    <div><b>RoleRover GTM</b><span>Job Hunters Outreach</span></div>
+    <button type="button" class="sidebar-close" id="btnCloseMenu" aria-label="Close menu">&#10005;</button>
   </div>
-  <div class="header-right">
-    <div class="top-status-pill" id="topStatusPill" title="Background system status">
-      <span class="dot" id="topStatusDot"></span>
-      <span id="topStatusText">Ready</span>
-    </div>
-  </div>
-</header>
-
-<!-- Backdrop & Quick Jump Navigation Drawer -->
-<div class="nav-backdrop" id="navBackdrop"></div>
-<aside class="nav-drawer" id="navDrawer" aria-label="Application Navigation">
-  <div class="nav-drawer-header">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo">R</div>
-      <div>
-        <div style="font-weight:800;font-size:15px">RoleRover GTM</div>
-        <div style="font-size:11px;color:var(--mute)">Quick navigation</div>
-      </div>
-    </div>
-    <button type="button" class="ghost" id="btnCloseNav" style="padding:6px 10px;font-size:16px" aria-label="Close menu">&times;</button>
-  </div>
-  <nav class="nav-items">
-    <div style="font-size:11px;text-transform:uppercase;color:var(--mute);font-weight:700;padding:6px 12px 2px;letter-spacing:.05em">Jump to Section</div>
-    <button type="button" class="nav-item" onclick="jumpTo('step1Card')">
-      <span class="nav-icon">&#128269;</span>
-      <span class="nav-title">Step 1 &middot; Find Groups</span>
+  <nav class="sidebar-nav">
+    <button type="button" class="sidebar-nav-item" data-page="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Group Search
     </button>
-    <button type="button" class="nav-item" onclick="jumpTo('step11Card')">
-      <span class="nav-icon">&#128279;</span>
-      <span class="nav-title">Step 1.1 &middot; Add Group Links</span>
+    <button type="button" class="sidebar-nav-item" data-page="scraper">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> Post &amp; Comment Scraper
     </button>
-    <button type="button" class="nav-item" onclick="jumpTo('groupsBox')">
-      <span class="nav-icon">&#128203;</span>
-      <span class="nav-title">Found Groups</span>
-      <span class="nav-pill" id="navCountGroups">0</span>
+    <button type="button" class="sidebar-nav-item" data-page="dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard
+      <span class="sidebar-badge" id="navLeadCount" style="display:none">0</span>
     </button>
-    <button type="button" class="nav-item" onclick="jumpTo('step2Card')">
-      <span class="nav-icon">&#9889;</span>
-      <span class="nav-title">Step 2 &middot; Scrape Groups</span>
+    <button type="button" class="sidebar-nav-item" data-page="watchlist">
+      <svg viewBox="0 0 24 24"><path d="M6 4a2 2 0 00-2 2v14l8-5 8 5V6a2 2 0 00-2-2H6z"/></svg> Watchlist
+      <span class="sidebar-badge" id="navWatchCount" style="display:none">0</span>
     </button>
-    <button type="button" class="nav-item" onclick="jumpTo('watchCard')">
-      <span class="nav-icon">&#9200;</span>
-      <span class="nav-title">Step 3 &middot; Daily Watch</span>
-      <span class="nav-pill" id="navCountWatch">0</span>
-    </button>
-    <button type="button" class="nav-item" onclick="jumpTo('resCard')">
-      <span class="nav-icon">&#128101;</span>
-      <span class="nav-title">Job Seekers Inbox</span>
-      <span class="nav-pill" id="navCountLeads">0</span>
-    </button>
-    <button type="button" class="nav-item" onclick="jumpTo('settingsCard')">
-      <span class="nav-icon">&#9881;&#65039;</span>
-      <span class="nav-title">Settings &amp; Server</span>
+    <button type="button" class="sidebar-nav-item" data-page="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg> Settings
     </button>
   </nav>
-  <div class="nav-drawer-footer">
-    <button type="button" class="ghost" id="btnExpandAll" style="flex:1;padding:8px;font-size:11px">&#9660; Expand all</button>
-    <button type="button" class="ghost" id="btnCollapseAll" style="flex:1;padding:8px;font-size:11px">&#9650; Collapse all</button>
+  <div class="sidebar-foot" id="userHeaderBar" style="display:none">
+    <span id="userEmailTag" class="badge" style="background:#162032;color:var(--text);border-color:var(--line);padding:4px 10px"></span>
+    <button type="button" class="ghost" id="btnSignOut" style="font-size:12px">Log out</button>
   </div>
 </aside>
 
+<main class="app-main">
+<div class="topbar">
+  <button type="button" class="hamburger-btn" id="btnMenu" aria-label="Open menu">&#9776;</button>
+  <h2 id="pageTitle">Group Search</h2>
+</div>
 <div class="wrap">
-  <div class="banner">RoleRover only. This page uses its own server addresses (<code>rr-*</code>) and its own saved leads. It never touches the forex / investing data.</div>
 
-  <!-- STEP 1: PICK WHAT YOU WANT TO FIND -->
-  <div class="card" id="step1Card">
-    <div class="step-header" id="step1Header" role="button" aria-expanded="true" aria-controls="finderBody" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 1 &middot; Pick what you want to find</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleFinder" aria-label="Toggle group finder">
-        <span id="finderToggleText">Collapse</span>
-        <span id="finderToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
+  <!-- AUTH SCREEN (shown when logged out) -->
+  <div class="auth-card" id="authCard">
+    <div class="step" id="authTitle" style="font-size:13px;color:var(--lime);margin-bottom:6px">Freelancer Login</div>
+    <div class="note" style="margin:0 0 16px;font-size:12px;color:var(--mute)">Log in with your freelancer account to access RoleRover job hunter leads, track your daily reply target, and receive your private Telegram alerts.</div>
+    <div class="auth-tabs">
+      <button type="button" id="tabLogin" class="active">Log In</button>
+      <button type="button" id="tabSignUp">Create Account</button>
     </div>
-
-    <div id="finderBody">
-      <label>Roles (tap to select). Wording switches: Remote adds "remote ...", Jobs adds "... jobs". Plain role is always searched.</label>
-      <div id="roleChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="customRole">Add another role</label><input id="customRole" placeholder="e.g. product manager" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddRole">Add role</button></div>
+    <form id="authForm" onsubmit="handleAuthSubmit(event)">
+      <div style="margin-bottom:12px">
+        <label for="authEmail">Email address</label>
+        <input id="authEmail" type="email" placeholder="freelancer@example.com" required autocomplete="email">
       </div>
-
-      <label style="margin-top:14px">Country / region (one at a time)</label>
-      <div id="countryChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="customCountry">Other country</label><input id="customCountry" placeholder="e.g. Uganda" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddCountry">Use this country</button></div>
+      <div style="margin-bottom:16px">
+        <label for="authPassword">Password</label>
+        <input id="authPassword" type="password" placeholder="your password" required autocomplete="current-password" minlength="6">
       </div>
+      <button type="submit" id="btnAuthSubmit" style="width:100%;padding:11px">Log In</button>
+      <div id="authMsg" class="note" style="margin-top:10px;min-height:20px;text-align:center"></div>
+    </form>
+  </div>
 
-      <label style="margin-top:14px">Searches the page will run (click &times; to drop one)</label>
-      <div id="phraseChips" class="chiprow"></div>
-      <div class="row" style="margin-top:8px">
-        <div class="grow"><label for="extraPhrase">Add your own phrase</label><input id="extraPhrase" placeholder="e.g. remote jobs for graduates" autocomplete="off"></div>
-        <div style="flex:0"><button class="ghost" id="btnAddPhrase">Add phrase</button></div>
+  <div id="appWorkspace" style="display:none">
+  <!-- PAGE: GROUP SEARCH -->
+  <section class="page" id="page-search" data-title="Group Search">
+  <div class="card">
+    <div class="step">Step 1 &middot; Find Job Hunter Groups</div>
+    <div class="row">
+      <div class="grow"><label for="kw">Target roles or keywords (comma separated)</label>
+        <input id="kw" placeholder="e.g. remote jobs, software engineer, customer support, virtual assistant" autocomplete="off"></div>
+      <div><label for="maxGroups">Max groups</label><input id="maxGroups" type="number" min="1" max="200" value="30"></div>
+      <div><label for="minMembers">Min members</label><input id="minMembers" type="number" min="0" value="0"></div>
+      <div style="flex:0"><button id="btnFind">Find groups</button></div>
+    </div>
+    <div style="margin-top:14px">
+      <label for="manualLinks">Or paste Facebook group links (one per line)</label>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <textarea id="manualLinks" rows="2" placeholder="https://www.facebook.com/groups/FindRemoteJobs/" style="flex:1;min-width:240px"></textarea>
+        <button class="ghost" id="btnAddLinks" style="white-space:nowrap">Add groups</button>
       </div>
-
-      <div class="row" style="margin-top:14px">
-        <div><label for="maxGroups">Max groups per phrase</label><input id="maxGroups" type="number" min="5" max="100" value="15"></div>
-        <div style="flex:3;min-width:240px"><div class="note" id="costLine" style="margin:0 0 6px"></div></div>
-        <div style="flex:0"><button class="ghost" id="btnClearPicks" title="Unselect every role and remove typed phrases">Clear all picks</button></div>
-        <div style="flex:0"><button id="btnFind" disabled>Find groups</button></div>
-      </div>
+      <div class="note" id="manualMsg">Added groups appear in the list below, automatically ticked for scraping.</div>
     </div>
     <div class="status" id="st1"></div>
-  </div>
-
-  <!-- STEP 1.1: ADD PUBLIC GROUP LINKS -->
-  <div class="card" id="step11Card">
-    <div class="step-header" id="step11Header" role="button" aria-expanded="true" aria-controls="step11Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 1.1 &middot; Add public group links</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep11" aria-label="Toggle step 1.1">
-        <span id="step11ToggleText">Collapse</span>
-        <span id="step11ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step11Body">
-      <label for="manualLinks">Or add public group links yourself (one per line)</label>
-      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
-        <textarea id="manualLinks" rows="3" placeholder="https://www.facebook.com/groups/123456789/" style="flex:1;min-width:240px"></textarea>
-        <button class="ghost" id="btnAddLinks" style="white-space:nowrap">Add these groups</button>
+    <div id="groupsBox" style="display:none;margin-top:10px">
+      <div class="toolbar">
+        <button class="ghost" id="btnAll">Select all</button>
+        <button class="ghost" id="btnNone">Clear</button>
+        <button class="ghost" id="btnHealth" title="Checks if recent posts exist">&#128269; Check alive groups</button>
+        <span class="muted small" id="selCount"></span>
+        <span class="muted small" id="healthMsg"></span>
       </div>
-      <div class="note" id="manualMsg">Paste the address of a PUBLIC group (it looks like facebook.com/groups/...). Private groups cannot be read.</div>
+      <div style="overflow:auto"><table id="groupsTbl">
+        <thead><tr><th></th><th>Group</th><th class="num">Members</th><th>Access</th><th class="num">Posts (7d)</th><th class="num">Comments</th><th>Verdict</th></tr></thead>
+        <tbody></tbody></table></div>
     </div>
   </div>
+  <div class="next-row"><button type="button" class="ghost" data-goto="scraper">Next: Post &amp; Comment Scraper &rarr;</button></div>
+  </section>
 
-  <!-- FOUND / ADDED GROUPS -->
-  <div class="card" id="groupsBox" style="display:none">
-    <div class="step-header">
-      <div class="step" style="margin-bottom:0">Found &middot; Added groups</div>
-      <div style="display:flex;gap:6px">
-        <button class="ghost" onclick="jumpTo('step1Card')" style="padding:4px 10px;font-size:11px">+ Find More</button>
-        <button class="ghost" onclick="jumpTo('step2Card')" style="padding:4px 10px;font-size:11px;color:var(--lime);border-color:#d4ff3355">Scrape &rarr;</button>
+  <!-- PAGE: GROUP SCRAPER -->
+  <section class="page" id="page-scraper" data-title="Post &amp; Comment Scraper">
+  <div class="intent-tag"><span class="intent-tag-label">Target Intent</span><span class="intent-tag-value">Job hunters looking for work, struggling with ATS, ghosting, resume rejection, or wanting automated career matching via RoleRover.</span></div>
+  <div class="card">
+    <div class="step">Step 2 &middot; Scrape Job Hunter Posts &amp; Comments</div>
+    <div class="row">
+      <div><label for="maxPosts">Posts per group</label><input id="maxPosts" type="number" min="1" value="20"></div>
+      <div><label for="hours">Posts newer than</label>
+        <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="38"><select id="unit" style="width:90px"><option value="hours">hours</option><option value="days">days</option></select></div></div>
+      <div><label for="viewOption">Sorting order</label>
+        <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
+      <div><label for="cpp">Comments per post</label><input id="cpp" type="number" min="1" value="30"></div>
+      <div><label for="replies">Include replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
+      <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+    </div>
+    <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+    <div class="run-tracker" id="runTracker">
+      <div class="run-tracker-head">
+        <span class="run-tracker-title"><span class="pulse-dot"></span> Scraper &amp; RoleRover AI Classifier In Progress</span>
+        <span id="runTimer" class="muted small">0s elapsed</span>
+      </div>
+      <div class="run-stages">
+        <div class="run-stage-pill active" id="stagePosts">
+          <span class="stage-name">1. FB Posts</span>
+          <span class="stage-detail" id="stagePostsDetail">Connecting...</span>
+        </div>
+        <div class="run-stage-pill" id="stageComments">
+          <span class="stage-name">2. Comments</span>
+          <span class="stage-detail" id="stageCommentsDetail">Waiting...</span>
+        </div>
+        <div class="run-stage-pill" id="stageAI">
+          <span class="stage-name">3. Claude UGC Drafter</span>
+          <span class="stage-detail" id="stageAIDetail">Waiting...</span>
+        </div>
+      </div>
+      <div id="runLiveStatusText" class="note" style="margin:0 0 10px;font-size:12px;color:var(--text)">Connecting to Facebook scraper...</div>
+      <div id="runActionRow" style="display:none;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span id="runLiveLeadsMsg" style="font-size:13px;font-weight:700;color:var(--teal)"></span>
+        <button type="button" class="ghost" data-goto="dashboard" style="font-size:12px;padding:6px 12px">&#128065; View Leads on Dashboard &rarr;</button>
       </div>
     </div>
-    <div class="toolbar">
-      <button class="ghost" id="btnAll">Select all</button>
-      <button class="ghost" id="btnNone">Untick all</button>
-      <button class="ghost" id="btnRemoveAll" title="Empty this list">Remove all groups</button>
-      <button class="ghost" id="btnHealth" title="Reads recent posts from up to 8 groups: last post date, posts in 7 days, comments">&#128269; Check which groups are alive</button>
-      <span class="muted small" id="selCount"></span>
-      <span class="muted small" id="healthMsg"></span>
-    </div>
-    <div id="groupsEmptyNotice" class="empty" style="display:none">No groups loaded yet. Use <a href="#step1Card" onclick="jumpTo('step1Card');return false">Step 1 &middot; Find groups</a> or <a href="#step11Card" onclick="jumpTo('step11Card');return false">Step 1.1 &middot; Add links</a> to find groups.</div>
-    <div style="overflow:auto"><table id="groupsTbl">
-      <thead><tr><th></th><th>Group</th><th>Found for</th><th class="num">Members</th><th>Access</th><th class="num">Posts/day</th><th>Last post</th><th class="num">Posts (7 days)</th><th class="num">Comments</th><th class="num">Adverts</th><th>Verdict</th></tr></thead>
-      <tbody></tbody></table></div>
-    <div class="note warn" style="margin-top:10px">Private groups cannot be scraped. Use "Check which groups are alive" before scraping (about $0.01&ndash;0.03).</div>
   </div>
+  <div class="next-row"><button type="button" class="ghost" data-goto="dashboard">Next: Dashboard &rarr;</button></div>
+  </section>
 
-  <!-- STEP 2: SCRAPE SELECTED GROUPS -->
-  <div class="card" id="step2Card">
-    <div class="step-header" id="step2Header" role="button" aria-expanded="true" aria-controls="step2Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 2 &middot; Scrape the selected groups</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep2" aria-label="Toggle step 2">
-        <span id="step2ToggleText">Collapse</span>
-        <span id="step2ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step2Body">
-      <div class="row">
-        <div><label for="maxPosts">Posts per group (blank = all in the window)</label><input id="maxPosts" type="number" min="1" value="" placeholder="all"></div>
-        <div><label for="hours">Posts newer than</label>
-          <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="30"><select id="unit" style="width:90px"><option value="days">days</option><option value="hours">hours</option></select></div></div>
-        <div><label for="viewOption">Sorting order</label>
-          <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
-        <div><label for="cpp">Comments per post (blank = all)</label><input id="cpp" type="number" min="1" value="" placeholder="all"></div>
-        <div><label for="replies">Replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
-        <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
+  <!-- PAGE: DASHBOARD -->
+  <section class="page" id="page-dashboard" data-title="Dashboard">
+  <!-- FREELANCER DAILY REPLY ACCOUNTABILITY -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <div class="goal-title">
+        <span style="font-size:20px">&#127919;</span> Freelancer Daily Reply Target
+        <span id="goalBadge" class="badge" style="background:#00ffcc1f;color:var(--teal);border-color:#00ffcc55;font-size:11px">150 Target / Day</span>
       </div>
-      <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
-      <div class="note">Blank means everything: all posts in the time window and all their comments. Posts cost about $0.005 each and comments $0.0005 each, so a busy group over 30 days can be a few dollars. A career coach's ad post is not a lead, but the people replying under it can be, so comments are always read.</div>
-    </div>
-  </div>
-
-  <!-- STEP 3: DAILY WATCH -->
-  <div class="card" id="watchCard">
-    <div class="step-header" id="step3Header" role="button" aria-expanded="true" aria-controls="step3Body" tabindex="0">
-      <div class="step" style="margin-bottom:0">Step 3 &middot; Daily watch</div>
-      <button type="button" class="step-toggle-btn" id="btnToggleStep3" aria-label="Toggle step 3">
-        <span id="step3ToggleText">Collapse</span>
-        <span id="step3ToggleIcon" style="font-size:9px">&#9650;</span>
-      </button>
-    </div>
-    <div id="step3Body">
-      <div class="note" style="margin:-4px 0 10px">Every group you scrape is added here. Each day the server scrapes the last 30 hours of every group in this list and re-checks the comments on the last 7 days of posts. Delete a group to stop watching it (you can restore it).</div>
-      <div id="watchList"><span class="muted small">Save your access key in Settings to load this list.</span></div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="ghost" id="btnRunDaily">Run the daily scrape now</button>
-        <button class="ghost" id="btnReloadWatch">Refresh list</button>
-        <button class="ghost" id="btnStartFresh" style="border-color:#f8717155;color:var(--red)" title="Deletes all saved job seekers, the watch list and the memory of what was already scraped">Start fresh (delete everything)</button>
-        <span class="muted small" id="watchMsg"></span>
+      <div class="goal-count">
+        <span id="dailyRepliedCount">0</span> <span style="font-size:14px;color:var(--mute);font-weight:600">/ 150 replied today</span>
       </div>
-      <div class="note">The automatic daily timer is switched on separately by the person who set this up. "Run now" costs about $0.005 for each new post.</div>
+    </div>
+    <div class="goal-bar-wrap">
+      <div class="goal-bar" id="goalProgressBar"></div>
+    </div>
+    <div class="goal-sub">
+      <span id="goalRemainingText">150 hot leads remaining to hit today's quota</span>
+      <span id="goalPercentText" style="font-weight:700;color:var(--lime)">0% Completed</span>
     </div>
   </div>
 
-  <!-- RESULTS / JOB SEEKERS INBOX -->
   <div class="stats" id="stats">
-    <div class="stat"><b id="sTotal">0</b><span class="muted">Job seekers</span></div>
-    <div class="stat"><b id="sHot" style="color:var(--red)">0</b><span class="muted">Hot (struggling)</span></div>
-    <div class="stat"><b id="sPosts" style="color:var(--blue)">0</b><span class="muted">From posts</span></div>
-    <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From comments</span></div>
+    <div class="stat"><b id="sTotal">0</b><span class="muted">RoleRover Leads</span></div>
+    <div class="stat"><b id="sHot" style="color:var(--red)">0</b><span class="muted">Hot Struggles</span></div>
+    <div class="stat"><b id="sPosts" style="color:var(--teal)">0</b><span class="muted">From Posts</span></div>
+    <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From Comments</span></div>
   </div>
 
   <div class="card" id="resCard">
-    <div class="step-header">
-      <div class="step" style="margin-bottom:0">Job seekers inbox</div>
-      <div style="display:flex;gap:6px">
-        <button class="ghost" id="btnRefresh" style="padding:5px 11px;font-size:12px">&#8635; Refresh</button>
-        <button class="ghost" id="btnCsv" style="padding:5px 11px;font-size:12px">CSV</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
+      <div>
+        <div class="step" style="margin-bottom:2px">Job Hunter Prospects (Connectable to RoleRover)</div>
+        <div class="note" id="runSummary" style="margin:0"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="ghost" id="btnRefresh" style="font-size:12px;padding:6px 14px">&#8635; Refresh</button>
+        <button type="button" class="ghost" id="btnCsv" style="font-size:12px;padding:6px 14px">&#8681; Download CSV</button>
       </div>
     </div>
-    <div class="note" id="runSummary" style="margin:-4px 0 10px"></div>
-    <div class="toolbar">
-      <div><label>Search</label><input id="q" placeholder="name or text"></div>
-      <div><label>Temperature</label><select id="fHot"><option value="all">All</option><option value="hot">Hot only</option><option value="seeker">Not hot</option></select></div>
-      <div><label>From</label><select id="fSource"><option value="all">Posts &amp; comments</option><option value="post">Posts</option><option value="comment">Comments</option></select></div>
-      <div><label>Group</label><select id="fGroup"><option value="all">All groups</option></select></div>
-    </div>
-    <div style="overflow:auto"><table id="leadsTbl">
-      <thead><tr><th>Person</th><th>Type</th><th>What they said</th><th>Group</th><th>Reply</th></tr></thead>
-      <tbody></tbody></table></div>
-    <div class="empty" id="emptyMsg" style="display:none"></div>
+    <div class="note" style="margin:0 0 14px">Tap a card (or <b>Flip</b>) to view the tailored <b>UGC RoleRover Reply</b>, pain-point reasoning, and exact quote. Click <b>Open &amp; reply</b> to open Facebook and advance your daily 150-reply count!</div>
+    <div class="lead-grid" id="leadsGrid"></div>
+    <div class="empty" id="emptyMsg">No saved job seekers yet.</div>
   </div>
+  <div class="next-row"><button type="button" class="ghost" data-goto="watchlist">Next: Watchlist &rarr;</button></div>
+  </section>
 
-  <!-- SETTINGS -->
-  <div class="card" id="settingsCard">
-    <div class="step">Settings &middot; Server Connection</div>
-    <label style="margin-top:8px">Access key</label>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input id="key" type="password" placeholder="paste the access key" autocomplete="off">
-      <button class="ghost" id="btnSaveKey" style="white-space:nowrap">Save key</button>
-      <span id="keyMsg" class="small" style="white-space:nowrap"></span>
-    </div>
-    <label style="margin-top:14px">Server address</label>
-    <input id="base" value="https://n8n.leadscompass.ai/webhook">
-    <div class="note">Leave this as it is unless you were told to change it.</div>
+  <!-- PAGE: WATCHLIST -->
+  <section class="page" id="page-watchlist" data-title="Watchlist">
+  <div class="card">
+    <div class="step">Monitored Groups</div>
+    <div class="note" style="margin:0 0 12px">Groups you scrape are remembered here. Enable <b>24h auto-watch</b> on any group to re-scan every 24 hours. New hot leads send an immediate alert to your Telegram!</div>
+    <div id="watchlistBox"></div>
+    <div class="empty" id="watchlistEmpty">No groups scraped yet. Start a scrape in Post &amp; Comment Scraper and they'll show up here.</div>
   </div>
-</div>
+  <div class="next-row"><button type="button" class="ghost" data-goto="settings">Next: Settings &rarr;</button></div>
+  </section>
 
-<div class="drawer" id="drawer">
-  <button class="ghost" id="btnClose" style="float:right">Close</button>
-  <div id="dBody"></div>
-</div>
+  <!-- PAGE: SETTINGS -->
+  <section class="page" id="page-settings" data-title="Settings">
+  <div class="card" style="margin-top:0">
+    <div class="step">Freelancer Telegram Alerts</div>
+    <div class="note" style="margin:0 0 12px">Get instant Telegram alerts whenever a new Hot Job Seeker lead is found that connects to RoleRover. Alerts go directly to <b>your personal Telegram bot &amp; chat ID</b>.</div>
+    <div class="row">
+      <div style="flex:1;min-width:200px">
+        <label for="tgBotToken">Your Bot Token</label>
+        <input id="tgBotToken" type="text" placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" autocomplete="off" spellcheck="false">
+      </div>
+      <div style="flex:1;min-width:180px">
+        <label for="tgChatId">Your Telegram Chat ID</label>
+        <input id="tgChatId" placeholder="e.g. 8993151034" autocomplete="off">
+      </div>
+      <div style="flex:0;align-self:flex-end">
+        <button class="ghost" id="btnSaveTg" style="white-space:nowrap">Save Settings</button>
+      </div>
+    </div>
+    <div style="margin-top:6px"><span id="tgMsg" class="small" style="white-space:nowrap"></span></div>
+    <div class="note" style="margin-top:12px">Create your bot with <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> on Telegram, copy the bot token, and message your bot. Get your chat ID from <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a>.</div>
+  </div>
+  </section>
+  </div> <!-- #appWorkspace -->
+</div> <!-- .wrap -->
+</main>
+</div> <!-- .app-layout -->
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const base = () => $('base').value.replace(/\/$/, '');
-let groups = [], selected = new Set(), leads = [], runId = null, poll = null, runStats = null, runLeadCount = 0, runSeen = 0;
 
-// RoleRover keeps its own browser storage names so it never shares anything with the forex page.
-try { const b = localStorage.getItem('rr_base'); if (b) $('base').value = b; const k = localStorage.getItem('rr_key'); if (k) $('key').value = k; } catch (e) {}
-$('base').addEventListener('change', () => { try { localStorage.setItem('rr_base', $('base').value); } catch (e) {} });
-function saveKey() {
-  const v = $('key').value.trim();
-  try { localStorage.setItem('rr_key', v); } catch (e) { $('keyMsg').style.color = 'var(--amber)'; $('keyMsg').textContent = 'Could not save here, but the key works until you close the page.'; return; }
-  $('keyMsg').style.color = 'var(--teal)';
-  $('keyMsg').textContent = v ? 'Saved ✓' : 'Key cleared';
-  setTimeout(() => { $('keyMsg').textContent = ''; }, 3000);
+/* HARDCODED INTERNAL BACKEND COMMUNICATION - NO ACCESS KEYS PROMPTED TO FREELANCERS */
+const ACCESS_KEY = '9272b5b3ddd2fdc4806e9c05';
+const API_BASE = 'https://n8n.leadscompass.ai/webhook';
+
+/* SUPABASE MULTI-TENANCY AUTH & FREELANCER ACTIVITY TRACKING (ROLEROVER PROJECT) */
+const SUPABASE_URL = 'https://ahpvdcdpwtdeoiatjvnq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFocHZkY2Rwd3RkZW9pYXRqdm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzkzOTgsImV4cCI6MjA5MjM1NTM5OH0.CtrIL_U2y4Ffu8BBENNzloAkWBkvcq3WAhEeROH1LC0';
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let currentUser = null;
+let isSignUpMode = false;
+let groups = [], selected = new Set(), leads = [];
+let runId = null, poll = null, runLeadCount = 0, runSeen = 0, runStats = null;
+let watchlist = [];
+let repliedLeadIds = new Set();
+let dailyReplyCount = 0;
+const DAILY_TARGET = 150;
+
+/* AUTHENTICATION */
+function setAuthMode(signUp) {
+  isSignUpMode = signUp;
+  $('tabLogin').classList.toggle('active', !signUp);
+  $('tabSignUp').classList.toggle('active', signUp);
+  $('authTitle').textContent = signUp ? 'Create Freelancer Account' : 'Freelancer Log In';
+  $('btnAuthSubmit').textContent = signUp ? 'Create Account' : 'Log In';
+  $('authMsg').textContent = '';
 }
-$('btnSaveKey').onclick = saveKey;
-try { if (!$('key').value.trim()) $('cfgBox').open = true; } catch (e) {}
-$('key').addEventListener('change', saveKey);
+$('tabLogin').onclick = () => setAuthMode(false);
+$('tabSignUp').onclick = () => setAuthMode(true);
 
-function status(id, msg, busy) {
-  if ($(id)) $(id).innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(msg) + '</span>';
-  if ($('topStatusText')) $('topStatusText').textContent = msg ? (msg.length > 28 ? msg.slice(0, 26) + '...' : msg) : 'Ready';
-  if ($('topStatusDot')) $('topStatusDot').classList.toggle('busy', !!busy);
+async function handleAuthSubmit(e) {
+  e.preventDefault();
+  if (!sb) { alert('Supabase client failed to load'); return; }
+  const email = $('authEmail').value.trim();
+  const password = $('authPassword').value;
+  $('btnAuthSubmit').disabled = true;
+  $('authMsg').style.color = 'var(--mute)';
+  $('authMsg').textContent = isSignUpMode ? 'Creating your account...' : 'Logging in...';
+
+  try {
+    let res;
+    if (isSignUpMode) {
+      res = await sb.auth.signUp({ email, password });
+      if (res.error) throw res.error;
+      $('authMsg').style.color = 'var(--teal)';
+      $('authMsg').textContent = 'Account created! Logging you in...';
+      if (res.data?.session) applySession(res.data.session.user);
+    } else {
+      res = await sb.auth.signInWithPassword({ email, password });
+      if (res.error) throw res.error;
+      applySession(res.data.user);
+    }
+  } catch (err) {
+    $('authMsg').style.color = 'var(--red)';
+    $('authMsg').textContent = err.message || 'Authentication error';
+  } finally {
+    $('btnAuthSubmit').disabled = false;
+  }
 }
 
+function applySession(user) {
+  currentUser = user;
+  if (user) {
+    document.body.classList.add('authed');
+    $('authCard').style.display = 'none';
+    $('appWorkspace').style.display = 'block';
+    $('userHeaderBar').style.display = 'flex';
+    $('userEmailTag').textContent = user.email || 'Freelancer';
+    loadFreelancerSettings();
+    loadFreelancerRepliesToday();
+    loadLeads();
+    loadWatchlist();
+    showPage('dashboard');
+  } else {
+    document.body.classList.remove('authed');
+    $('authCard').style.display = 'block';
+    $('appWorkspace').style.display = 'none';
+    $('userHeaderBar').style.display = 'none';
+  }
+}
+
+$('btnSignOut').onclick = async () => {
+  if (sb) await sb.auth.signOut();
+  applySession(null);
+};
+
+/* PAGES & SIDEBAR NAVIGATION */
+const PAGES = ['search', 'scraper', 'dashboard', 'watchlist', 'settings'];
+function showPage(name) {
+  if (!PAGES.includes(name)) name = 'dashboard';
+  PAGES.forEach(p => $('page-' + p).classList.toggle('active', p === name));
+  document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  $('pageTitle').textContent = $('page-' + name).dataset.title;
+  closeMenu();
+  window.scrollTo(0, 0);
+  if (name === 'dashboard') { loadFreelancerRepliesToday(); }
+  if (name === 'watchlist') { loadWatchlist(); }
+}
+function openMenu() { $('appSidebar').classList.add('open'); $('sidebarOverlay').classList.add('open'); }
+function closeMenu() { $('appSidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('open'); }
+$('btnMenu').onclick = openMenu;
+$('btnCloseMenu').onclick = closeMenu;
+$('sidebarOverlay').onclick = closeMenu;
+document.querySelectorAll('.sidebar-nav-item').forEach(b => b.onclick = () => showPage(b.dataset.page));
+document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => showPage(b.dataset.goto));
+
+/* API HELPER WITH INTERNAL ACCESS KEY */
 async function post(path, body) {
-  const r = await fetch(base() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ key: $('key').value.trim() }, body)) });
-  if (r.status === 401) throw new Error('Wrong access key. Open Settings at the bottom and paste the key.');
-  if (r.status === 404) throw new Error('The RoleRover server is not switched on yet (' + path + ' not found).');
+  const r = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ key: ACCESS_KEY }, body))
+  });
   if (!r.ok) throw new Error('Server returned ' + r.status);
   const t = await r.text();
   try { return JSON.parse(t); } catch (e) { return { raw: t }; }
 }
 
-/* STEP 1: roles x country -> phrases -> groups */
-const ROLES = [
-  { label: 'General job groups', core: '*general*' },
-  { label: 'Software engineer', core: 'software engineer' },
-  { label: 'Data analyst', core: 'data analyst' },
-  { label: 'Customer rep', core: 'customer service' },
-  { label: 'Virtual assistant', core: 'virtual assistant' }
-];
-const COUNTRIES = ['Nigeria', 'Kenya', 'Ghana', 'Africa'];
-const PER_PHRASE = 0.03; // worst case: $0.005 start + up to ~15 groups at $0.0019
-let pickedRoles = new Set(['General job groups', 'Software engineer']), country = 'Nigeria', extras = [], dropped = new Set(), remoteOn = true, jobsOn = false;
-try { const st = JSON.parse(localStorage.getItem('rr_picks') || 'null'); if (st) { pickedRoles = new Set(st.roles || []); remoteOn = st.remote !== false; jobsOn = st.jobs === true; country = st.country || country; extras = st.extras || []; ROLES.push(...(st.customRoles || []).map(l => ({ label: l, core: l.toLowerCase() }))); (st.customCountries || []).forEach(c => COUNTRIES.push(c)); } } catch (e) {}
-const savePicks = () => { try { localStorage.setItem('rr_picks', JSON.stringify({ roles: [...pickedRoles], remote: remoteOn, jobs: jobsOn, country, extras, customRoles: ROLES.slice(5).map(r => r.label), customCountries: COUNTRIES.slice(4) })); } catch (e) {} };
-
-// The search matches every word strictly, so a role is searched by its plain name (e.g. 'data analyst Nigeria').
-const rolePhrases = (r) => {
-  if (r.core === '*general*') return ['remote jobs', 'jobs'].map(t => ({ text: t, role: r.label }));
-  const forms = [r.core];
-  if (remoteOn) forms.push('remote ' + r.core);
-  if (jobsOn) { forms.push(r.core + ' jobs'); if (remoteOn) forms.push('remote ' + r.core + ' jobs'); }
-  return forms.map(t => ({ text: t, role: r.label }));
-};
-const stripCountry = (t) => { let x = String(t || '').trim(); if (country && x.toLowerCase().endsWith(country.toLowerCase())) x = x.slice(0, x.length - country.length).trim(); return x; };
-function allPhrases() {
-  const list = [];
-  ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => rolePhrases(r).forEach(p => { if (!dropped.has(p.text)) list.push(p); }));
-  extras.forEach(t => { const x = stripCountry(t); if (x) list.push({ text: x, role: 'Your phrase' }); });
-  const seen = new Set();
-  return list.filter(p => { const k = p.text.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+function status(id, msg, busy) {
+  if ($(id)) $(id).innerHTML = (busy ? '<span class="spin"></span> ' : '') + '<span>' + esc(msg) + '</span>';
 }
-function renderPicker() {
-  $('roleChips').innerHTML = ROLES.map(r => '<button type="button" class="chip' + (pickedRoles.has(r.label) ? ' on' : '') + '" data-r="' + esc(r.label) + '">' + esc(r.label) + '</button>').join('');
-  $('roleChips').innerHTML += '<span style="width:14px"></span><button type="button" class="chip' + (remoteOn ? ' on' : '') + '" id="remoteChip" title="When on, every role is also searched as remote + role">' + (remoteOn ? '\u2713 ' : '') + 'Remote</button>';
-  $('roleChips').innerHTML += '<button type="button" class="chip' + (jobsOn ? ' on' : '') + '" id="jobsChip" title="When on, roles are also searched as role + jobs">' + (jobsOn ? '\u2713 ' : '') + 'Jobs</button>';
-  $('remoteChip').onclick = () => { remoteOn = !remoteOn; dropped = new Set(); savePicks(); renderPicker(); };
-  $('jobsChip').onclick = () => { jobsOn = !jobsOn; dropped = new Set(); savePicks(); renderPicker(); };
-  $('roleChips').querySelectorAll('.chip[data-r]').forEach(b => b.onclick = () => { const l = b.dataset.r; pickedRoles.has(l) ? pickedRoles.delete(l) : pickedRoles.add(l); dropped = new Set(); savePicks(); renderPicker(); });
-  $('countryChips').innerHTML = COUNTRIES.map(c => '<button type="button" class="chip' + (country === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('');
-  $('countryChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { country = b.dataset.c; savePicks(); renderPicker(); });
-  const ph = allPhrases();
-  $('phraseChips').innerHTML = ph.length ? ph.map(p => '<span class="chip on" title="' + esc(p.role) + '">' + esc(p.text + ' ' + country) + ' <b class="x" data-k="' + (p.role === 'Your phrase' ? 'extra' : 'role') + '" data-t="' + esc(p.text) + '" style="cursor:pointer;margin-left:6px">&times;</b></span>').join('') : '<span class="muted small">Pick at least one role above.</span>';
-  $('phraseChips').querySelectorAll('.x').forEach(x => x.onclick = () => {
-    const t = x.dataset.t;
-    if (x.dataset.k === 'extra') { extras = extras.filter(e => stripCountry(e).toLowerCase() !== t.toLowerCase()); }
-    else {
-      dropped.add(t);
-      ROLES.filter(r => pickedRoles.has(r.label)).forEach(r => { if (rolePhrases(r).every(p => dropped.has(p.text))) { pickedRoles.delete(r.label); rolePhrases(r).forEach(p => dropped.delete(p.text)); } });
-    }
-    savePicks(); renderPicker();
-  });
-  const cost = ph.length * PER_PHRASE;
-  $('costLine').textContent = ph.length ? ph.length + ' search' + (ph.length === 1 ? '' : 'es') + ' in ' + country + ', up to $' + cost.toFixed(2) + ' (all run together, about 2\u20134 minutes). Runs only when you click.' : '';
-  $('btnFind').disabled = ph.length === 0;
+
+/* FREELANCER DAILY REPLY ACCOUNTABILITY */
+async function loadFreelancerRepliesToday() {
+  if (!sb || !currentUser) return;
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  try {
+    const { data, error } = await sb
+      .from('rr_freelancer_replies')
+      .select('lead_id')
+      .eq('user_id', currentUser.id)
+      .gte('replied_at', startOfDay.toISOString());
+
+    if (error) throw error;
+    repliedLeadIds = new Set((data || []).map(r => r.lead_id));
+    dailyReplyCount = repliedLeadIds.size;
+    updateGoalUI();
+    renderLeads();
+  } catch (e) {
+    console.warn('Error loading daily replies:', e);
+  }
 }
-$('btnAddRole').onclick = () => { const v = $('customRole').value.trim(); if (!v) return; if (!ROLES.some(r => r.label.toLowerCase() === v.toLowerCase())) ROLES.push({ label: v, core: v.toLowerCase() }); pickedRoles.add(v); $('customRole').value = ''; savePicks(); renderPicker(); };
-$('btnAddCountry').onclick = () => { const v = $('customCountry').value.trim(); if (!v) return; if (!COUNTRIES.some(c => c.toLowerCase() === v.toLowerCase())) COUNTRIES.push(v); country = v; $('customCountry').value = ''; savePicks(); renderPicker(); };
-$('btnAddPhrase').onclick = () => { const v = $('extraPhrase').value.trim(); if (!v) return; if (!extras.includes(v)) extras.push(v); $('extraPhrase').value = ''; savePicks(); renderPicker(); };
-['customRole', 'customCountry', 'extraPhrase'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $({ customRole: 'btnAddRole', customCountry: 'btnAddCountry', extraPhrase: 'btnAddPhrase' }[id]).click(); } }));
-$('btnClearPicks').onclick = () => { pickedRoles = new Set(); extras = []; dropped = new Set(); savePicks(); renderPicker(); };
-renderPicker();
 
-function makeCollapsible(headerId, bodyId, toggleBtnId, textId, iconId, defaultExpanded = true) {
-  const header = $(headerId), body = $(bodyId), btn = $(toggleBtnId), text = $(textId), icon = $(iconId);
-  if (!header || !body) return () => {};
+function updateGoalUI() {
+  $('dailyRepliedCount').textContent = dailyReplyCount;
+  const pct = Math.min(100, Math.round((dailyReplyCount / DAILY_TARGET) * 100));
+  $('goalProgressBar').style.width = pct + '%';
+  $('goalPercentText').textContent = pct + '% Completed';
+  const remaining = Math.max(0, DAILY_TARGET - dailyReplyCount);
+  $('goalRemainingText').textContent = remaining === 0 
+    ? '🎉 Daily goal reached! Excellent work.'
+    : remaining + ' hot leads remaining to hit today\'s 150 target';
+}
 
-  function setCollapsed(collapse) {
-    const isCollapsed = collapse !== undefined ? collapse : !body.classList.contains('collapsed');
-    if (isCollapsed) {
-      body.classList.add('collapsed');
-      header.setAttribute('aria-expanded', 'false');
-      if (text) text.textContent = 'Expand';
-      if (icon) icon.innerHTML = '&#9660;';
-    } else {
-      body.classList.remove('collapsed');
-      header.setAttribute('aria-expanded', 'true');
-      if (text) text.textContent = 'Collapse';
-      if (icon) icon.innerHTML = '&#9650;';
+async function recordFreelancerReply(lead) {
+  if (!currentUser || !sb) return;
+  const leadId = String(lead.id || lead.item_key || lead.post_url || lead.comment_url);
+  if (!repliedLeadIds.has(leadId)) {
+    repliedLeadIds.add(leadId);
+    dailyReplyCount = repliedLeadIds.size;
+    updateGoalUI();
+    try {
+      await sb.from('rr_freelancer_replies').insert({
+        user_id: currentUser.id,
+        lead_id: leadId,
+        lead_name: lead.full_name || 'Job Hunter',
+        group_name: lead.group_name || ''
+      });
+    } catch (e) {
+      console.warn('Could not record reply to Supabase:', e);
     }
   }
-
-  header.addEventListener('click', (e) => {
-    if (btn && (e.target === btn || btn.contains(e.target))) return;
-    setCollapsed();
-  });
-  header.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCollapsed(); }
-  });
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setCollapsed();
-    });
-  }
-
-  if (!defaultExpanded) setCollapsed(true);
-  return setCollapsed;
+  renderLeads();
 }
 
-function openNav() {
-  $('navDrawer')?.classList.add('open');
-  $('navBackdrop')?.classList.add('open');
-}
-function closeNav() {
-  $('navDrawer')?.classList.remove('open');
-  $('navBackdrop')?.classList.remove('open');
-}
-$('btnMenu')?.addEventListener('click', openNav);
-$('btnCloseNav')?.addEventListener('click', closeNav);
-$('navBackdrop')?.addEventListener('click', closeNav);
-
-const isMobile = window.innerWidth <= 768;
-const toggleStep1 = makeCollapsible('step1Header', 'finderBody', 'btnToggleFinder', 'finderToggleText', 'finderToggleIcon', true);
-const toggleStep11 = makeCollapsible('step11Header', 'step11Body', 'btnToggleStep11', 'step11ToggleText', 'step11ToggleIcon', !isMobile);
-const toggleStep2 = makeCollapsible('step2Header', 'step2Body', 'btnToggleStep2', 'step2ToggleText', 'step2ToggleIcon', !isMobile);
-const toggleStep3 = makeCollapsible('step3Header', 'step3Body', 'btnToggleStep3', 'step3ToggleText', 'step3ToggleIcon', !isMobile);
-
-function jumpTo(elementId) {
-  closeNav();
-  if (elementId === 'step1Card') toggleStep1(false);
-  if (elementId === 'step11Card') toggleStep11(false);
-  if (elementId === 'step2Card') toggleStep2(false);
-  if (elementId === 'watchCard') toggleStep3(false);
-  if (elementId === 'resCard' || elementId === 'stats') {
-    $('stats').style.display = 'grid';
-    $('resCard').style.display = 'block';
-  }
-  if (elementId === 'groupsBox') {
-    $('groupsBox').style.display = 'block';
-  }
-  const el = $(elementId);
-  if (el) {
-    setTimeout(() => {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
-  }
-}
-
-function expandAll() {
-  toggleStep1(false);
-  toggleStep11(false);
-  toggleStep2(false);
-  toggleStep3(false);
-  closeNav();
-}
-function collapseAll() {
-  toggleStep1(true);
-  toggleStep11(true);
-  toggleStep2(true);
-  toggleStep3(true);
-  closeNav();
-}
-$('btnExpandAll')?.addEventListener('click', expandAll);
-$('btnCollapseAll')?.addEventListener('click', collapseAll);
-
-const dec = (t) => { const e = document.createElement('textarea'); e.innerHTML = String(t == null ? '' : t); return e.value; };
-function groupId(u) { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); }
-$('btnFind').onclick = async () => {
-  const ph = allPhrases();
-  if (!ph.length) return;
-  if (window.innerWidth <= 768) toggleStep1(true);
-  $('btnFind').disabled = true;
+/* SETTINGS (TELEGRAM PER FREELANCER) */
+async function loadFreelancerSettings() {
+  if (!sb || !currentUser) return;
   try {
-    const want = +$('maxGroups').value || 15;
-    const byId = {};
-    groups.filter(g => g.manual).forEach(g => { byId[groupId(g.url)] = g; });
-    status('st1', 'Starting ' + ph.length + ' search' + (ph.length === 1 ? '' : 'es') + ' in ' + country + '...', true);
-    const started = await post('/rr-group-finder', { keywords: ph.map(x => x.text), country, maxGroups: want, minMembers: 0 });
-    if (!started.search_id) throw new Error('The server did not start the search.');
-    // The server works in the background (about 2-4 minutes). Ask for the result every 5 seconds.
-    let p = null; const t0 = Date.now();
-    for (;;) {
-      await new Promise(r => setTimeout(r, 5000));
-      const secs = Math.round((Date.now() - t0) / 1000);
-      status('st1', 'Searching ' + ph.length + ' phrase' + (ph.length === 1 ? '' : 's') + ' in ' + country + '... ' + secs + 's (keep this page open, usually 2-4 minutes)', true);
-      let r;
-      try { r = await post('/rr-group-result', { search_id: started.search_id }); } catch (e) { if (secs > 600) throw e; continue; }
-      if (!r.pending) { p = r; break; }
-      if (secs > 600) throw new Error('The search is taking too long (over 10 minutes). Try fewer phrases.');
+    const { data } = await sb.from('rr_freelancer_settings').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (data) {
+      if ($('tgBotToken')) $('tgBotToken').value = data.telegram_bot_token || '';
+      if ($('tgChatId')) $('tgChatId').value = data.telegram_chat_id || '';
     }
-    if (p.searchError && !(p.groups || []).length) throw new Error(p.searchError);
-    const roleOf = {};
-    ph.forEach(x => { roleOf[(x.text + ' ' + country).toLowerCase()] = x.role; });
-    (p.groups || []).forEach(g => {
-      const id = groupId(g.url);
-      const cur = byId[id] || (byId[id] = { url: g.url, name: dec(g.name), description: dec(g.description || ''), membersNumber: g.membersNumber || 0, visibility: g.visibility || '', postsPerDay: g.postsPerDay || 0, roles: [] });
-      const r = roleOf[String(g.query || '').toLowerCase()];
-      if (r && !cur.roles.includes(r)) cur.roles.push(r);
-    });
-    groups = Object.values(byId);
-    selected = new Set(groups.map((g, i) => g.manual ? i : -1).filter(i => i >= 0));
-    renderGroups();
-    if (groups.length) jumpTo('groupsBox');
-    status('st1', groups.length ? groups.length + ' groups found for ' + country + '. Click "Check which groups are alive", then scrape.' : 'No groups found. Try other roles or another country.');
-  } catch (e) { status('st1', 'Error: ' + e.message); }
-  renderPicker();
-};
+  } catch (e) {
+    console.warn('Error loading settings:', e);
+  }
+}
 
-function verdictOf(h) {
-  if (!h) return null;
-  const p7 = h.posts7d != null ? h.posts7d : h.posts;
-  if (!p7) return { t: 'Dead (no posts in 7 days)', c: 'other', alive: false };
-  if (h.advertPct >= 60) return { t: 'Mostly adverts', c: 'hot', alive: false };
-  if (p7 >= 3) return { t: h.comments ? 'Active' : 'Active, no replies', c: 'seeker', alive: true };
-  return { t: 'Slow', c: 'other', alive: true };
-}
-function lastPostText(h) { if (h.lastPostDays == null) return 'none found'; if (h.lastPostDays === 0) return 'today'; if (h.lastPostDays === 1) return '1 day ago'; return h.lastPostDays + ' days ago'; }
-function healthCells(g) {
-  const h = g.health;
-  if (!h) return '<td class="muted small">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="num muted">-</td><td class="muted small">not checked</td>';
-  const v = verdictOf(h);
-  return '<td class="small">' + lastPostText(h) + '</td><td class="num">' + (h.posts7d != null ? h.posts7d : h.posts) + '</td><td class="num">' + h.comments + '</td><td class="num">' + h.advertPct + '%</td><td><span class="badge ' + v.c + '">' + v.t + '</span></td>';
-}
-function renderGroups() {
-  $('groupsBox').style.display = groups.length ? 'block' : 'none';
-  if ($('navCountGroups')) $('navCountGroups').textContent = groups.length;
-  if ($('groupsEmptyNotice')) $('groupsEmptyNotice').style.display = groups.length ? 'none' : 'block';
-  if ($('groupsTbl')) $('groupsTbl').style.display = groups.length ? 'table' : 'none';
-  const tb = $('groupsTbl').querySelector('tbody');
-  tb.innerHTML = groups.map((g, i) => `<tr>
-    <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} style="width:auto"></td>
-    <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>${g.manual ? ' <span class="muted small">(added by you)</span>' : ''}<div class="small muted clip" style="max-width:340px">${esc(g.description || '')}</div></td>
-    <td class="small">${esc((g.roles || []).join(', ')) || '-'}</td>
-    <td class="num">${g.membersNumber ? g.membersNumber.toLocaleString() : '-'}</td>
-    <td>${esc(g.visibility || '-')}</td>
-    <td class="num">${g.manual ? '-' : g.postsPerDay}</td>
-    ${healthCells(g)}</tr>`).join('');
-  tb.querySelectorAll('input[type=checkbox]').forEach(cb => cb.onchange = () => { cb.checked ? selected.add(+cb.dataset.i) : selected.delete(+cb.dataset.i); updSel(); });
-  updSel();
-}
-function updSel() {
-  $('selCount').textContent = selected.size + ' selected';
-  $('btnScrape').disabled = selected.size === 0;
-  if (!runId || !poll) status('st2', selected.size ? selected.size + ' group(s) ready. Click Start scraping.' : 'Tick at least one group in Step 1 to enable Start scraping.');
-}
-$('btnHealth').onclick = async () => {
-  let idx = [...selected]; if (!idx.length) idx = groups.slice(0, 8).map((_, i) => i); idx = idx.slice(0, 8);
-  $('btnHealth').disabled = true; $('healthMsg').textContent = 'Checking ' + idx.length + ' groups (about 20 seconds)...';
+$('btnSaveTg').onclick = async () => {
+  if (!sb || !currentUser) return;
+  const token = $('tgBotToken').value.trim();
+  const chat = $('tgChatId').value.trim();
+  $('btnSaveTg').disabled = true;
+  $('tgMsg').style.color = 'var(--mute)';
+  $('tgMsg').textContent = 'Saving...';
   try {
-    const d = await post('/rr-health', { groupUrls: idx.map(i => groups[i].url), hours: 168 });
-    const byId = {}; (d.health || []).forEach(h => { byId[groupId(h.url)] = h; });
-    let alive = 0;
-    idx.forEach(i => { const h = byId[groupId(groups[i].url)]; if (h) { groups[i].health = h; const v = verdictOf(h); if (v && v.alive) alive++; } });
-    selected = new Set(idx.filter(i => { const v = verdictOf(groups[i].health); return v && v.alive; }));
-    renderGroups();
-    $('healthMsg').textContent = alive ? alive + ' of ' + idx.length + ' groups had posts in the last 7 days and are now ticked.' : 'None of these ' + idx.length + ' groups had a post in the last 7 days.';
-  } catch (e) { $('healthMsg').textContent = 'Error: ' + e.message; }
-  $('btnHealth').disabled = false;
-};
-function parseGroupLinks(text) {
-  const found = [], unreadable = [];
-  String(text || '').split(/[\s,;]+/).filter(Boolean).forEach(tok => {
-    const m = tok.match(/facebook\.com\/groups\/([^\/?#\s]+)/i);
-    if (m) found.push({ id: m[1], url: 'https://www.facebook.com/groups/' + m[1] + '/' });
-    else if (/facebook\.com|fb\.me|fb\.com/i.test(tok)) unreadable.push(tok);
-  });
-  return { found, unreadable };
-}
-$('btnAddLinks').onclick = () => {
-  const { found, unreadable } = parseGroupLinks($('manualLinks').value);
-  const have = new Set(groups.map(g => groupId(g.url)));
-  let added = 0, dup = 0;
-  found.forEach(o => {
-    const id = o.id.toLowerCase();
-    if (have.has(id)) { dup++; const i = groups.findIndex(g => groupId(g.url) === id); if (i >= 0) selected.add(i); return; }
-    have.add(id); groups.push({ url: o.url, name: 'Group ' + o.id, description: '', roles: [], manual: true }); selected.add(groups.length - 1); added++;
-  });
-  renderGroups();
-  const parts = [];
-  if (added) parts.push(added + ' group' + (added === 1 ? '' : 's') + ' added and ticked');
-  if (dup) parts.push(dup + ' already in the list (ticked)');
-  if (unreadable.length) parts.push(unreadable.length + ' link(s) could not be used: share links (facebook.com/share/g/...) cannot be read. Open the link in your browser and copy the address once the group opens (facebook.com/groups/123...)');
-  if (!found.length && !unreadable.length) parts.push('No group links found. Paste addresses that look like facebook.com/groups/...');
-  $('manualMsg').className = 'note' + (unreadable.length || !found.length ? ' warn' : '');
-  $('manualMsg').textContent = parts.join('. ') + '.';
-  if (added) {
-    $('manualLinks').value = '';
-    if (window.innerWidth <= 768) toggleStep11(true);
-    jumpTo('groupsBox');
+    const { error } = await sb.from('rr_freelancer_settings').upsert({
+      user_id: currentUser.id,
+      telegram_bot_token: token,
+      telegram_chat_id: chat,
+      updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    $('tgMsg').style.color = 'var(--teal)';
+    $('tgMsg').textContent = 'Settings saved! Alerts will be sent to your Telegram.';
+    setTimeout(() => { $('tgMsg').textContent = ''; }, 4000);
+  } catch (e) {
+    $('tgMsg').style.color = 'var(--red)';
+    $('tgMsg').textContent = 'Error: ' + e.message;
+  } finally {
+    $('btnSaveTg').disabled = false;
   }
 };
-$('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
-$('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
-$('btnRemoveAll').onclick = () => { groups = []; selected = new Set(); renderGroups(); status('st1', 'List emptied.'); };
 
-/* STEP 2 */
-$('btnScrape').onclick = async () => {
-  const picked = [...selected].map(i => ({ url: groups[i].url, name: groups[i].name }));
-  if (window.innerWidth <= 768) toggleStep2(true);
-  $('btnScrape').disabled = true;
-  status('st2', 'Starting scrape of ' + picked.length + ' group(s)...', true);
-  jumpTo('resCard');
-  try {
-    const d = await post('/rr-scrape', {
-      groupUrls: picked, maxPosts: +$('maxPosts').value || 0, newerThan: (+$('hours').value || 30) + ' ' + $('unit').value,
-      viewOption: $('viewOption').value, commentsPerPost: +$('cpp').value || 0, includeReplies: $('replies').value === 'true'
-    });
-    runId = d.run_id;
-    if (!runId) throw new Error('No run id returned');
-    $('stats').style.display = 'grid'; $('resCard').style.display = 'block';
-    status('st2', 'Run ' + runId + ' started. Results appear below when classified (usually a few minutes).', true);
-    startPolling();
-    addToWatch(picked);
-  } catch (e) { status('st2', 'Error: ' + e.message); $('btnScrape').disabled = false; }
-};
-function startPolling() {
-  clearInterval(poll); let n = 0, lastCount = -1, still = 0;
-  // Leads are saved only at the end of a run, so 0 for a few minutes is normal.
-  const done = (msg) => { clearInterval(poll); poll = null; status('st2', msg); $('btnScrape').disabled = selected.size === 0; renderLeads(); };
-  const tick = async () => {
-    n++; await loadLeads();
-    still = runSeen === lastCount ? still + 1 : 0; lastCount = runSeen;
-    status('st2', 'Run ' + runId + ': ' + runLeadCount + ' new job seekers so far (' + n * 10 + 's)...', true);
-    if (runStats && runStats.posts === 0 && n >= 2) return done('Run ' + runId + ' finished: no posts were found in the time window.');
-    if (runSeen && still >= 6) return done('Run ' + runId + ' finished: ' + runLeadCount + ' new job seekers.');
-    if (!runSeen && n >= 36) return done('Run ' + runId + ' finished after 6 minutes with 0 job seekers. Press Refresh to check again.');
-    if (n > 180) done('Stopped waiting. Press Refresh to check again.');
-  };
-  poll = setInterval(tick, 10000); tick();
-}
-
-/* RESULTS */
+/* LEADS & FLIP CARDS WITH UGC ROLE ROVER REPLIES */
 async function loadLeads() {
   try {
-    const all = await post('/rr-leads', { run_id: null });
-    leads = all.leads || [];
-    if (runId) {
-      const mine = await post('/rr-leads', { run_id: runId });
-      runSeen = (mine.leads || []).length;
-      runLeadCount = mine.new_count != null ? mine.new_count : runSeen;
-      runStats = mine.hasStats ? mine.stats : null;
-    } else { runSeen = 0; runLeadCount = 0; runStats = null; }
+    const res = await post('/rr-leads', { run_id: null });
+    leads = res.leads || [];
     renderLeads();
-  } catch (e) { if (!poll) $('emptyMsg').textContent = e.message; }
+  } catch (e) {
+    $('emptyMsg').textContent = 'Error loading leads: ' + e.message;
+  }
 }
 $('btnRefresh').onclick = loadLeads;
 
-const isHot = (l) => l.hot === true || l.hot === 'true';
-function badge(l) { return isHot(l) ? '<span class="badge hot">Hot</span>' : '<span class="badge seeker">Job seeker</span>'; }
-function filtered() {
-  const q = $('q').value.toLowerCase(), h = $('fHot').value, s = $('fSource').value, g = $('fGroup').value;
-  return leads.filter(l => (h === 'all' || (h === 'hot') === isHot(l)) && (s === 'all' || l.source === s) && (g === 'all' || l.group_name === g) &&
-    (!q || (l.full_name || '').toLowerCase().includes(q) || (l.item_text || '').toLowerCase().includes(q)));
-}
-const replyLink = (l) => l.comment_url || l.post_url || '';
-const leadKey = (l) => String(l.id || l.comment_url || l.post_url || (l.full_name + '_' + (l.created_at || '') + '_' + (l.item_text || '').slice(0, 30)));
-let viewedLeads = new Set();
-try {
-  const v = JSON.parse(localStorage.getItem('rr_viewed_leads') || '[]');
-  if (Array.isArray(v)) viewedLeads = new Set(v);
-} catch (e) {}
+function renderLeads() {
+  $('sTotal').textContent = leads.length;
+  $('sHot').textContent = leads.filter(l => l.hot === true || l.hot === 'true').length;
+  $('sPosts').textContent = leads.filter(l => l.source === 'post').length;
+  $('sComments').textContent = leads.filter(l => l.source === 'comment').length;
+  if ($('navLeadCount')) {
+    $('navLeadCount').textContent = leads.length;
+    $('navLeadCount').style.display = leads.length ? 'inline-block' : 'none';
+  }
+  $('emptyMsg').style.display = leads.length ? 'none' : 'block';
 
-function markLeadViewed(k) {
-  if (!k) return;
-  viewedLeads.add(k);
-  try { localStorage.setItem('rr_viewed_leads', JSON.stringify([...viewedLeads])); } catch (e) {}
+  const grid = $('leadsGrid');
+  grid.innerHTML = leads.map((l, i) => {
+    const isHot = l.hot === true || l.hot === 'true';
+    const leadId = String(l.id || l.item_key || l.post_url || l.comment_url);
+    const replied = repliedLeadIds.has(leadId);
+    const replyTargetUrl = l.comment_url || l.post_url || '#';
+    const roleRoverReply = l.draft_reply || generateFallbackUgcReply(l);
+
+    return `
+    <div class="fcard" id="fcard-${i}">
+      <div class="fcard-inner">
+        <!-- FRONT FACE -->
+        <div class="fface front" onclick="toggleFlip(${i})">
+          <div class="fhead">
+            <div>
+              <b style="font-size:15px">${esc(l.full_name || 'Anonymous Job Hunter')}</b>
+              <div class="small muted">${esc(l.group_name || 'Job Group')} &middot; ${l.source === 'comment' ? 'Comment' : 'Post'}</div>
+            </div>
+            <span class="badge ${isHot ? 'hot' : 'seeker'}">${isHot ? '🔥 Hot Struggle' : 'Job Seeker'}</span>
+          </div>
+          <div class="fsnip">${esc(l.item_text || '')}</div>
+          <div class="ffoot" onclick="event.stopPropagation()">
+            <button type="button" class="flip-btn" onclick="toggleFlip(${i})">&#8635; View UGC Reply</button>
+            <a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link ${replied ? 'replied' : ''}" onclick="onLeadReplyClick(event, ${i})">
+              ${replied ? '✓ Replied' : 'Open &amp; reply &rarr;'}
+            </a>
+          </div>
+        </div>
+
+        <!-- BACK FACE (UGC RESPONSE + REASONING) -->
+        <div class="fface back">
+          <div class="fback-head">
+            <div>
+              <b style="font-size:14px">${esc(l.full_name || 'Job Hunter')}</b>
+              <span class="badge ${isHot ? 'hot' : 'seeker'}" style="margin-left:6px">${isHot ? 'Hot' : 'Lead'}</span>
+            </div>
+            <button type="button" class="flip-btn" onclick="toggleFlip(${i})">&#8635; Flip back</button>
+          </div>
+          <div>
+            <label style="color:var(--teal)">Why this connects to RoleRover</label>
+            <div class="qbox q-why">${esc(l.reasoning || 'Job seeker actively looking for opportunities and experiencing search friction.')}</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+              <label style="color:var(--lime)">Tailored UGC Reply (Mentions RoleRover)</label>
+              <button type="button" class="copy-ugc-btn" id="copyBtn-${i}" onclick="copyReplyText(${i}, '${esc(roleRoverReply)}')">📋 Copy Reply</button>
+            </div>
+            <div class="qbox q-draft" id="replyBox-${i}">${esc(roleRoverReply)}</div>
+          </div>
+          <div class="ffoot" style="margin-top:auto">
+            <a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link ${replied ? 'replied' : ''}" style="width:100%;text-align:center" onclick="onLeadReplyClick(event, ${i})">
+              ${replied ? '✓ Replied (Click to reopen)' : 'Open Facebook &amp; Send Reply &rarr;'}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function onReplyClick(e, el, k) {
-  markLeadViewed(k);
-  document.querySelectorAll(`a.btn-link[data-k="${k}"]`).forEach(btn => {
-    btn.classList.add('viewed');
-    if (!btn.querySelector('.eye-icon')) {
-      btn.insertAdjacentHTML('afterbegin', '<span class="eye-icon">&#128065;</span>');
+function generateFallbackUgcReply(lead) {
+  const text = (lead.item_text || '').toLowerCase();
+  if (text.includes('ats') || text.includes('resume') || text.includes('ghost')) {
+    return "Totally feel this—getting ghosted by ATS filters is exhausting. I had the same issue until I tried RoleRover, which scans direct company career boards and auto-tailors applications so you don't get stuck in the black hole. Might save you hours!";
+  }
+  return "I completely understand how overwhelming the job search can be right now. Definitely look into RoleRover—it automatically watches company career sites 24/7 and helps submit tailored applications for you so you can land interviews without spending all day applying.";
+}
+
+function toggleFlip(i) {
+  const el = $('fcard-' + i);
+  if (el) el.classList.toggle('flipped');
+}
+
+function copyReplyText(idx, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = $('copyBtn-' + idx);
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
     }
   });
 }
 
-function renderLeads() {
-  const gsel = $('fGroup'), cur = gsel.value;
-  const names = [...new Set(leads.map(l => l.group_name).filter(Boolean))];
-  gsel.innerHTML = '<option value="all">All groups</option>' + names.map(n => '<option>' + esc(n) + '</option>').join('');
-  if (names.includes(cur)) gsel.value = cur;
-  $('sTotal').textContent = leads.length;
-  $('sHot').textContent = leads.filter(isHot).length;
-  $('sPosts').textContent = leads.filter(l => l.source === 'post').length;
-  $('sComments').textContent = leads.filter(l => l.source === 'comment').length;
-  if ($('navCountLeads')) $('navCountLeads').textContent = leads.length;
-  // hottest first, then newest
-  const rows = filtered().sort((a, b) => (isHot(b) - isHot(a)) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
-  $('emptyMsg').style.display = rows.length ? 'none' : 'block';
-  let note = '';
-  if (runStats) note = 'This run read ' + runStats.posts + ' post(s) and ' + runStats.comments + ' comment(s).';
-  if (runId && !poll) note += ' ' + runLeadCount + ' new job seeker(s) from this run.';
-  else if (!runId && leads.length) note = 'Showing ' + leads.length + ' unique people from all runs.';
-  $('emptyMsg').textContent = leads.length ? 'No job seekers match these filters.' : 'No saved job seekers yet.';
-  $('runSummary').textContent = note;
-  $('leadsTbl').querySelector('tbody').innerHTML = rows.map((l, i) => {
-    const k = leadKey(l);
-    const seen = viewedLeads.has(k);
-    return `<tr class="clickable" data-i="${i}">
-    <td><b>${esc(l.full_name)}</b>${runId && l.run_id === runId ? ' <span class="badge seeker" style="margin-left:6px;font-size:10px;padding:1px 7px">New</span>' : ''}<div class="small">${l.profile_url ? '<a href="' + esc(l.profile_url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Facebook profile</a>' : '<span class="muted">no profile link</span>'}</div></td>
-    <td>${badge(l)}<div class="muted small">${l.source === 'comment' ? 'commented' : 'posted'}</div></td>
-    <td><div class="clip">${esc(l.item_text)}</div></td>
-    <td class="small">${esc(l.group_name)}</td>
-    <td>${replyLink(l) ? `<a class="btn-link ${seen ? 'viewed' : ''}" data-k="${esc(k)}" href="${esc(replyLink(l))}" target="_blank" rel="noopener" onclick="onReplyClick(event, this, '${esc(k)}'); event.stopPropagation()">${seen ? '<span class="eye-icon">&#128065;</span>' : ''}Open &amp; reply</a>` : ''}</td></tr>`;
-  }).join('');
-  $('leadsTbl').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => openDrawer(rows[+tr.dataset.i]));
-}
-['q', 'fHot', 'fSource', 'fGroup'].forEach(id => $(id).addEventListener('input', renderLeads));
-
-function openDrawer(l) {
-  const isC = l.source === 'comment';
-  const k = leadKey(l);
-  const seen = viewedLeads.has(k);
-  const block = (label, cls, color, text) => '<label style="color:' + color + '">' + label + '</label><div class="qbox ' + cls + '">' + esc(text) + '</div>';
-  $('dBody').innerHTML = `<h3>${esc(l.full_name)}</h3>
-    <div style="margin:6px 0 14px">${badge(l)} <span class="muted small">${isC ? 'commented' : 'posted'} in ${esc(l.group_name)}</span></div>
-    ${isC ? block('Original post', 'q-orig', 'var(--violet)', l.parent_post_text) : ''}
-    ${block(isC ? 'Their comment' : 'Their post', isC ? 'q-comment' : 'q-post', isC ? 'var(--amber)' : 'var(--blue)', l.item_text)}
-    ${block('Why this is a job seeker' + (isHot(l) ? ' (and hot)' : ''), 'q-why', 'var(--teal)', l.reasoning)}
-    ${l.draft_reply ? block('Suggested reply (edit before sending)', 'q-draft', 'var(--lime)', l.draft_reply) : ''}
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${l.draft_reply ? '<button class="ghost" id="btnCopy">Copy suggested reply</button>' : ''}
-      ${replyLink(l) ? `<a class="btn-link ${seen ? 'viewed' : ''}" data-k="${esc(k)}" target="_blank" rel="noopener" href="${esc(replyLink(l))}" onclick="onReplyClick(event, this, '${esc(k)}')">${seen ? '<span class="eye-icon">&#128065;</span>' : ''}Open &amp; reply in the group</a>` : ''}
-    </div>`;
-  const c = $('btnCopy'); if (c) c.onclick = () => { navigator.clipboard.writeText(l.draft_reply).then(() => { c.textContent = 'Copied ✓'; }); };
-  $('drawer').classList.add('open');
-}
-$('btnClose').onclick = () => $('drawer').classList.remove('open');
-
-
-/* DAILY WATCH */
-let watch = [];
-async function loadWatch() {
-  try { const d = await post('/rr-watch', { action: 'list' }); watch = d.groups || []; } catch (e) { $('watchList').innerHTML = '<span class="muted small">' + esc(e.message) + '</span>'; return; }
-  renderWatch();
-}
-function renderWatch() {
-  const act = watch.filter(g => g.status === 'active'), del = watch.filter(g => g.status !== 'active');
-  if ($('navCountWatch')) $('navCountWatch').textContent = act.length;
-  let h = act.length ? '<div style="overflow:auto"><table><thead><tr><th>Watched group</th><th></th></tr></thead><tbody>' + act.map(g => '<tr><td><a href="' + esc(g.url) + '" target="_blank" rel="noopener">' + esc(g.name || g.url) + '</a></td><td style="text-align:right"><button class="ghost" data-del="' + esc(g.url) + '">Delete</button></td></tr>').join('') + '</tbody></table></div>' : '<div class="empty">No groups are being watched yet. Scrape a group and it will appear here.</div>';
-  if (del.length) h += '<details style="margin-top:10px"><summary class="muted small" style="cursor:pointer">' + del.length + ' deleted group' + (del.length === 1 ? '' : 's') + ' (not scraped daily)</summary>' + del.map(g => '<div style="display:flex;gap:10px;align-items:center;padding:4px 0"><span class="muted small" style="flex:1">' + esc(g.name || g.url) + '</span><button class="ghost" data-res="' + esc(g.url) + '">Restore</button></div>').join('') + '</details>';
-  $('watchList').innerHTML = h;
-  $('watchList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => changeWatch('delete', b.dataset.del, b));
-  $('watchList').querySelectorAll('[data-res]').forEach(b => b.onclick = () => changeWatch('restore', b.dataset.res, b));
-  $('watchMsg').textContent = act.length + ' group' + (act.length === 1 ? '' : 's') + ' watched daily.';
-}
-async function changeWatch(action, url, btn) {
-  btn.disabled = true;
-  try { const d = await post('/rr-watch', { action, url }); watch = d.groups || []; renderWatch(); }
-  catch (e) { $('watchMsg').textContent = 'Error: ' + e.message; btn.disabled = false; }
-}
-async function addToWatch(picked) {
-  try { const d = await post('/rr-watch', { action: 'add', groups: picked.map(g => ({ url: g.url, name: g.name })) }); watch = d.groups || []; renderWatch(); } catch (e) { /* the scrape itself already started */ }
-}
-$('btnReloadWatch').onclick = loadWatch;
-$('btnRunDaily').onclick = async () => {
-  const n = watch.filter(g => g.status === 'active').length;
-  if (!n) return ($('watchMsg').textContent = 'No groups are watched yet.');
-  if (!confirm('Run the daily scrape now for ' + n + ' group' + (n === 1 ? '' : 's') + '? It reads the last 30 hours of posts and costs about $0.005 per new post.')) return;
-  $('btnRunDaily').disabled = true; $('watchMsg').textContent = 'Starting...';
-  try {
-    const d = await post('/rr-daily-run', { windowHours: 30 });
-    $('watchMsg').textContent = 'Started for ' + (d.groups != null ? d.groups : n) + ' group(s), last ' + (d.window_hours || 30) + ' hours. New job seekers appear in the results below in a few minutes (press Refresh).';
-    $('stats').style.display = 'grid'; $('resCard').style.display = 'block';
-  } catch (e) { $('watchMsg').textContent = 'Error: ' + e.message; }
-  $('btnRunDaily').disabled = false;
-};
-
-/* START FRESH */
-$('btnStartFresh').onclick = async () => {
-  const t = prompt('This permanently deletes ALL saved job seekers, the daily watch list and the memory of what was already scraped. Every group will count as never scraped.\n\nType START FRESH to confirm.');
-  if (t !== 'START FRESH') return;
-  $('btnStartFresh').disabled = true; $('watchMsg').textContent = 'Deleting...';
-  try {
-    await post('/rr-reset', { confirm: 'START FRESH' });
-    clearInterval(poll); poll = null; runId = null; runStats = null; runLeadCount = 0; runSeen = 0;
-    groups = []; selected = new Set(); leads = []; watch = [];
-    pickedRoles = new Set(); extras = []; dropped = new Set();
-    viewedLeads.clear();
-    try { localStorage.removeItem('rr_picks'); localStorage.removeItem('rr_viewed_leads'); } catch (e) {}
-    renderPicker(); renderGroups(); renderWatch(); renderLeads();
-    $('resCard').style.display = 'none'; $('stats').style.display = 'none';
-    status('st1', ''); status('st2', 'Tick at least one group in Step 1 to enable Start scraping.');
-    $('watchMsg').textContent = 'Everything deleted. You are starting fresh.';
-  } catch (e) { $('watchMsg').textContent = 'Error: ' + e.message; }
-  $('btnStartFresh').disabled = false;
-};
-
-(async () => {
-  try {
-    const hasKey = !!$('key').value.trim();
-    if (hasKey) loadWatch();
-    await loadLeads();
-    if (leads.length) {
-      $('stats').style.display = 'grid';
-      $('resCard').style.display = 'block';
-    }
-  } catch (e) {
-    console.warn(e);
+function onLeadReplyClick(e, idx) {
+  const lead = leads[idx];
+  if (lead) {
+    recordFreelancerReply(lead);
   }
-})();
+}
 
+/* GROUP FINDER */
+$('btnFind').onclick = async () => {
+  const kw = $('kw').value.trim();
+  if (!kw) return;
+  $('btnFind').disabled = true;
+  status('st1', 'Finding groups...', true);
+  try {
+    const res = await post('/rr-group-finder', {
+      keywords: kw.split(',').map(s => s.trim()).filter(Boolean),
+      maxGroups: +$('maxGroups').value || 30,
+      minMembers: +$('minMembers').value || 0
+    });
+    if (!res.search_id) throw new Error('Search failed to start');
+    // Poll for search results
+    let finished = false;
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const pollRes = await post('/rr-group-result', { search_id: res.search_id });
+      if (!pollRes.pending) {
+        groups = pollRes.groups || [];
+        selected = new Set(groups.map((_, idx) => idx));
+        renderGroups();
+        status('st1', 'Found ' + groups.length + ' groups!');
+        finished = true;
+        break;
+      }
+    }
+    if (!finished) status('st1', 'Search taking longer than expected. Please retry.');
+  } catch (err) {
+    status('st1', 'Error: ' + err.message);
+  } finally {
+    $('btnFind').disabled = false;
+  }
+};
+
+$('btnAddLinks').onclick = () => {
+  const lines = $('manualLinks').value.split('\n').map(l => l.trim()).filter(Boolean);
+  lines.forEach(url => {
+    if (url.includes('facebook.com/groups')) {
+      groups.push({ url, name: url.split('groups/')[1]?.replace(/\//g,'') || 'Facebook Group', membersNumber: 0 });
+      selected.add(groups.length - 1);
+    }
+  });
+  $('manualLinks').value = '';
+  renderGroups();
+};
+
+function renderGroups() {
+  $('groupsBox').style.display = groups.length ? 'block' : 'none';
+  const tb = $('groupsTbl').querySelector('tbody');
+  tb.innerHTML = groups.map((g, i) => `
+    <tr>
+      <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} onchange="onGroupToggle(${i}, this.checked)"></td>
+      <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name || g.url)}</a></td>
+      <td class="num">${g.membersNumber ? g.membersNumber.toLocaleString() : '-'}</td>
+      <td>${esc(g.visibility || 'Public')}</td>
+      <td class="num">${g.posts7d != null ? g.posts7d : '-'}</td>
+      <td class="num">${g.comments != null ? g.comments : '-'}</td>
+      <td><span class="badge ${g.alive ? 'seeker' : 'other'}">${g.alive ? 'Active' : 'Ready'}</span></td>
+    </tr>
+  `).join('');
+  $('selCount').textContent = selected.size + ' selected';
+  $('btnScrape').disabled = selected.size === 0;
+}
+function onGroupToggle(i, checked) {
+  checked ? selected.add(i) : selected.delete(i);
+  $('selCount').textContent = selected.size + ' selected';
+  $('btnScrape').disabled = selected.size === 0;
+}
+$('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
+$('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
+
+/* SCRAPER */
+$('btnScrape').onclick = async () => {
+  const picked = [...selected].map(i => ({ url: groups[i].url, name: groups[i].name }));
+  if (!picked.length) return;
+  $('btnScrape').disabled = true;
+  $('runTracker').classList.add('active');
+  $('stagePostsDetail').textContent = 'Scraping ' + picked.length + ' group(s)...';
+  status('st2', 'Starting scrape for ' + picked.length + ' group(s)...', true);
+  try {
+    const res = await post('/rr-scrape', {
+      groupUrls: picked,
+      maxPosts: +$('maxPosts').value || 20,
+      newerThan: $('hours').value + ' ' + $('unit').value,
+      viewOption: $('viewOption').value,
+      commentsPerPost: +$('cpp').value || 30,
+      includeReplies: $('replies').value === 'true'
+    });
+    runId = res.run_id;
+    startScraperPoll();
+  } catch (e) {
+    status('st2', 'Error: ' + e.message);
+    $('btnScrape').disabled = false;
+  }
+};
+
+function startScraperPoll() {
+  clearInterval(poll);
+  let sec = 0;
+  poll = setInterval(async () => {
+    sec += 5;
+    $('runTimer').textContent = sec + 's elapsed';
+    try {
+      const res = await post('/rr-leads', { run_id: runId });
+      if (res.leads && res.leads.length > 0) {
+        $('stageAI').classList.add('done');
+        $('stageAIDetail').textContent = res.leads.length + ' leads found!';
+        $('runLiveLeadsMsg').textContent = 'Found ' + res.leads.length + ' RoleRover leads!';
+        $('runActionRow').style.display = 'flex';
+        loadLeads();
+      }
+      if (sec > 180) {
+        clearInterval(poll);
+        $('btnScrape').disabled = false;
+      }
+    } catch (e) {}
+  }, 5000);
+}
+
+/* WATCHLIST */
+async function loadWatchlist() {
+  try {
+    const res = await post('/rr-watch', { action: 'list' });
+    watchlist = res.groups || [];
+    renderWatchlist();
+  } catch (e) {
+    console.warn('Error loading watchlist:', e);
+  }
+}
+
+function renderWatchlist() {
+  if ($('navWatchCount')) {
+    $('navWatchCount').textContent = watchlist.length;
+    $('navWatchCount').style.display = watchlist.length ? 'inline-block' : 'none';
+  }
+  $('watchlistEmpty').style.display = watchlist.length ? 'none' : 'block';
+  $('watchlistBox').innerHTML = watchlist.map((g, i) => `
+    <div class="wl-row">
+      <div class="wl-main">
+        <a href="${esc(g.url)}" target="_blank" rel="noopener"><b>${esc(g.name || g.url)}</b></a>
+        <div class="small muted">Watched group</div>
+      </div>
+      <div class="wl-actions">
+        <label class="wl-switch-wrap">
+          <span class="wl-switch">
+            <input type="checkbox" ${g.status === 'active' ? 'checked' : ''} onchange="toggleWatch('${esc(g.url)}', this.checked)">
+            <span class="wl-switch-slider"></span>
+          </span>
+          24h auto-watch
+        </label>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleWatch(url, active) {
+  try {
+    await post('/rr-watch', { action: active ? 'restore' : 'delete', url });
+    loadWatchlist();
+  } catch (e) {
+    alert('Error updating watchlist: ' + e.message);
+  }
+}
+
+/* CSV EXPORT */
 $('btnCsv').onclick = () => {
-  const rows = filtered(); if (!rows.length) return;
-  const cols = ['full_name', 'hot', 'source', 'group_name', 'profile_url', 'comment_url', 'post_url', 'item_text', 'parent_post_text', 'reasoning', 'draft_reply', 'created_at'];
+  if (!leads.length) return;
+  const cols = ['full_name', 'hot', 'source', 'group_name', 'post_url', 'comment_url', 'item_text', 'reasoning', 'draft_reply', 'createdAt'];
   const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const csv = [cols.join(','), ...rows.map(r => cols.map(c => q(r[c])).join(','))].join('\n');
+  const csv = [cols.join(','), ...leads.map(r => cols.map(c => q(r[c])).join(','))].join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-  a.download = 'job-seekers-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  a.download = 'rolerover-leads-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
 };
+
+/* INITIAL SESSION CHECK */
+(async () => {
+  if (sb) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      applySession(session.user);
+    } else {
+      applySession(null);
+    }
+  }
+})();
 </script>
 </body>
 </html>
