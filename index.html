@@ -790,11 +790,30 @@ function renderLeads() {
 }
 
 function generateFallbackUgcReply(lead) {
-  const text = (lead.item_text || '').toLowerCase();
-  if (text.includes('ats') || text.includes('resume') || text.includes('ghost')) {
-    return "Totally feel this—getting ghosted by ATS filters is exhausting. I had the same issue until I tried RoleRover, which scans direct company career boards and auto-tailors applications so you don't get stuck in the black hole. Might save you hours!";
+  const text = ((lead.item_text || '') + ' ' + (lead.reasoning || '')).toLowerCase();
+
+  // 1. Repetitive Forms / Workday Burnout / Manual Fatigue
+  if (text.includes('burnout') || text.includes('drained') || text.includes('exhaust') || text.includes('fatigue') || text.includes('burned out') || text.includes('form') || text.includes('workday') || text.includes('cover letter')) {
+    return "Filling out the exact same work history on repetitive application forms for the 50th time is honestly soul-crushing. @myrolerover lets you swipe to apply in seconds with custom tailored resumes and value-driven cover letters that skip the generic fluff entirely. It monitors direct company career pages 24/7 so you don't waste hours on manual forms. Pretty sure they have a free trial going right now if you want to test it out.";
   }
-  return "I completely understand how overwhelming the job search can be right now. Definitely look into RoleRover—it automatically watches company career sites 24/7 and helps submit tailored applications for you so you can land interviews without spending all day applying.";
+
+  // 2. Applied everywhere / Zero interviews / ATS keyword filters
+  if (text.includes('zero interview') || text.includes('no interview') || text.includes('rejection') || text.includes('applied everywhere') || (text.includes('applied') && (text.includes('no') || text.includes('0') || text.includes('never')))) {
+    return "That usually means the problem isn’t your qualifications—it’s keyword matching. If your resume isn’t aligned with the exact terms ATS scanners look for, automated filters drop you before a human sees it. @myrolerover shows you missing requirements upfront before you submit, and auto-tailors your resume keywords so you pass the screen. Pretty sure there's a free trial to play around with if you want to test it out.";
+  }
+
+  // 3. Recruiters never reply / Ghosted after interviews
+  if (text.includes('ghost') || text.includes('recruiter') || text.includes('never reply') || text.includes('follow up') || text.includes('silence') || text.includes('hear back')) {
+    return "Recruiter silence is so frustrating, especially after investing time into applications. The best move is getting your resume onto company career pages immediately when roles go live rather than waiting on crowded job boards. @myrolerover catches openings on thousands of direct company career pages 24/7 and lets you swipe to apply with tailored resumes. Think they have a free trial running right now if you want to check it out.";
+  }
+
+  // 4. Missing requirements / Imposter syndrome / Career transition
+  if (text.includes('requirement') || text.includes('beginner') || text.includes('transition') || text.includes('where to start') || text.includes('advice') || text.includes('tips') || text.includes('open to')) {
+    return "Most job descriptions are wish lists rather than strict must-haves. @myrolerover breaks down the job requirements upfront, lets you add skills to your resume in one click if you can learn or defend them, or writes a value-driven cover letter pitching why your actual strengths make you a great fit anyway. Pretty sure they have a free trial going right now if you want to test it out.";
+  }
+
+  // 5. Default / General job seeker ("where do you get jobs / anyone hiring?")
+  return "Honestly, scrolling through public job boards will drive you crazy because every post gets hundreds of applicants within minutes. The real move is getting your application in directly on company career pages the second roles go live. @myrolerover monitors thousands of company career sites 24/7 so you can catch openings before the crowd and just swipe to apply. Pretty sure they have a free trial running right now if you want to test it out.";
 }
 
 function toggleFlip(i) {
