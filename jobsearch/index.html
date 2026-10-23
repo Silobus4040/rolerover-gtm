@@ -70,6 +70,18 @@
   .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
   .filter-bar input{max-width:280px}
   .page{display:none} .page.active{display:block}
+  
+  /* Matrix Pills and Preview */
+  .pill-box{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+  .pill{display:inline-flex;align-items:center;background:#0d1320;border:1px solid var(--line);padding:3px 10px;border-radius:99px;font-size:12px;color:var(--text)}
+  .pill-role{border-color:#a78bfa55;color:#c4b5fd;background:#a78bfa14}
+  .pill-query{border-color:#00ffcc55;color:#5eead4;background:#00ffcc12}
+  .pill-tag{font-size:10px;opacity:.7;margin-right:4px;text-transform:uppercase}
+  table.g-tbl{width:100%;border-collapse:collapse;margin-top:14px}
+  table.g-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);text-align:left;padding:9px;border-bottom:1px solid var(--line)}
+  table.g-tbl td{padding:10px 9px;border-bottom:1px solid #1a2236;vertical-align:middle}
+  table.g-tbl tr:hover td{background:#ffffff06}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -88,6 +100,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
         <span>Live Job Vacancies</span>
         <span class="sidebar-badge" id="countLive">0</span>
+      </button>
+      <button type="button" class="sidebar-nav-item" data-page="finder">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>Discover Groups by Role</span>
       </button>
       <button type="button" class="sidebar-nav-item" data-page="scraper">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -185,28 +201,106 @@
         <div id="emptyFeed" class="empty">No job vacancies found yet. Click <b>Run Group Scrape</b> to discover open roles.</div>
       </section>
 
-      <!-- PAGE 2: SCRAPER -->
+      <!-- PAGE: GROUP FINDER MATRIX -->
+      <section class="page" id="page-finder">
+        <div class="card">
+          <div class="step">Targeted Facebook Group Discovery &middot; User Country &times; Role Matrix</div>
+          <p style="color:var(--mute);font-size:13px;margin:0 0 16px">
+            Select a target country where your users are based, and choose their role. The system pulls that role's <b>exact database aliases</b> (e.g. <i>Customer Care Rep</i>, <i>Support Agent</i>) plus native language pairings (e.g. French translations for Cameroon) to locate relevant hiring communities.
+          </p>
+
+          <div class="row">
+            <div>
+              <label for="matrixCountry">Target Country (Where RoleRover Users Live)</label>
+              <select id="matrixCountry">
+                <optgroup label="Primary User Bases">
+                  <option value="Nigeria" selected>Nigeria 🇳🇬 (Executive Assistant, Customer Support, Frontend, VA, Fullstack)</option>
+                  <option value="Kenya">Kenya 🇰🇪 (Executive Assistant, Virtual Assistant, Data Analyst, No-Code)</option>
+                  <option value="Cameroon">Cameroon 🇨🇲 (Executive Assistant, Admin Assistant, UX, Comms) - Bilingual EN/FR</option>
+                  <option value="Ghana">Ghana 🇬🇭 (Product Manager)</option>
+                  <option value="Niger">Niger 🇳🇪 (Frontend Engineer)</option>
+                  <option value="South Africa">South Africa 🇿🇦 (General African Tech &amp; Remote)</option>
+                  <option value="United States">United States 🇺🇸 (Customer Support Representative)</option>
+                  <option value="Canada">Canada 🇨🇦 (Data Analyst)</option>
+                  <option value="Worldwide">Worldwide / Remote 🌐 (Global remote groups)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div>
+              <label for="matrixRole">Target Role (Exact Database Taxonomy)</label>
+              <select id="matrixRole"></select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <label>Exact Role Aliases Loaded From System Database (<span id="aliasCount">0</span> aliases):</label>
+            <div id="aliasPills" class="pill-box"></div>
+          </div>
+
+          <div style="margin-top:10px">
+            <label>Generated Facebook Search Phrases (Live Preview):</label>
+            <div id="queryPills" class="pill-box"></div>
+            <textarea id="customQueries" rows="3" placeholder="Generated search phrases appear here, you can edit or add custom keywords..."></textarea>
+          </div>
+
+          <div class="row" style="margin-top:14px">
+            <div>
+              <label for="maxFinderGroups">Max groups to find</label>
+              <input id="maxFinderGroups" type="number" min="5" max="100" value="30">
+            </div>
+            <div>
+              <label for="minMembers">Minimum members</label>
+              <input id="minMembers" type="number" min="0" value="500">
+            </div>
+            <div style="flex:0">
+              <button id="btnRunFinder">Find Facebook Groups</button>
+            </div>
+          </div>
+          <div class="status" id="finderStatus"></div>
+        </div>
+
+        <!-- FINDER RESULTS -->
+        <div id="finderResultsBox" class="card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+            <div>
+              <b style="font-size:16px;color:#fff" id="finderResultTitle">Discovered Groups</b>
+              <span class="muted small" style="margin-left:8px" id="finderResultCount"></span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="ghost" id="btnSelectAllFound">Select All</button>
+              <button class="ghost" id="btnClearFound">Clear</button>
+              <button id="btnAddSelectedToScraper">+ Add Selected to Monitored Groups</button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <table class="g-tbl" id="tblFoundGroups">
+              <thead>
+                <tr>
+                  <th style="width:36px"><input type="checkbox" id="chkAllFound" checked></th>
+                  <th>Facebook Group</th>
+                  <th class="num">Members</th>
+                  <th>Privacy</th>
+                  <th>Group Link</th>
+                </tr>
+              </thead>
+              <tbody id="tblFoundGroupsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 3: SCRAPER -->
       <section class="page" id="page-scraper">
         <div class="card">
-          <div class="step">Step 1 &middot; Configure Vacancy Scraper</div>
+          <div class="step">Run Vacancy Scraper &middot; Filter for Direct Email &amp; Google Forms</div>
           <p style="color:var(--mute);font-size:13px;margin:0 0 16px">Scrapes Facebook groups for hiring announcements. Automatically drops 100% of posts that lack an <b>email</b> or <b>Google Form/Doc</b>, then maps the post to standard RoleRover roles.</p>
           
           <div class="row">
             <div>
-              <label>Target Facebook Groups (13 GTM Groups Pre-loaded)</label>
-              <textarea id="targetGroupUrls" rows="7" placeholder="Paste group URLs here...">https://www.facebook.com/groups/FindRemoteJobs/
-https://www.facebook.com/groups/4135438206495664/
-https://www.facebook.com/groups/301312318828550/
-https://www.facebook.com/groups/1369874337227607/
-https://www.facebook.com/groups/1175978272559466/
-https://www.facebook.com/groups/146067042755662/
-https://www.facebook.com/groups/1695153690875529/
-https://www.facebook.com/groups/229614498540492/
-https://www.facebook.com/groups/292799300883685/
-https://www.facebook.com/groups/859091059134962/
-https://www.facebook.com/groups/913342749801435/
-https://www.facebook.com/groups/internshipsph/
-https://www.facebook.com/groups/2860123447535416/</textarea>
+              <label>Target Facebook Groups to Scrape</label>
+              <textarea id="targetGroupUrls" rows="7" placeholder="Paste group URLs here..."></textarea>
             </div>
           </div>
           
@@ -227,26 +321,15 @@ https://www.facebook.com/groups/2860123447535416/</textarea>
         </div>
       </section>
 
-      <!-- PAGE 3: GROUPS -->
+      <!-- PAGE 4: MONITORED GROUPS -->
       <section class="page" id="page-groups">
         <div class="card">
-          <div class="step">Monitored Facebook Groups (13 Ready)</div>
-          <p style="color:var(--mute);font-size:13px">These groups are transferred directly from your GTM database so you don't spend money discovering groups again.</p>
-          <textarea id="watchedGroups" rows="8">https://www.facebook.com/groups/FindRemoteJobs/
-https://www.facebook.com/groups/4135438206495664/
-https://www.facebook.com/groups/301312318828550/
-https://www.facebook.com/groups/1369874337227607/
-https://www.facebook.com/groups/1175978272559466/
-https://www.facebook.com/groups/146067042755662/
-https://www.facebook.com/groups/1695153690875529/
-https://www.facebook.com/groups/229614498540492/
-https://www.facebook.com/groups/292799300883685/
-https://www.facebook.com/groups/859091059134962/
-https://www.facebook.com/groups/913342749801435/
-https://www.facebook.com/groups/internshipsph/
-https://www.facebook.com/groups/2860123447535416/</textarea>
-          <div style="margin-top:12px">
+          <div class="step">Monitored Facebook Groups</div>
+          <p style="color:var(--mute);font-size:13px">These groups are stored in your session and transferred directly to the scraper. New groups discovered in the <b>Discover Groups by Role</b> matrix are appended here automatically.</p>
+          <textarea id="watchedGroups" rows="9"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px">
             <button class="ghost" id="btnSaveWatch">Save Watched Groups</button>
+            <button class="ghost" id="btnSendToScraper">Send All to Scraper &rarr;</button>
           </div>
         </div>
       </section>
@@ -261,7 +344,179 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&a
 const ACCESS_KEY = '9272b5b3ddd2fdc4806e9c05';
 const API_BASE = 'https://n8n.leadscompass.ai/webhook';
 
+// Pre-loaded groups transferred from existing GTM database
+const DEFAULT_GROUPS = [
+  'https://www.facebook.com/groups/FindRemoteJobs/',
+  'https://www.facebook.com/groups/4135438206495664/',
+  'https://www.facebook.com/groups/301312318828550/',
+  'https://www.facebook.com/groups/1369874337227607/',
+  'https://www.facebook.com/groups/1175978272559466/',
+  'https://www.facebook.com/groups/146067042755662/',
+  'https://www.facebook.com/groups/1695153690875529/',
+  'https://www.facebook.com/groups/229614498540492/',
+  'https://www.facebook.com/groups/292799300883685/',
+  'https://www.facebook.com/groups/859091059134962/',
+  'https://www.facebook.com/groups/913342749801435/',
+  'https://www.facebook.com/groups/internshipsph/',
+  'https://www.facebook.com/groups/2860123447535416/'
+];
+
+// Exact RoleRover Taxonomy & Aliases from Supabase std_roles & std_role_aliases
+const ROLE_TAXONOMY = [
+  {
+    family: "Administrative & Executive Support",
+    roles: [
+      { name: "Executive Assistant", aliases: ["Personal Assistant", "Executive Assistant to CEO", "Exec Assistant", "EA", "Executive Assistant"], userDemand: 3 },
+      { name: "Virtual Assistant", aliases: ["General Virtual Assistant", "Remote Virtual Assistant", "VA", "Virtual Assistant"], userDemand: 2 },
+      { name: "Administrative Assistant", aliases: ["Admin Officer", "Admin Support Specialist", "Administrative Coordinator", "Admin Assistant", "Administrative Assistant"], userDemand: 1 },
+      { name: "Travel / Itinerary Coordinator", aliases: ["Itinerary Planner", "Short-Term Rental Coordinator", "Airbnb Coordinator", "Travel Coordinator", "Travel / Itinerary Coordinator"], userDemand: 1 },
+      { name: "Office Manager", aliases: ["Front Office Manager", "Facilities and Office Manager", "Office Administrator", "Office Manager"], userDemand: 0 },
+      { name: "Chief of Staff", aliases: ["Chief of Staff"], userDemand: 0 },
+      { name: "Scheduling Coordinator", aliases: ["Appointment Coordinator", "Calendar Coordinator", "Scheduling Coordinator"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Customer Success & Support",
+    roles: [
+      { name: "Customer Support Representative", aliases: ["Customer Care Representative", "Support Agent", "Customer Service Representative", "Customer Support Representative"], userDemand: 3 },
+      { name: "Customer Success Manager", aliases: ["Client Success Manager", "CSM", "Customer Success Manager"], userDemand: 0 },
+      { name: "Technical Support Engineer", aliases: ["Support Engineer", "Application Support Engineer", "Tier 2 Support Engineer", "Technical Support Engineer"], userDemand: 0 },
+      { name: "IT Help Desk Technician", aliases: ["Desktop Support Technician", "IT Support Technician", "Help Desk Technician", "IT Help Desk Technician"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Frontend & Mobile Engineering",
+    roles: [
+      { name: "Frontend Engineer", aliases: ["Front End Developer", "Frontend Developer", "Front-End Engineer", "Frontend Engineer"], userDemand: 3 },
+      { name: "Mobile Engineer (cross-platform)", aliases: ["Flutter Developer", "React Native Developer", "Mobile Developer", "Mobile Engineer (cross-platform)"], userDemand: 0 },
+      { name: "Android Developer", aliases: ["Android Engineer", "Android Developer"], userDemand: 0 },
+      { name: "iOS Developer", aliases: ["iOS Engineer", "iOS Developer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Full Stack Engineering",
+    roles: [
+      { name: "Full Stack Developer", aliases: ["Full Stack Engineer", "Full-Stack Developer"], userDemand: 2 },
+      { name: "Web Applications Engineer", aliases: ["Web App Engineer", "Web Application Developer", "Web Applications Engineer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Product Design",
+    roles: [
+      { name: "Product Designer", aliases: ["UI/UX Designer", "UX/UI Designer", "Product Designer"], userDemand: 2 },
+      { name: "UX Designer", aliases: ["User Experience Designer", "UX Designer"], userDemand: 1 },
+      { name: "Visual / Web Designer", aliases: ["Graphic Designer", "Web Designer", "Visual Designer", "Visual / Web Designer"], userDemand: 0 },
+      { name: "UX Researcher", aliases: ["User Researcher", "UX Researcher"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Data & Analytics",
+    roles: [
+      { name: "Data Analyst", aliases: ["Data Analytics Specialist", "Data Analyst"], userDemand: 2 },
+      { name: "Data Scientist", aliases: ["Applied Data Scientist", "Data Scientist"], userDemand: 0 },
+      { name: "Business Analyst", aliases: ["Business Systems Analyst", "BA", "Business Analyst"], userDemand: 0 },
+      { name: "Business Intelligence Analyst", aliases: ["BI Developer", "BI Analyst", "Business Intelligence Analyst"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Software Engineering (general)",
+    roles: [
+      { name: "Software Engineer", aliases: ["SWE", "Software Developer", "Software Engineer"], userDemand: 2 },
+      { name: "Systems Engineer", aliases: ["Systems Software Engineer", "Systems Engineer"], userDemand: 0 },
+      { name: "Game Developer", aliases: ["Video Game Developer", "Game Programmer", "Game Developer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Backend Engineering",
+    roles: [
+      { name: "Backend Engineer", aliases: ["Backend Software Engineer", "Back-End Engineer", "Backend Developer", "Backend Engineer"], userDemand: 1 },
+      { name: "API Developer", aliases: ["Backend API Developer", "API Engineer", "API Developer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Platform & DevOps Engineering",
+    roles: [
+      { name: "DevOps Engineer", aliases: ["Dev Ops Engineer", "DevOps Engineer"], userDemand: 1 },
+      { name: "Cloud Engineer", aliases: ["AWS Engineer", "Cloud Infrastructure Engineer", "Cloud Engineer"], userDemand: 0 },
+      { name: "Site Reliability Engineer", aliases: ["SRE", "Site Reliability Engineer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "QA & Testing",
+    roles: [
+      { name: "Manual Tester", aliases: ["QA Tester", "Manual QA Tester", "Manual Tester"], userDemand: 1 },
+      { name: "QA Analyst", aliases: ["Quality Assurance Analyst", "QA Analyst"], userDemand: 0 },
+      { name: "QA Engineer", aliases: ["QA Software Engineer", "Quality Assurance Engineer", "QA Engineer"], userDemand: 0 },
+      { name: "SDET / Automation Test Engineer", aliases: ["QA Automation Engineer", "Automation Test Engineer", "SDET", "SDET / Automation Test Engineer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Workflow Automation & Integrations",
+    roles: [
+      { name: "No-Code Developer", aliases: ["No-Code/Low-Code Developer", "Low-Code Developer", "No Code Developer"], userDemand: 1 },
+      { name: "Workflow Automation Engineer", aliases: ["AI Automation", "Workflow Automation Specialist", "Workflow Automation Engineer", "Zapier Expert", "n8n Automation Engineer"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Product Management",
+    roles: [
+      { name: "Product Manager", aliases: ["PM", "Product Manager"], userDemand: 1 },
+      { name: "Product Owner", aliases: ["PO", "Product Owner"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Content & Technical Writing",
+    roles: [
+      { name: "Content Writer", aliases: ["Blog Writer", "Web Content Writer", "SEO Content Writer", "Content Writer"], userDemand: 1 },
+      { name: "Journalist", aliases: ["News Writer", "Reporter", "Journalist"], userDemand: 1 },
+      { name: "Technical Writer", aliases: ["Knowledge Base Writer", "Technical Documentation Writer", "Documentation Specialist", "Technical Writer"], userDemand: 1 },
+      { name: "Copywriter", aliases: ["Marketing Copywriter", "Advertising Copywriter", "Copywriter"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Communications & Public Affairs",
+    roles: [
+      { name: "Internal Communications Specialist", aliases: ["Employee Communications Specialist", "Internal Comms Specialist", "Internal Communications Specialist"], userDemand: 1 },
+      { name: "PR Specialist / Public Relations Manager", aliases: ["PR Manager", "Public Relations Specialist", "PR Specialist"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Marketing & Growth",
+    roles: [
+      { name: "Content Marketing Manager", aliases: ["Content Marketing Lead", "Content Marketing Manager"], userDemand: 1 },
+      { name: "Email / CRM Marketing Manager", aliases: ["Email Marketing Specialist", "CRM Marketing Specialist", "Email Marketing Manager"], userDemand: 1 },
+      { name: "Digital Marketing Manager", aliases: ["Digital Marketer", "Digital Marketing Specialist", "Digital Marketing Manager"], userDemand: 0 },
+      { name: "Growth Marketing Manager", aliases: ["Performance Marketing Manager", "Growth Marketer", "Growth Marketing Manager"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Operations & Supply Chain",
+    roles: [
+      { name: "Operations Manager", aliases: ["Business Operations Manager", "Ops Manager"], userDemand: 1 },
+      { name: "Operations Analyst", aliases: ["Business Operations Analyst", "Ops Analyst"], userDemand: 0 }
+    ]
+  },
+  {
+    family: "Cybersecurity & Security Operations",
+    roles: [
+      { name: "Penetration Tester", aliases: ["Offensive Security Engineer", "Ethical Hacker", "Pen Tester", "Penetration Tester"], userDemand: 1 },
+      { name: "Security Analyst / SOC Analyst", aliases: ["Cybersecurity Analyst", "SOC Analyst", "Security Analyst"], userDemand: 0 }
+    ]
+  }
+];
+
 let vacancies = [];
+let discoveredGroups = [];
+let watchedGroupList = [...DEFAULT_GROUPS];
+
+/* INITIALIZE STORAGE */
+if (localStorage.getItem('rr_watched_groups')) {
+  try {
+    watchedGroupList = JSON.parse(localStorage.getItem('rr_watched_groups'));
+  } catch(e){}
+}
+$('targetGroupUrls').value = watchedGroupList.join('\n');
+$('watchedGroups').value = watchedGroupList.join('\n');
 
 /* NAVIGATION */
 document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
@@ -270,10 +525,133 @@ document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     $('page-' + btn.dataset.page).classList.add('active');
-    const titles = { feed: 'Live Job Vacancies', scraper: 'Run Group Scrape', groups: 'Monitored Groups' };
+    const titles = {
+      feed: 'Live Job Vacancies',
+      finder: 'Discover Facebook Groups by Role & Country',
+      scraper: 'Run Group Scrape',
+      groups: 'Monitored Groups'
+    };
     $('pageHeading').textContent = titles[btn.dataset.page] || 'Job Vacancies';
   };
 });
+
+/* POPULATE ROLE DROPDOWN */
+function populateRoleDropdown() {
+  const sel = $('matrixRole');
+  sel.innerHTML = '';
+
+  // Sort high demand first
+  const highDemand = [];
+  ROLE_TAXONOMY.forEach(fam => {
+    fam.roles.forEach(r => {
+      if (r.userDemand >= 2) highDemand.push(r);
+    });
+  });
+
+  const optGroupHigh = document.createElement('optgroup');
+  optGroupHigh.label = '🔥 Highest RoleRover Demand';
+  highDemand.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = `${r.name} (${r.userDemand} users)`;
+    optGroupHigh.appendChild(opt);
+  });
+  sel.appendChild(optGroupHigh);
+
+  // All families
+  ROLE_TAXONOMY.forEach(fam => {
+    const optGroup = document.createElement('optgroup');
+    optGroup.label = fam.family;
+    fam.roles.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.name;
+      opt.textContent = r.userDemand > 0 ? `${r.name} (${r.userDemand} user${r.userDemand>1?'s':''})` : r.name;
+      optGroup.appendChild(opt);
+    });
+    sel.appendChild(optGroup);
+  });
+}
+
+function findRoleData(roleName) {
+  for (const fam of ROLE_TAXONOMY) {
+    for (const r of fam.roles) {
+      if (r.name === roleName) return r;
+    }
+  }
+  return null;
+}
+
+/* UPDATE SEARCH QUERY PREVIEW */
+function updateMatrixPreview() {
+  const country = $('matrixCountry').value;
+  const roleName = $('matrixRole').value;
+  const roleData = findRoleData(roleName);
+  if (!roleData) return;
+
+  const aliases = roleData.aliases || [roleName];
+  $('aliasCount').textContent = aliases.length;
+  $('aliasPills').innerHTML = aliases.map(a => `<span class="pill pill-role"><span class="pill-tag">Alias</span>${esc(a)}</span>`).join('');
+
+  // Build query list combining Country + Role Aliases
+  let queries = [];
+  const isCameroon = country.toLowerCase() === 'cameroon';
+  const isWorldwide = country.toLowerCase() === 'worldwide';
+
+  if (isCameroon) {
+    // English & French combinations for Cameroon
+    queries.push(`Remote Jobs Cameroon`);
+    queries.push(`Offres d'emploi Cameroun`);
+    queries.push(`Télétravail Cameroun`);
+    queries.push(`${roleName} Cameroon`);
+    
+    // Exact aliases
+    aliases.slice(0, 3).forEach(al => {
+      queries.push(`${al} Cameroon`);
+    });
+
+    // French mappings for top roles
+    if (roleName.includes('Executive') || roleName.includes('Virtual Assistant')) {
+      queries.push(`Assistante Virtuelle Cameroun`);
+      queries.push(`Assistante de Direction Cameroun`);
+      queries.push(`Secrétaire Cameroun`);
+    } else if (roleName.includes('Customer Support')) {
+      queries.push(`Service Client Cameroun`);
+      queries.push(`Chargé de Clientèle Cameroun`);
+    } else if (roleName.includes('Frontend') || roleName.includes('Developer') || roleName.includes('Software')) {
+      queries.push(`Développeur Informatique Cameroun`);
+      queries.push(`Développeur Web Cameroun`);
+    } else if (roleName.includes('Designer')) {
+      queries.push(`Graphiste Designer Cameroun`);
+      queries.push(`UI UX Designer Cameroun`);
+    } else if (roleName.includes('Content') || roleName.includes('Writer')) {
+      queries.push(`Rédacteur Web Cameroun`);
+    }
+  } else if (isWorldwide) {
+    queries.push(`Remote Jobs`);
+    queries.push(`Work From Home Jobs`);
+    queries.push(`${roleName} Remote`);
+    aliases.slice(0, 3).forEach(al => {
+      queries.push(`${al} Remote`);
+    });
+  } else {
+    // Standard country format (Nigeria, Kenya, Ghana, South Africa, etc.)
+    queries.push(`Remote Jobs ${country}`);
+    queries.push(`Jobs in ${country}`);
+    queries.push(`${roleName} ${country}`);
+    aliases.slice(0, 3).forEach(al => {
+      queries.push(`${al} ${country}`);
+    });
+  }
+
+  // De-duplicate
+  queries = [...new Set(queries)];
+
+  $('queryPills').innerHTML = queries.map(q => `<span class="pill pill-query">${esc(q)}</span>`).join('');
+  $('customQueries').value = queries.join(', ');
+}
+
+$('matrixCountry').onchange = updateMatrixPreview;
+$('matrixRole').onchange = updateMatrixPreview;
 
 /* API POST HELPER */
 async function post(path, body) {
@@ -287,6 +665,139 @@ async function post(path, body) {
   try { return JSON.parse(t); } catch (e) { return { raw: t }; }
 }
 
+/* FIND GROUPS ACTION */
+$('btnRunFinder').onclick = async () => {
+  const rawQ = $('customQueries').value.trim();
+  const kwList = rawQ.split(',').map(s => s.trim()).filter(Boolean);
+  if (!kwList.length) {
+    alert('Please enter at least one keyword.');
+    return;
+  }
+
+  $('btnRunFinder').disabled = true;
+  $('finderStatus').innerHTML = '<span class="spin"></span> <span>Searching Facebook Groups via Apify actor for queries...</span>';
+  $('finderResultsBox').style.display = 'none';
+
+  try {
+    const res = await post('/rr-group-finder', {
+      keywords: kwList,
+      maxGroups: +$('maxFinderGroups').value || 30,
+      minMembers: +$('minMembers').value || 0
+    });
+
+    if (!res.search_id) throw new Error('Search failed to dispatch. No search_id returned.');
+
+    $('finderStatus').innerHTML = `<span class="spin"></span> <span>Search ID: <code>${res.search_id}</code> &mdash; collecting groups...</span>`;
+
+    // Poll for search results
+    let done = false;
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const pollRes = await post('/rr-group-result', { search_id: res.search_id });
+      if (!pollRes.pending) {
+        discoveredGroups = pollRes.groups || [];
+        renderFoundGroups();
+        $('finderStatus').innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Found ${discoveredGroups.length} Facebook Groups matching your country &amp; role taxonomy!</span>`;
+        done = true;
+        break;
+      }
+    }
+    if (!done) {
+      $('finderStatus').innerHTML = '<span style="color:var(--amber)">Search is taking longer than expected. Please check back shortly.</span>';
+    }
+  } catch (err) {
+    $('finderStatus').innerHTML = `<span style="color:var(--red)">Error finding groups: ${esc(err.message)}</span>`;
+  } finally {
+    $('btnRunFinder').disabled = false;
+  }
+};
+
+function renderFoundGroups() {
+  if (!discoveredGroups.length) {
+    $('finderResultsBox').style.display = 'none';
+    return;
+  }
+
+  $('finderResultsBox').style.display = 'block';
+  $('finderResultTitle').textContent = `Discovered Groups (${discoveredGroups.length})`;
+  $('finderResultCount').textContent = `for ${$('matrixRole').value} in ${$('matrixCountry').value}`;
+
+  const tbody = $('tblFoundGroupsBody');
+  tbody.innerHTML = discoveredGroups.map((g, idx) => {
+    const members = g.membersNumber ? Number(g.membersNumber).toLocaleString() : 'N/A';
+    const privacy = g.isPrivate ? '<span class="badge" style="background:#ef444422;color:#f87171">Private</span>' : '<span class="badge" style="background:#00ffcc22;color:var(--teal)">Public</span>';
+    const url = g.url || `https://www.facebook.com/groups/${g.id}/`;
+    return `
+      <tr>
+        <td><input type="checkbox" class="chk-group" data-idx="${idx}" checked></td>
+        <td><b>${esc(g.name || 'Facebook Group')}</b></td>
+        <td class="num">${members}</td>
+        <td>${privacy}</td>
+        <td><a href="${esc(url)}" target="_blank" rel="noopener">Open Facebook &rarr;</a></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* CHECKBOX & SELECTION CONTROLS */
+$('chkAllFound').onchange = (e) => {
+  document.querySelectorAll('.chk-group').forEach(c => c.checked = e.target.checked);
+};
+$('btnSelectAllFound').onclick = () => {
+  document.querySelectorAll('.chk-group').forEach(c => c.checked = true);
+  $('chkAllFound').checked = true;
+};
+$('btnClearFound').onclick = () => {
+  document.querySelectorAll('.chk-group').forEach(c => c.checked = false);
+  $('chkAllFound').checked = false;
+};
+
+/* ADD SELECTED TO MONITORED GROUPS & SCRAPER */
+$('btnAddSelectedToScraper').onclick = () => {
+  const checked = Array.from(document.querySelectorAll('.chk-group:checked'));
+  if (!checked.length) {
+    alert('Please select at least one group to add.');
+    return;
+  }
+
+  const newUrls = checked.map(c => {
+    const g = discoveredGroups[c.dataset.idx];
+    return g.url || `https://www.facebook.com/groups/${g.id}/`;
+  }).filter(Boolean);
+
+  const existingSet = new Set(watchedGroupList.map(u => u.trim().replace(/\/+$/, '')));
+  let addedCount = 0;
+
+  newUrls.forEach(u => {
+    const clean = u.trim().replace(/\/+$/, '');
+    if (!existingSet.has(clean)) {
+      watchedGroupList.push(u);
+      existingSet.add(clean);
+      addedCount++;
+    }
+  });
+
+  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+  $('watchedGroups').value = watchedGroupList.join('\n');
+  $('targetGroupUrls').value = watchedGroupList.join('\n');
+
+  alert(`✓ Added ${addedCount} new Facebook groups to your Monitored Groups and Scraper! (Total groups: ${watchedGroupList.length})`);
+};
+
+/* MONITORED GROUPS ACTIONS */
+$('btnSaveWatch').onclick = () => {
+  watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+  $('targetGroupUrls').value = watchedGroupList.join('\n');
+  alert('Saved ' + watchedGroupList.length + ' monitored groups.');
+};
+
+$('btnSendToScraper').onclick = () => {
+  watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+  $('targetGroupUrls').value = watchedGroupList.join('\n');
+  document.querySelector('[data-page="scraper"]').click();
+};
+
 /* LOAD VACANCIES */
 async function loadVacancies() {
   $('btnRefresh').disabled = true;
@@ -296,7 +807,7 @@ async function loadVacancies() {
     vacancies = res.leads || res.vacancies || [];
     renderFeed();
   } catch (err) {
-    console.warn('Could not load vacancies from n8n webhook, falling back to direct load:', err);
+    console.warn('Could not load vacancies from n8n webhook, falling back:', err);
     renderFeed();
   } finally {
     $('btnRefresh').disabled = false;
@@ -331,7 +842,7 @@ function renderFeed() {
 
   $('emptyFeed').style.display = filtered.length ? 'none' : 'block';
 
-  $('vacanciesList').innerHTML = filtered.map((v, i) => {
+  $('vacanciesList').innerHTML = filtered.map(v => {
     const emails = v.contact_email ? [v.contact_email] : (v.emails_found || []);
     const docs = v.google_doc_urls || [];
     const isRemote = v.detected_workplace_type === 'Remote' || (v.post_text || '').toLowerCase().includes('remote');
@@ -398,14 +909,14 @@ $('btnStartScrape').onclick = async () => {
     return;
   }
   $('btnStartScrape').disabled = true;
-  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape (filtering for emails &amp; Google Forms)...</span>';
+  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape (filtering exclusively for emails &amp; Google Forms)...</span>';
   try {
     const res = await post('/rr-vacancy-scrape', {
       groupUrls: urls,
       maxPosts: +$('maxPosts').value || 25,
       newerThan: $('newerThan').value || '3 days'
     });
-    $('scrapeStatus').innerHTML = '✓ Scrape run started! Processing posts in background...';
+    $('scrapeStatus').innerHTML = '<span style="color:var(--lime);font-weight:700">✓ Scrape run started! Extracting hiring openings with emails and docs...</span>';
     setTimeout(loadVacancies, 15000);
   } catch (err) {
     $('scrapeStatus').innerHTML = '<span style="color:var(--red)">Error: ' + esc(err.message) + '</span>';
@@ -414,6 +925,9 @@ $('btnStartScrape').onclick = async () => {
   }
 };
 
+// Initial bootstrap
+populateRoleDropdown();
+updateMatrixPreview();
 loadVacancies();
 </script>
 </body>
