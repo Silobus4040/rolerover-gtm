@@ -107,14 +107,17 @@
       <button type="button" class="sidebar-nav-item" data-page="finder">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span>Discover Groups by Role</span>
+        <span class="sidebar-badge" id="countFinderGroups">27</span>
       </button>
       <button type="button" class="sidebar-nav-item" data-page="scraper">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         <span>Run Group Scrape</span>
+        <span class="sidebar-badge" id="countScraperGroups" style="background:var(--lime);color:#0b0f17">27</span>
       </button>
       <button type="button" class="sidebar-nav-item" data-page="groups">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span>Monitored Groups</span>
+        <span class="sidebar-badge" id="countMonitoredGroups">27</span>
       </button>
     </nav>
     <div class="sidebar-foot">
@@ -263,7 +266,7 @@
             <div style="display:flex;gap:8px">
               <button class="ghost" id="btnSelectAllFound">Select All</button>
               <button class="ghost" id="btnClearFound">Clear</button>
-              <button id="btnAddSelectedToScraper">+ Add Selected to Monitored Groups</button>
+              <button id="btnAddSelectedToScraper" style="background:var(--lime);color:#0b0f17;font-weight:700">+ Add Selected &amp; Go to Scraper &rarr;</button>
             </div>
           </div>
 
@@ -291,9 +294,12 @@
           <p style="color:var(--mute);font-size:13px;margin:0 0 16px">Scrapes Facebook groups for hiring announcements. Automatically drops 100% of posts that lack an <b>email</b> or <b>Google Form/Doc</b>, then maps the post to standard RoleRover roles.</p>
           
           <div class="row">
-            <div>
-              <label>Target Facebook Groups to Scrape</label>
-              <textarea id="targetGroupUrls" rows="7" placeholder="Paste group URLs here..."></textarea>
+            <div style="width:100%">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <label style="margin:0;font-weight:700">Target Facebook Groups to Scrape</label>
+                <span id="targetGroupCountBadge" style="background:#2563eb22;color:#60a5fa;border:1px solid #3b82f644;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px">27 groups loaded</span>
+              </div>
+              <textarea id="targetGroupUrls" rows="8" placeholder="Paste group URLs here (one per line)..."></textarea>
             </div>
           </div>
           
@@ -317,7 +323,10 @@
       <!-- PAGE 4: MONITORED GROUPS -->
       <section class="page" id="page-groups">
         <div class="card">
-          <div class="step">Monitored Facebook Groups</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="step" style="margin:0">Monitored Facebook Groups</div>
+            <span id="monitoredGroupCountBadge" style="background:#2563eb22;color:#60a5fa;border:1px solid #3b82f644;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px">27 groups loaded</span>
+          </div>
           <p style="color:var(--mute);font-size:13px">These groups are stored in your session and transferred directly to the scraper. New groups discovered in the <b>Discover Groups by Role</b> matrix are appended here automatically.</p>
           <textarea id="watchedGroups" rows="9"></textarea>
           <div style="margin-top:12px;display:flex;gap:10px">
@@ -339,19 +348,33 @@ const API_BASE = 'https://n8n.leadscompass.ai/webhook';
 
 // Pre-loaded groups transferred from existing GTM database
 const DEFAULT_GROUPS = [
-  'https://www.facebook.com/groups/FindRemoteJobs/',
-  'https://www.facebook.com/groups/4135438206495664/',
-  'https://www.facebook.com/groups/301312318828550/',
-  'https://www.facebook.com/groups/1369874337227607/',
-  'https://www.facebook.com/groups/1175978272559466/',
-  'https://www.facebook.com/groups/146067042755662/',
-  'https://www.facebook.com/groups/1695153690875529/',
-  'https://www.facebook.com/groups/229614498540492/',
-  'https://www.facebook.com/groups/292799300883685/',
-  'https://www.facebook.com/groups/859091059134962/',
-  'https://www.facebook.com/groups/913342749801435/',
-  'https://www.facebook.com/groups/internshipsph/',
-  'https://www.facebook.com/groups/2860123447535416/'
+  'https://www.facebook.com/groups/233851282802584/',
+  'https://www.facebook.com/groups/JobVacanciesNG/',
+  'https://www.facebook.com/groups/925751931740150/',
+  'https://www.facebook.com/groups/452927972004014/',
+  'https://www.facebook.com/groups/364753057285134/',
+  'https://www.facebook.com/groups/LatestNigeriaJobVacancies/',
+  'https://www.facebook.com/groups/127651097250065/',
+  'https://www.facebook.com/groups/careersremote/',
+  'https://www.facebook.com/groups/computervillageikejalagos/',
+  'https://www.facebook.com/groups/639779065724911/',
+  'https://www.facebook.com/groups/searchnigeriajobs/',
+  'https://www.facebook.com/groups/963813264280730/',
+  'https://www.facebook.com/groups/currentjobs4naija/',
+  'https://www.facebook.com/groups/785332263108110/',
+  'https://www.facebook.com/groups/1180029070312284/',
+  'https://www.facebook.com/groups/719527508847385/',
+  'https://www.facebook.com/groups/146594738720556/',
+  'https://www.facebook.com/groups/922997686604803/',
+  'https://www.facebook.com/groups/513020832106016/',
+  'https://www.facebook.com/groups/1308678204772402/',
+  'https://www.facebook.com/groups/nigeria.job.listing/',
+  'https://www.facebook.com/groups/603237336382430/',
+  'https://www.facebook.com/groups/211549268168161/',
+  'https://www.facebook.com/groups/nsdgroup/',
+  'https://www.facebook.com/groups/267340074267886/',
+  'https://www.facebook.com/groups/1376976263932406/',
+  'https://www.facebook.com/groups/remoteworkinnigeria/'
 ];
 
 // Exact RoleRover Taxonomy & Aliases from Supabase std_roles & std_role_aliases
@@ -2057,16 +2080,53 @@ if (localStorage.getItem('rr_discovered_groups')) {
   } catch(e){}
 }
 const initialUrls = INITIAL_DISCOVERED_GROUPS.map(g => g.url).filter(Boolean);
-let watchedGroupList = Array.from(new Set([...DEFAULT_GROUPS, ...initialUrls]));
-
-/* INITIALIZE STORAGE */
+let watchedGroupList = [];
 if (localStorage.getItem('rr_watched_groups')) {
   try {
-    watchedGroupList = JSON.parse(localStorage.getItem('rr_watched_groups'));
+    const saved = JSON.parse(localStorage.getItem('rr_watched_groups'));
+    if (Array.isArray(saved) && saved.length) watchedGroupList = saved;
   } catch(e){}
 }
+
+// Always ensure all 27 discovered groups are merged into watchedGroupList
+const existingCleanUrls = new Set(watchedGroupList.map(u => (u || '').trim().toLowerCase().replace(/\/+$/, '')));
+initialUrls.forEach(u => {
+  const clean = (u || '').trim().toLowerCase().replace(/\/+$/, '');
+  if (clean && !existingCleanUrls.has(clean)) {
+    watchedGroupList.push(u);
+    existingCleanUrls.add(clean);
+  }
+});
+if (!watchedGroupList.length) {
+  watchedGroupList = [...DEFAULT_GROUPS];
+}
+localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+
+function updateGroupCountUI() {
+  const count = watchedGroupList.length;
+  const finderCount = discoveredGroups ? discoveredGroups.length : 0;
+  if ($('countScraperGroups')) $('countScraperGroups').textContent = count;
+  if ($('countMonitoredGroups')) $('countMonitoredGroups').textContent = count;
+  if ($('countFinderGroups')) $('countFinderGroups').textContent = finderCount;
+  if ($('targetGroupCountBadge')) $('targetGroupCountBadge').textContent = `${count} group${count === 1 ? '' : 's'} loaded`;
+  if ($('monitoredGroupCountBadge')) $('monitoredGroupCountBadge').textContent = `${count} group${count === 1 ? '' : 's'} loaded`;
+}
+
 $('targetGroupUrls').value = watchedGroupList.join('\n');
 $('watchedGroups').value = watchedGroupList.join('\n');
+updateGroupCountUI();
+
+$('targetGroupUrls').addEventListener('input', () => {
+  const urls = $('targetGroupUrls').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if ($('targetGroupCountBadge')) $('targetGroupCountBadge').textContent = `${urls.length} group${urls.length === 1 ? '' : 's'} loaded`;
+  if ($('countScraperGroups')) $('countScraperGroups').textContent = urls.length;
+});
+
+$('watchedGroups').addEventListener('input', () => {
+  const urls = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if ($('monitoredGroupCountBadge')) $('monitoredGroupCountBadge').textContent = `${urls.length} group${urls.length === 1 ? '' : 's'} loaded`;
+  if ($('countMonitoredGroups')) $('countMonitoredGroups').textContent = urls.length;
+});
 
 /* NAVIGATION */
 document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
@@ -2291,6 +2351,7 @@ $('btnRunFinder').onclick = async () => {
 };
 
 function renderFoundGroups() {
+  updateGroupCountUI();
   if (!discoveredGroups || !discoveredGroups.length) {
     $('finderResultsBox').style.display = 'none';
     return;
@@ -2340,15 +2401,15 @@ $('btnAddSelectedToScraper').onclick = () => {
 
   const newUrls = checked.map(c => {
     const g = discoveredGroups[c.dataset.idx];
-    return g.url || `https://www.facebook.com/groups/${g.id}/`;
+    return g ? (g.url || `https://www.facebook.com/groups/${g.id}/`) : null;
   }).filter(Boolean);
 
-  const existingSet = new Set(watchedGroupList.map(u => u.trim().replace(/\/+$/, '')));
+  const existingSet = new Set(watchedGroupList.map(u => (u || '').trim().toLowerCase().replace(/\/+$/, '')));
   let addedCount = 0;
 
   newUrls.forEach(u => {
-    const clean = u.trim().replace(/\/+$/, '');
-    if (!existingSet.has(clean)) {
+    const clean = (u || '').trim().toLowerCase().replace(/\/+$/, '');
+    if (clean && !existingSet.has(clean)) {
       watchedGroupList.push(u);
       existingSet.add(clean);
       addedCount++;
@@ -2358,8 +2419,17 @@ $('btnAddSelectedToScraper').onclick = () => {
   localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
   $('watchedGroups').value = watchedGroupList.join('\n');
   $('targetGroupUrls').value = watchedGroupList.join('\n');
+  updateGroupCountUI();
 
-  alert(`✓ Added ${addedCount} new Facebook groups to your Monitored Groups and Scraper! (Total groups: ${watchedGroupList.length})`);
+  // Navigate directly to the Run Group Scrape page
+  const scraperTab = document.querySelector('[data-page="scraper"]');
+  if (scraperTab) scraperTab.click();
+
+  const scrapeStatus = $('scrapeStatus');
+  if (scrapeStatus) {
+    scrapeStatus.style.display = 'block';
+    scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Added ${checked.length} group${checked.length > 1 ? 's' : ''} to Scraper! (${watchedGroupList.length} total groups loaded). Click "Start Vacancy Scrape" below.</span>`;
+  }
 };
 
 /* MONITORED GROUPS ACTIONS */
@@ -2367,13 +2437,22 @@ $('btnSaveWatch').onclick = () => {
   watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
   localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
   $('targetGroupUrls').value = watchedGroupList.join('\n');
+  updateGroupCountUI();
   alert('Saved ' + watchedGroupList.length + ' monitored groups.');
 };
 
 $('btnSendToScraper').onclick = () => {
   watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
   $('targetGroupUrls').value = watchedGroupList.join('\n');
-  document.querySelector('[data-page="scraper"]').click();
+  updateGroupCountUI();
+  const scraperTab = document.querySelector('[data-page="scraper"]');
+  if (scraperTab) scraperTab.click();
+  const scrapeStatus = $('scrapeStatus');
+  if (scrapeStatus) {
+    scrapeStatus.style.display = 'block';
+    scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Loaded ${watchedGroupList.length} monitored groups into Scraper. Ready to run!</span>`;
+  }
 };
 
 /* LOAD VACANCIES */
