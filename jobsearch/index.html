@@ -76,6 +76,9 @@
   .pill{display:inline-flex;align-items:center;background:#0d1320;border:1px solid var(--line);padding:3px 10px;border-radius:99px;font-size:12px;color:var(--text)}
   .pill-role{border-color:#a78bfa55;color:#c4b5fd;background:#a78bfa14}
   .pill-query{border-color:#00ffcc55;color:#5eead4;background:#00ffcc12}
+  .pill-suggest{border-color:#fbbf2455;color:#fde68a;background:#fbbf2414;cursor:pointer;user-select:none;transition:all .15s}
+  .pill-suggest:hover{border-color:var(--lime);background:#d4ff3322;color:#fff}
+  .pill-suggest.active{background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17;font-weight:700;border-color:transparent}
   .pill-tag{font-size:10px;opacity:.7;margin-right:4px;text-transform:uppercase}
   table.g-tbl{width:100%;border-collapse:collapse;margin-top:14px}
   table.g-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);text-align:left;padding:9px;border-bottom:1px solid var(--line)}
@@ -209,35 +212,42 @@
             Select a target country where your users are based, and choose their role. The system pulls that role's <b>exact database aliases</b> (e.g. <i>Customer Care Rep</i>, <i>Support Agent</i>) plus native language pairings (e.g. French translations for Cameroon) to locate relevant hiring communities.
           </p>
 
-          <div class="row">
-            <div>
-              <label for="matrixCountry">Target Country (Where RoleRover Users Live)</label>
-              <select id="matrixCountry">
-                <option value="Nigeria" selected>Nigeria 🇳🇬 (18 Roles: EA, Support, Frontend, VA, Devs...)</option>
-                <option value="Kenya">Kenya 🇰🇪 (4 Roles: EA, VA, Data Analyst, No-Code)</option>
-                <option value="Cameroon">Cameroon 🇨🇲 (5 Roles: EA, Admin, UX, Comms, Design - Bilingual EN/FR)</option>
-                <option value="Ghana">Ghana 🇬🇭 (1 Role: Product Manager)</option>
-                <option value="Niger">Niger 🇳🇪 (1 Role: Frontend Engineer)</option>
-                <option value="United States">United States 🇺🇸 (1 Role: Customer Support)</option>
-                <option value="Canada">Canada 🇨🇦 (1 Role: Data Analyst)</option>
-                <option value="South Africa">South Africa 🇿🇦 (Pan-African Tech / Remote)</option>
-                <option value="Worldwide">Worldwide / Remote 🌐 (Global Remote Groups)</option>
-              </select>
+          <div class="row" style="align-items:flex-start">
+            <div style="flex:1.2;min-width:280px">
+              <label for="matrixRole">Target Role (Exact Database Taxonomy)</label>
+              <select id="matrixRole"></select>
             </div>
 
-            <div>
-              <label for="matrixRole">Target Role (Synchronized with Country)</label>
-              <select id="matrixRole"></select>
+            <div style="flex:2;min-width:320px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <label style="margin:0">Target Countries (Multi-Select &middot; Click to Toggle)</label>
+                <div style="display:flex;gap:6px">
+                  <button type="button" class="ghost" id="btnSelectAllUserCountries" style="padding:2px 8px;font-size:11px">+ All User Countries</button>
+                  <button type="button" class="ghost" id="btnClearCountries" style="padding:2px 8px;font-size:11px">Clear</button>
+                </div>
+              </div>
+              <div id="quickCountryChips" class="pill-box" style="margin:0 0 8px"></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <select id="addMoreCountrySelect" style="max-width:240px">
+                  <option value="">+ Add any other country...</option>
+                </select>
+                <span class="muted small" id="countryCountLabel">1 country selected</span>
+              </div>
             </div>
           </div>
 
           <div style="margin-top:16px">
+            <label>Suggested In-Demand Roles (Active RoleRover Users &mdash; Click to Select):</label>
+            <div id="suggestedRolePills" class="pill-box"></div>
+          </div>
+
+          <div style="margin-top:12px">
             <label>Exact Role Aliases Loaded From System Database (<span id="aliasCount">0</span> aliases):</label>
             <div id="aliasPills" class="pill-box"></div>
           </div>
 
           <div style="margin-top:10px">
-            <label>Generated Facebook Search Phrases (Live Preview):</label>
+            <label>Generated Facebook Search Phrases (Live Preview for <span id="selectedCountriesLabel" style="color:var(--lime)">Nigeria</span>):</label>
             <div id="queryPills" class="pill-box"></div>
             <textarea id="customQueries" rows="3" placeholder="Generated search phrases appear here, you can edit or add custom keywords..."></textarea>
           </div>
@@ -563,6 +573,53 @@ Object.entries(USER_COUNTRY_ROLES).forEach(([cName, list]) => {
   });
 });
 
+// Standard World Countries (Clean Country Names)
+const WORLD_COUNTRIES = [
+  "Worldwide", "Nigeria", "Kenya", "Cameroon", "Ghana", "South Africa", "Niger",
+  "United States", "Canada", "United Kingdom", "Germany", "France", "Netherlands",
+  "Australia", "Brazil", "Egypt", "Ethiopia", "India", "Ireland", "Ivory Coast",
+  "Morocco", "Philippines", "Poland", "Portugal", "Rwanda", "Senegal", "Singapore",
+  "Spain", "Sweden", "Switzerland", "Tanzania", "Tunisia", "Uganda",
+  "United Arab Emirates", "Zambia", "Zimbabwe"
+];
+
+const QUICK_COUNTRIES = [
+  { name: "Worldwide", label: "🌐 Worldwide / Global" },
+  { name: "Nigeria", label: "🇳🇬 Nigeria" },
+  { name: "Kenya", label: "🇰🇪 Kenya" },
+  { name: "Cameroon", label: "🇨🇲 Cameroon" },
+  { name: "Ghana", label: "🇬🇭 Ghana" },
+  { name: "South Africa", label: "🇿🇦 South Africa" },
+  { name: "Niger", label: "🇳🇪 Niger" },
+  { name: "United States", label: "🇺🇸 United States" },
+  { name: "Canada", label: "🇨🇦 Canada" },
+  { name: "United Kingdom", label: "🇬🇧 United Kingdom" }
+];
+
+const IN_DEMAND_ROLES = [
+  { role: "Executive Assistant", count: 3 },
+  { role: "Customer Support Representative", count: 3 },
+  { role: "Frontend Engineer", count: 3 },
+  { role: "Virtual Assistant", count: 2 },
+  { role: "Full Stack Developer", count: 2 },
+  { role: "Product Designer", count: 2 },
+  { role: "Data Analyst", count: 2 },
+  { role: "Software Engineer", count: 2 },
+  { role: "Product Manager", count: 1 },
+  { role: "Administrative Assistant", count: 1 },
+  { role: "Internal Communications Specialist", count: 1 },
+  { role: "Backend Engineer", count: 1 },
+  { role: "DevOps Engineer", count: 1 },
+  { role: "No-Code Developer", count: 1 },
+  { role: "Technical Writer", count: 1 },
+  { role: "Content Writer", count: 1 },
+  { role: "Operations Manager", count: 1 },
+  { role: "Penetration Tester", count: 1 },
+  { role: "Manual Tester", count: 1 }
+];
+
+const selectedCountries = new Set(["Nigeria"]);
+
 let vacancies = [];
 let discoveredGroups = [];
 let watchedGroupList = [...DEFAULT_GROUPS];
@@ -602,124 +659,128 @@ function findRoleData(roleName) {
   return null;
 }
 
-/* SYNCHRONIZE ROLE DROPDOWN FOR SELECTED COUNTRY */
-let isSyncing = false;
-
-function syncRolesForCountry(country, preferredRole) {
+/* POPULATE ROLE DROPDOWN */
+function populateRoleDropdown() {
   const sel = $('matrixRole');
-  const countryRoles = USER_COUNTRY_ROLES[country] || [];
   sel.innerHTML = '';
 
-  let roleToSelect = null;
-
-  if (countryRoles.length > 0) {
-    // 1. Specific in-demand roles for this country
-    const optGroupCountry = document.createElement('optgroup');
-    optGroupCountry.label = `📍 Active User Demand in ${country} (${countryRoles.length} role${countryRoles.length>1?'s':''})`;
-    
-    countryRoles.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item.role;
-      opt.textContent = `${item.role} (${item.count} user${item.count>1?'s':''})`;
-      optGroupCountry.appendChild(opt);
-      if (preferredRole && item.role === preferredRole) {
-        roleToSelect = item.role;
-      }
-    });
-    sel.appendChild(optGroupCountry);
-
-    // If preferredRole wasn't in this country, default to the first role in this country
-    if (!roleToSelect && countryRoles.length) {
-      roleToSelect = countryRoles[0].role;
-    }
-
-    // 2. Secondary section: Other database roles (in case user wants to broaden)
-    const countryRoleSet = new Set(countryRoles.map(i => i.role));
-    const optGroupOther = document.createElement('optgroup');
-    optGroupOther.label = '🌐 Other Database Roles';
-    
-    ROLE_TAXONOMY.forEach(fam => {
-      fam.roles.forEach(r => {
-        if (!countryRoleSet.has(r.name)) {
-          const opt = document.createElement('option');
-          opt.value = r.name;
-          opt.textContent = `${r.name} (${fam.family})`;
-          optGroupOther.appendChild(opt);
-        }
-      });
-    });
-    sel.appendChild(optGroupOther);
-  } else {
-    // Fallback for South Africa / Worldwide: all roles grouped by demand
-    const highDemand = [];
-    ROLE_TAXONOMY.forEach(fam => {
-      fam.roles.forEach(r => {
-        if (r.userDemand >= 2) highDemand.push(r);
-      });
-    });
-
-    const optGroupHigh = document.createElement('optgroup');
-    optGroupHigh.label = '🔥 High Demand Roles';
-    highDemand.forEach(r => {
+  ROLE_TAXONOMY.forEach(fam => {
+    const optGroup = document.createElement('optgroup');
+    optGroup.label = fam.family;
+    fam.roles.forEach(r => {
       const opt = document.createElement('option');
       opt.value = r.name;
-      opt.textContent = `${r.name} (${r.userDemand} users)`;
-      optGroupHigh.appendChild(opt);
+      opt.textContent = r.name;
+      optGroup.appendChild(opt);
     });
-    sel.appendChild(optGroupHigh);
-
-    ROLE_TAXONOMY.forEach(fam => {
-      const optGroup = document.createElement('optgroup');
-      optGroup.label = fam.family;
-      fam.roles.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.name;
-        opt.textContent = r.name;
-        optGroup.appendChild(opt);
-      });
-      sel.appendChild(optGroup);
-    });
-
-    roleToSelect = preferredRole || 'Executive Assistant';
-  }
-
-  if (roleToSelect) {
-    sel.value = roleToSelect;
-  }
+    sel.appendChild(optGroup);
+  });
+  sel.value = 'Executive Assistant';
 }
 
-/* EVENT: COUNTRY CHANGED -> SYNC ROLES */
-$('matrixCountry').onchange = () => {
-  if (isSyncing) return;
-  isSyncing = true;
-  const country = $('matrixCountry').value;
-  syncRolesForCountry(country);
-  updateMatrixPreview();
-  isSyncing = false;
-};
+/* POPULATE ADD MORE COUNTRY DROPDOWN */
+function populateMoreCountriesDropdown() {
+  const sel = $('addMoreCountrySelect');
+  sel.innerHTML = '<option value="">+ Add any other country...</option>';
+  
+  const quickSet = new Set(QUICK_COUNTRIES.map(c => c.name));
+  const remaining = WORLD_COUNTRIES.filter(c => !quickSet.has(c)).sort();
+  
+  remaining.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
 
-/* EVENT: ROLE CHANGED -> SYNC COUNTRY */
-$('matrixRole').onchange = () => {
-  if (isSyncing) return;
-  isSyncing = true;
-  const roleName = $('matrixRole').value;
-  const matchingCountries = ROLE_TO_COUNTRIES[roleName];
-
-  if (matchingCountries && matchingCountries.length) {
-    const currentCountry = $('matrixCountry').value;
-    // If the currently selected country does not contain this role, switch to the primary country
-    if (!matchingCountries.includes(currentCountry)) {
-      $('matrixCountry').value = matchingCountries[0];
-      syncRolesForCountry(matchingCountries[0], roleName);
+  sel.onchange = () => {
+    if (sel.value) {
+      selectedCountries.add(sel.value);
+      sel.value = '';
+      renderCountryChips();
+      updateMatrixPreview();
     }
+  };
+}
+
+/* RENDER COUNTRY CHIPS (MULTI-SELECT) */
+function renderCountryChips() {
+  const box = $('quickCountryChips');
+  const quickNames = new Set(QUICK_COUNTRIES.map(c => c.name));
+
+  // Quick list
+  let html = QUICK_COUNTRIES.map(c => {
+    const active = selectedCountries.has(c.name);
+    return `<button type="button" class="pill pill-suggest ${active ? 'active' : ''}" onclick="toggleCountry('${esc(c.name)}')">
+      ${esc(c.label)} ${active ? '&check;' : ''}
+    </button>`;
+  }).join('');
+
+  // Custom countries added beyond quick list
+  selectedCountries.forEach(c => {
+    if (!quickNames.has(c)) {
+      html += `<button type="button" class="pill pill-suggest active" onclick="toggleCountry('${esc(c)}')">
+        📍 ${esc(c)} &times;
+      </button>`;
+    }
+  });
+
+  box.innerHTML = html;
+
+  const count = selectedCountries.size;
+  $('countryCountLabel').textContent = count ? `${count} countr${count>1?'ies':'y'} selected` : 'No country selected';
+  $('selectedCountriesLabel').textContent = count ? Array.from(selectedCountries).join(', ') : 'None';
+}
+
+function toggleCountry(cName) {
+  if (selectedCountries.has(cName)) {
+    if (selectedCountries.size > 1) {
+      selectedCountries.delete(cName);
+    }
+  } else {
+    selectedCountries.add(cName);
   }
+  renderCountryChips();
   updateMatrixPreview();
-  isSyncing = false;
+}
+
+$('btnSelectAllUserCountries').onclick = () => {
+  ["Nigeria", "Kenya", "Cameroon", "Ghana", "Niger", "United States", "Canada"].forEach(c => selectedCountries.add(c));
+  renderCountryChips();
+  updateMatrixPreview();
 };
 
-/* UPDATE SEARCH QUERY PREVIEW */
+$('btnClearCountries').onclick = () => {
+  selectedCountries.clear();
+  selectedCountries.add("Worldwide");
+  renderCountryChips();
+  updateMatrixPreview();
+};
+
+/* RENDER SUGGESTED IN-DEMAND ROLES */
+function renderSuggestedRolePills() {
+  const current = $('matrixRole').value;
+  $('suggestedRolePills').innerHTML = IN_DEMAND_ROLES.map(r => {
+    const active = r.role === current;
+    return `<span class="pill pill-suggest ${active ? 'active' : ''}" onclick="selectSuggestedRole('${esc(r.role)}')">
+      🔥 ${esc(r.role)} (${r.count} users)
+    </span>`;
+  }).join('');
+}
+
+function selectSuggestedRole(roleName) {
+  $('matrixRole').value = roleName;
+  renderSuggestedRolePills();
+  updateMatrixPreview();
+}
+
+$('matrixRole').onchange = () => {
+  renderSuggestedRolePills();
+  updateMatrixPreview();
+};
+
+/* UPDATE SEARCH QUERY PREVIEW FOR ALL SELECTED COUNTRIES */
 function updateMatrixPreview() {
-  const country = $('matrixCountry').value;
   const roleName = $('matrixRole').value;
   const roleData = findRoleData(roleName);
   if (!roleData) return;
@@ -728,56 +789,43 @@ function updateMatrixPreview() {
   $('aliasCount').textContent = aliases.length;
   $('aliasPills').innerHTML = aliases.map(a => `<span class="pill pill-role"><span class="pill-tag">Alias</span>${esc(a)}</span>`).join('');
 
-  // Build query list combining Country + Role Aliases
   let queries = [];
-  const isCameroon = country.toLowerCase() === 'cameroon';
-  const isWorldwide = country.toLowerCase() === 'worldwide';
+  const countries = selectedCountries.size ? Array.from(selectedCountries) : ["Worldwide"];
 
-  if (isCameroon) {
-    // English & French combinations for Cameroon
-    queries.push(`Remote Jobs Cameroon`);
-    queries.push(`Offres d'emploi Cameroun`);
-    queries.push(`Télétravail Cameroun`);
-    queries.push(`${roleName} Cameroon`);
-    
-    // Exact aliases
-    aliases.slice(0, 3).forEach(al => {
-      queries.push(`${al} Cameroon`);
-    });
+  countries.forEach(country => {
+    const isCameroon = country.toLowerCase() === 'cameroon';
+    const isWorldwide = country.toLowerCase() === 'worldwide';
 
-    // French mappings for top roles
-    if (roleName.includes('Executive') || roleName.includes('Virtual Assistant')) {
-      queries.push(`Assistante Virtuelle Cameroun`);
-      queries.push(`Assistante de Direction Cameroun`);
-      queries.push(`Secrétaire Cameroun`);
-    } else if (roleName.includes('Customer Support')) {
-      queries.push(`Service Client Cameroun`);
-      queries.push(`Chargé de Clientèle Cameroun`);
-    } else if (roleName.includes('Frontend') || roleName.includes('Developer') || roleName.includes('Software')) {
-      queries.push(`Développeur Informatique Cameroun`);
-      queries.push(`Développeur Web Cameroun`);
-    } else if (roleName.includes('Designer')) {
-      queries.push(`Graphiste Designer Cameroun`);
-      queries.push(`UI UX Designer Cameroun`);
-    } else if (roleName.includes('Content') || roleName.includes('Writer')) {
-      queries.push(`Rédacteur Web Cameroun`);
+    if (isWorldwide) {
+      queries.push(`Remote Jobs`);
+      queries.push(`Work From Home Jobs`);
+      queries.push(`${roleName} Remote`);
+      aliases.slice(0, 3).forEach(al => queries.push(`${al} Remote`));
+    } else if (isCameroon) {
+      queries.push(`Remote Jobs Cameroon`);
+      queries.push(`Offres d'emploi Cameroun`);
+      queries.push(`Télétravail Cameroun`);
+      queries.push(`${roleName} Cameroon`);
+      aliases.slice(0, 2).forEach(al => queries.push(`${al} Cameroon`));
+
+      // French mappings for top roles
+      if (roleName.includes('Executive') || roleName.includes('Virtual Assistant')) {
+        queries.push(`Assistante Virtuelle Cameroun`);
+        queries.push(`Assistante de Direction Cameroun`);
+      } else if (roleName.includes('Customer Support')) {
+        queries.push(`Service Client Cameroun`);
+      } else if (roleName.includes('Frontend') || roleName.includes('Developer') || roleName.includes('Software')) {
+        queries.push(`Développeur Informatique Cameroun`);
+      } else if (roleName.includes('Designer')) {
+        queries.push(`Graphiste Designer Cameroun`);
+      }
+    } else {
+      queries.push(`Remote Jobs ${country}`);
+      queries.push(`Jobs in ${country}`);
+      queries.push(`${roleName} ${country}`);
+      aliases.slice(0, 2).forEach(al => queries.push(`${al} ${country}`));
     }
-  } else if (isWorldwide) {
-    queries.push(`Remote Jobs`);
-    queries.push(`Work From Home Jobs`);
-    queries.push(`${roleName} Remote`);
-    aliases.slice(0, 3).forEach(al => {
-      queries.push(`${al} Remote`);
-    });
-  } else {
-    // Standard country format (Nigeria, Kenya, Ghana, South Africa, etc.)
-    queries.push(`Remote Jobs ${country}`);
-    queries.push(`Jobs in ${country}`);
-    queries.push(`${roleName} ${country}`);
-    aliases.slice(0, 3).forEach(al => {
-      queries.push(`${al} ${country}`);
-    });
-  }
+  });
 
   // De-duplicate
   queries = [...new Set(queries)];
@@ -1058,8 +1106,11 @@ $('btnStartScrape').onclick = async () => {
   }
 };
 
-// Initial bootstrap: country and role in strict sync
-syncRolesForCountry($('matrixCountry').value);
+// Initial bootstrap
+populateRoleDropdown();
+populateMoreCountriesDropdown();
+renderCountryChips();
+renderSuggestedRolePills();
 updateMatrixPreview();
 loadVacancies();
 </script>
