@@ -908,13 +908,13 @@ function renderFeed() {
   const geoFilter = $('geoFilter').value;
 
   const filtered = vacancies.filter(v => {
-    const txt = ((v.job_title || '') + ' ' + (v.company_name || '') + ' ' + (v.post_text || '') + ' ' + (v.role_family || '')).toLowerCase();
+    const txt = ((v.job_title || '') + ' ' + (v.search_keyword || '') + ' ' + (v.company_name || '') + ' ' + (v.post_text || '') + ' ' + (v.role_family || '')).toLowerCase();
     if (q && !txt.includes(q)) return false;
     if (typeFilter === 'email' && !(v.contact_email || (v.emails_found && v.emails_found.length))) return false;
     if (typeFilter === 'doc' && !(v.google_doc_urls && v.google_doc_urls.length)) return false;
     if (geoFilter === 'remote' && !(v.detected_workplace_type === 'Remote' || txt.includes('remote'))) return false;
     if (roleFamily !== 'all') {
-      const rf = (v.role_family || '').toLowerCase();
+      const rf = ((v.role_family || '') + ' ' + (v.search_keyword || '')).toLowerCase();
       if (!rf.includes(roleFamily) && !txt.includes(roleFamily)) return false;
     }
     return true;
@@ -932,9 +932,9 @@ function renderFeed() {
     const emails = v.contact_email ? [v.contact_email] : (v.emails_found || []);
     const docs = v.google_doc_urls || [];
     const isRemote = v.detected_workplace_type === 'Remote' || (v.post_text || '').toLowerCase().includes('remote');
-    const title = v.job_title || 'Job Opening';
+    const title = v.job_title || v.search_keyword || 'Job Opening';
     const company = v.company_name || v.author_name || 'Hiring Manager';
-    const family = v.role_family || 'Direct Role';
+    const family = v.role_family || v.search_keyword || 'Direct Role';
 
     return `
     <div class="vcard">
