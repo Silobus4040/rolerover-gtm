@@ -107,7 +107,7 @@
       <button type="button" class="sidebar-nav-item" data-page="finder">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span>Discover Groups by Role</span>
-        <span class="sidebar-badge" id="countFinderGroups">27</span>
+        <span class="sidebar-badge" id="countFinderGroups">0</span>
       </button>
       <button type="button" class="sidebar-nav-item" data-page="scraper">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -290,30 +290,73 @@
       <!-- PAGE 3: SCRAPER -->
       <section class="page" id="page-scraper">
         <div class="card">
-          <div class="step">Run Vacancy Scraper &middot; Filter for Direct Email &amp; Google Forms</div>
-          <p style="color:var(--mute);font-size:13px;margin:0 0 16px">Scrapes Facebook groups for hiring announcements. Automatically drops 100% of posts that lack an <b>email</b> or <b>Google Form/Doc</b>, then maps the post to standard RoleRover roles.</p>
-          
-          <div class="row">
-            <div style="width:100%">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                <label style="margin:0;font-weight:700">Target Facebook Groups to Scrape</label>
-                <span id="targetGroupCountBadge" style="background:#2563eb22;color:#60a5fa;border:1px solid #3b82f644;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px">27 groups loaded</span>
-              </div>
-              <textarea id="targetGroupUrls" rows="8" placeholder="Paste group URLs here (one per line)..."></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+            <div>
+              <div class="step">Run Vacancy Scraper &middot; Select Groups to Scrape</div>
+              <p style="color:var(--mute);font-size:13px;margin:3px 0 0">Choose any group below to scrape individually or select multiple groups to run in bulk.</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="targetGroupCountBadge" style="background:#2563eb22;color:#60a5fa;border:1px solid #3b82f644;font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px">27 groups loaded</span>
+              <button type="button" class="ghost" id="btnToggleCustomUrl">+ Add Custom Group URL</button>
             </div>
           </div>
-          
-          <div class="row" style="margin-top:14px">
-            <div>
+
+          <!-- COLLAPSIBLE CUSTOM URL BOX -->
+          <div id="customUrlBox" style="display:none;margin-bottom:14px;padding:12px 14px;background:#0d1320;border:1px solid var(--line);border-radius:10px">
+            <label style="font-weight:700;color:var(--text);margin-bottom:6px">Paste Additional Facebook Group URLs (one per line):</label>
+            <textarea id="customGroupInput" rows="2" placeholder="https://www.facebook.com/groups/..."></textarea>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button type="button" id="btnAddCustomUrls" style="padding:6px 14px;font-size:13px">+ Add to Scraper List</button>
+              <button type="button" class="ghost" id="btnCloseCustomUrl" style="padding:6px 12px;font-size:13px">Cancel</button>
+            </div>
+          </div>
+
+          <!-- TABLE CONTROLS BAR -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="text" id="scraperGroupSearch" placeholder="🔍 Filter groups..." style="padding:6px 10px;font-size:13px;width:210px">
+              <button type="button" class="ghost small" id="btnSelectAllScrape">Select All</button>
+              <button type="button" class="ghost small" id="btnClearScrape">Deselect All</button>
+            </div>
+            <div style="font-size:13px;color:var(--mute)">
+              Selected: <b id="lblSelectedCount" style="color:var(--lime);font-size:14px">27</b> of <span id="lblTotalScrapeCount">27</span> groups
+            </div>
+          </div>
+
+          <!-- RICH SCRAPER GROUPS TABLE (MATCHES DISCOVERED GROUPS STYLE) -->
+          <div style="overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-height:450px;overflow-y:auto">
+            <table class="g-tbl" id="tblScrapeGroups" style="margin:0">
+              <thead style="position:sticky;top:0;background:#101726;z-index:2">
+                <tr>
+                  <th style="width:36px"><input type="checkbox" id="chkAllScrape" checked></th>
+                  <th>Facebook Group</th>
+                  <th class="num">Members</th>
+                  <th>Privacy</th>
+                  <th>Link</th>
+                  <th style="text-align:right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tblScrapeGroupsBody"></tbody>
+            </table>
+          </div>
+
+          <!-- HIDDEN SYNC TEXTAREA -->
+          <textarea id="targetGroupUrls" style="display:none"></textarea>
+
+          <!-- SCRAPE SETTINGS & LAUNCH BUTTON -->
+          <div class="row" style="margin-top:14px;align-items:center;background:#0d1320;padding:12px 16px;border-radius:10px;border:1px solid var(--line)">
+            <div style="max-width:140px">
               <label>Posts per group</label>
               <input id="maxPosts" type="number" min="5" value="25">
             </div>
-            <div>
+            <div style="max-width:150px">
               <label>Posts newer than</label>
               <input id="newerThan" value="3 days">
             </div>
-            <div style="flex:0">
-              <button id="btnStartScrape">Start Vacancy Scrape</button>
+            <div style="flex:1;text-align:right">
+              <button id="btnStartScrape" style="font-size:14px;padding:10px 20px">
+                🚀 Start Vacancy Scrape (<span id="btnScrapeCount">27</span> Selected)
+              </button>
             </div>
           </div>
           <div class="status" id="scrapeStatus"></div>
@@ -2072,61 +2115,220 @@ const selectedCountries = new Set();
 
 const INITIAL_DISCOVERED_GROUPS = [{"id":"233851282802584","name":"Job Vacancies in Nigeria","url":"https://www.facebook.com/groups/233851282802584/","membersNumber":119846,"membersText":"119.8K members","visibility":"Public","postsPerDay":136,"postsPerMonth":3034,"locations":[],"description":"Job Vacancies in Nigeria is a group created to help applicants secure a well paid job in Nigeria at ease.\n\nThis group is proudly sponsored by Bethel Computers. Do well to react, comment and share post","query":"jobs Nigeria"},{"id":"1006842116143918","name":"Job Vacancies in Nigeria","url":"https://www.facebook.com/groups/JobVacanciesNG/","membersNumber":101985,"membersText":"102.0K members","visibility":"Public","postsPerDay":115,"postsPerMonth":3266,"locations":["Nigeria"],"description":"Find your Dream Jobs by connecting with various Employers in Nigeria.\nWe (JobVacancies.ng) Covers Multiple Job Vacancies, Full-Time & Part-Time Job Openings From Top Companies in Nigeria. APPLY for FR","query":"jobs Nigeria"},{"id":"925751931740150","name":"LATEST AND AVAILABLE JOBS IN ABUJA","url":"https://www.facebook.com/groups/925751931740150/","membersNumber":100493,"membersText":"100.5K members","visibility":"Public","postsPerDay":50,"postsPerMonth":1154,"locations":["Federal Capital Territory, Nigeria"],"description":"Available and latest jobs are posted here daily, establishment that are in need of workers can contact us","query":"jobs Nigeria"},{"id":"452927972004014","name":"Job Vacancies Within Nigeria","url":"https://www.facebook.com/groups/452927972004014/","membersNumber":98159,"membersText":"98.2K members","visibility":"Public","postsPerDay":6,"postsPerMonth":73,"locations":[],"description":"\"Unlock your career potential with our dynamic group, connecting top talent to job opportunities across Nigeria.\"\n\n''See you win''","query":"jobs Nigeria"},{"id":"364753057285134","name":"ONLINE BUSINESS AND JOBS OPPORTUNITIES  NIGERIA","url":"https://www.facebook.com/groups/364753057285134/","membersNumber":79950,"membersText":"80.0K members","visibility":"Public","postsPerDay":16,"postsPerMonth":293,"locations":[],"description":"","query":"jobs Nigeria"},{"id":"227878193913399","name":"Latest Nigerian Job Vacancies","url":"https://www.facebook.com/groups/LatestNigeriaJobVacancies/","membersNumber":74830,"membersText":"74.8K members","visibility":"Public","postsPerDay":16,"postsPerMonth":533,"locations":["Aba, Abia","Yorro, Taraba, Nigeria","Kogi, Oyo, Nigeria"],"description":"Get All latest Nigeria Jobs here!","query":"jobs Nigeria"},{"id":"127651097250065","name":"Current Job Vacancies in Nigeria","url":"https://www.facebook.com/groups/127651097250065/","membersNumber":61469,"membersText":"61.5K members","visibility":"Public","postsPerDay":2,"postsPerMonth":133,"locations":[],"description":"Be aware of the current job vacancies in nigeria; recieve relevant job vacancies alert on your mobile phones","query":"jobs Nigeria"},{"id":"590644874865182","name":"Upright Remote Jobs | Work From Home | Work From Anywhere Jobs","url":"https://www.facebook.com/groups/careersremote/","membersNumber":61246,"membersText":"61.2K members","visibility":"Private","postsPerDay":0,"postsPerMonth":10,"locations":["Vatican City, Vatican City","Cape Paterson","Shoal Bay"],"description":"We provide the best and the most wanted remote jobs from across the globe. Only genuine job opportunities are posted in the group.\nAll jobs are from well-reputed companies. You can work from your home","query":"remote jobs Nigeria"},{"id":"562413794379030","name":"International Remote Jobs For Nigerians","url":"https://www.facebook.com/groups/computervillageikejalagos/","membersNumber":57224,"membersText":"57.2K members","visibility":"Public","postsPerDay":0,"postsPerMonth":8,"locations":["Lagos State","Nigeria"],"description":"🌍 Foreign Remote Jobs Nigeria – Work From Home & Earn Globally\n\nWelcome to one of Nigeria’s fastest-growing communities for people searching for legitimate international remote jobs, online work oppo","query":"remote jobs Nigeria"},{"id":"639779065724911","name":"Remote Workers in Nigeria","url":"https://www.facebook.com/groups/639779065724911/","membersNumber":54731,"membersText":"54.7K members","visibility":"Private","postsPerDay":34,"postsPerMonth":1348,"locations":[],"description":"Welcome to Remote Workers in Nigeria\nThis group is a supportive community for Nigerians currently working remotely or looking to transition into remote work.\n\nWhether you’re a freelancer, virtual assi","query":"remote jobs Nigeria"},{"id":"241041993088504","name":"Jobs in Nigeria","url":"https://www.facebook.com/groups/searchnigeriajobs/","membersNumber":22284,"membersText":"22.3K members","visibility":"Private","postsPerDay":0,"postsPerMonth":1,"locations":["Kano, Nigeria","Ibadan, Nigeria","Lagos, Nigeria"],"description":"This is a Nigerian Job Board connecting companies, recruiters and job seekers across Nigeria.\nAPPLY TO JOBS NOW! \nWebsite: https://nigeriajobscareers.com/\n\nPOST JOBS NOW FOR FREE!\nPost Jobs for free a","query":"jobs Nigeria"},{"id":"963813264280730","name":"FREELANCERS IN NIGERIA (UPWORK, HUBSTAFF, ANGELIST JOBS)","url":"https://www.facebook.com/groups/963813264280730/","membersNumber":19953,"membersText":"20.0K members","visibility":"Public","postsPerDay":0,"postsPerMonth":18,"locations":[],"description":"Welcome to Freelancers in Nigeria group, this group was created to help Freelancers come together and share general knowledge of securing remote jobs, cover letter ideas, CV revamp, LinkedIn optimizat","query":"remote jobs Nigeria"},{"id":"172975486056627","name":"Current Jobs In Nigeria","url":"https://www.facebook.com/groups/currentjobs4naija/","membersNumber":17098,"membersText":"17.1K members","visibility":"Public","postsPerDay":8,"postsPerMonth":252,"locations":[],"description":"Bringing, Current jobs in Nigeria, Jobs in Nigeria, Recent Nigerian jobs, Nigerian vacancies, Fresh Graduate Jobs, Careers in Nigeria. Nigerian Job vacancies, Banking, Engineering, Medical, Teaching, ","query":"jobs Nigeria"},{"id":"785332263108110","name":"Government and NGOs jobs opportunities","url":"https://www.facebook.com/groups/785332263108110/","membersNumber":9735,"membersText":"9.7K members","visibility":"Public","postsPerDay":1,"postsPerMonth":95,"locations":[],"description":"Government NGOs Jobs Opportunities within and Outside Nigeria with scholarship and internship ","query":"jobs Nigeria"},{"id":"1180029070312284","name":"Virtual Assistants Jobs Nigeria","url":"https://www.facebook.com/groups/1180029070312284/","membersNumber":8766,"membersText":"8.8K members","visibility":"Public","postsPerDay":23,"postsPerMonth":523,"locations":[],"description":"Struggling with VIRTUAL ASSISTANT/SOCIAL MEDIA/ and other REMOTE jobs ..\nWe bring jobs to your doorstep,\nJUST APPLY \n\nAre you Hiring?\nWe have talents","query":"remote jobs Nigeria"},{"id":"719527508847385","name":"EXPATS IN NIGERIA JOBS","url":"https://www.facebook.com/groups/719527508847385/","membersNumber":7244,"membersText":"7.2K members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"JOBS ,VACANCY JOBS, SEARCHING JOBS","query":"jobs Nigeria"},{"id":"146594738720556","name":"OIL & GAS JOBS IN NIGERIA","url":"https://www.facebook.com/groups/146594738720556/","membersNumber":4835,"membersText":"4.8K members","visibility":"Public","postsPerDay":0,"postsPerMonth":12,"locations":["Port Harcourt"],"description":"Get Latest Information On Oil & Gas Jobs In Nigeria.\nJoin This Group And You will Be Updated On Latest Job Openings.\n& Also  How To Start Your Oil & Gas Business With Little Or No Capital Make Million","query":"jobs Nigeria"},{"id":"922997686604803","name":"Tech And Remote Jobs in Nigeria","url":"https://www.facebook.com/groups/922997686604803/","membersNumber":4631,"membersText":"4.6K members","visibility":"Public","postsPerDay":1,"postsPerMonth":50,"locations":[],"description":"Tech and Remote Jobs in Nigeria is a community for Nigerians seeking opportunities in tech and remote work. Whether you're a job seeker, freelancer, or employer, this group connects you with the lates","query":"remote jobs Nigeria"},{"id":"513020832106016","name":"Nigeria Software Engineers","url":"https://www.facebook.com/groups/513020832106016/","membersNumber":3172,"membersText":"3.2K members","visibility":"Public","postsPerDay":0,"postsPerMonth":32,"locations":["Nigeria"],"description":"A group for Software Engineers, Lovers and Tech Enthusiast.","query":"software engineer Nigeria"},{"id":"1308678204772402","name":"Remote Jobs Nigeria","url":"https://www.facebook.com/groups/1308678204772402/","membersNumber":1390,"membersText":"1.4K members","visibility":"Public","postsPerDay":8,"postsPerMonth":148,"locations":[],"description":"WELCOME TO NIGERIA'S LARGEST ANTI-SCAM REMOTE WORK HUB! 🇳🇬💼\nStop letting inflation destroy your purchasing power. \nThis community is a dedicated safe zone built to connect smart Nigerians with legi","query":"remote jobs Nigeria"},{"id":"1162321540496253","name":"NIGERIA JOBSLISTING","url":"https://www.facebook.com/groups/nigeria.job.listing/","membersNumber":1134,"membersText":"1.1K members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":["Lagos, Nigeria"],"description":"Nigeria job market retrenchment is becoming laudable by the day; the ways forward is seen necessary and the time is now. Findings show that people are still getting jobs even when others are losing jo","query":"jobs Nigeria"},{"id":"603237336382430","name":"JOB SEEKERS FORUM OF NIGERIA","url":"https://www.facebook.com/groups/603237336382430/","membersNumber":938,"membersText":"938 members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"","query":"jobs Nigeria"},{"id":"211549268168161","name":"Nigeria Software Developers Association (NSDA)","url":"https://www.facebook.com/groups/211549268168161/","membersNumber":490,"membersText":"490 members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"The Nigeria Software Developers Association (NSDA) is a vibrant community of professionals dedicated to advancing the software development industry in Nigeria. Established with the vision of fostering","query":"software engineer Nigeria"},{"id":"829637270407505","name":"Nigerian Software Developers","url":"https://www.facebook.com/groups/nsdgroup/","membersNumber":298,"membersText":"298 members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"Elevate Authentic Software Engineering in Nigeria","query":"software engineer Nigeria"},{"id":"267340074267886","name":"Work From Home Nigeria Group","url":"https://www.facebook.com/groups/267340074267886/","membersNumber":86,"membersText":"86 members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"This group is dedicated to Work From Home community in Nigeria. Here we can have discussions on emerging work from home trends, opportunities and skills. \n\nOur goal is to empower Nigerians with the ri","query":"remote jobs Nigeria"},{"id":"1376976263932406","name":"JOB OPPORTUNITIES NIGERIA �","url":"https://www.facebook.com/groups/1376976263932406/","membersNumber":4,"membersText":"4 members","visibility":"Public","postsPerDay":0,"postsPerMonth":0,"locations":[],"description":"THIS GROUP IS CREATED TO FIND JOBS OPPORTUNITIES AVAILABLE ACROSS ALL STATES IN NIGERIA AND NOTHING ELSE ","query":"jobs Nigeria"},{"id":"1081701948155000","name":"🇳🇬 Nigeria Remote Work | Work From Home Jobs | Online Jobs | Extra Income","url":"https://www.facebook.com/groups/remoteworkinnigeria/","membersNumber":1,"membersText":"1 member","visibility":"Public","postsPerDay":0,"postsPerMonth":5,"locations":[],"description":"Welcome to Nigeria Remote Work!\n\nLooking for:\n\n✅ Work From Home Jobs Nigeria\n ✅ Remote Jobs Nigeria\n ✅ Online Jobs for Students\n ✅ Side Hustles Nigeria\n ✅ Extra Income Opportunities\n ✅ Affiliate Marke","query":"remote jobs Nigeria"}];
 let vacancies = [];
-let discoveredGroups = [...INITIAL_DISCOVERED_GROUPS];
-if (localStorage.getItem('rr_discovered_groups')) {
+// Clean initial state for Discover Groups: starts empty until user searches
+let discoveredGroups = [];
+
+// Initialize Target Groups for Scraper (pre-loaded with the 27 groups with full metadata)
+let targetGroups = [];
+if (localStorage.getItem('rr_target_groups_meta')) {
   try {
-    const saved = JSON.parse(localStorage.getItem('rr_discovered_groups'));
-    if (saved && saved.length) discoveredGroups = saved;
-  } catch(e){}
-}
-const initialUrls = INITIAL_DISCOVERED_GROUPS.map(g => g.url).filter(Boolean);
-let watchedGroupList = [];
-if (localStorage.getItem('rr_watched_groups')) {
-  try {
-    const saved = JSON.parse(localStorage.getItem('rr_watched_groups'));
-    if (Array.isArray(saved) && saved.length) watchedGroupList = saved;
+    const saved = JSON.parse(localStorage.getItem('rr_target_groups_meta'));
+    if (Array.isArray(saved) && saved.length) targetGroups = saved;
   } catch(e){}
 }
 
-// Always ensure all 27 discovered groups are merged into watchedGroupList
-const existingCleanUrls = new Set(watchedGroupList.map(u => (u || '').trim().toLowerCase().replace(/\/+$/, '')));
-initialUrls.forEach(u => {
-  const clean = (u || '').trim().toLowerCase().replace(/\/+$/, '');
-  if (clean && !existingCleanUrls.has(clean)) {
-    watchedGroupList.push(u);
-    existingCleanUrls.add(clean);
-  }
-});
-if (!watchedGroupList.length) {
-  watchedGroupList = [...DEFAULT_GROUPS];
+if (!targetGroups.length) {
+  targetGroups = INITIAL_DISCOVERED_GROUPS.map(g => ({
+    id: g.id,
+    name: g.name,
+    url: g.url,
+    membersNumber: g.membersNumber,
+    membersText: g.membersText,
+    visibility: g.visibility,
+    description: g.description,
+    selected: true
+  }));
+} else {
+  // Ensure all 27 core groups are present in targetGroups
+  const existingUrls = new Set(targetGroups.map(g => (g.url || '').trim().toLowerCase().replace(/\/+$/, '')));
+  INITIAL_DISCOVERED_GROUPS.forEach(g => {
+    const clean = (g.url || '').trim().toLowerCase().replace(/\/+$/, '');
+    if (clean && !existingUrls.has(clean)) {
+      targetGroups.push({
+        id: g.id,
+        name: g.name,
+        url: g.url,
+        membersNumber: g.membersNumber,
+        membersText: g.membersText,
+        visibility: g.visibility,
+        description: g.description,
+        selected: true
+      });
+      existingUrls.add(clean);
+    }
+  });
 }
-localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+
+let watchedGroupList = targetGroups.map(g => g.url).filter(Boolean);
 
 function updateGroupCountUI() {
-  const count = watchedGroupList.length;
+  const totalTargetCount = targetGroups.length;
+  const selectedCount = targetGroups.filter(g => g.selected).length;
   const finderCount = discoveredGroups ? discoveredGroups.length : 0;
-  if ($('countScraperGroups')) $('countScraperGroups').textContent = count;
-  if ($('countMonitoredGroups')) $('countMonitoredGroups').textContent = count;
+
+  if ($('countScraperGroups')) $('countScraperGroups').textContent = selectedCount;
+  if ($('countMonitoredGroups')) $('countMonitoredGroups').textContent = totalTargetCount;
   if ($('countFinderGroups')) $('countFinderGroups').textContent = finderCount;
-  if ($('targetGroupCountBadge')) $('targetGroupCountBadge').textContent = `${count} group${count === 1 ? '' : 's'} loaded`;
-  if ($('monitoredGroupCountBadge')) $('monitoredGroupCountBadge').textContent = `${count} group${count === 1 ? '' : 's'} loaded`;
+  if ($('targetGroupCountBadge')) $('targetGroupCountBadge').textContent = `${totalTargetCount} groups loaded`;
+  if ($('monitoredGroupCountBadge')) $('monitoredGroupCountBadge').textContent = `${totalTargetCount} groups loaded`;
+  if ($('lblSelectedCount')) $('lblSelectedCount').textContent = selectedCount;
+  if ($('lblTotalScrapeCount')) $('lblTotalScrapeCount').textContent = totalTargetCount;
+  if ($('btnScrapeCount')) $('btnScrapeCount').textContent = selectedCount;
 }
 
-$('targetGroupUrls').value = watchedGroupList.join('\n');
-$('watchedGroups').value = watchedGroupList.join('\n');
-updateGroupCountUI();
+/* RENDER SCRAPER GROUPS TABLE */
+function renderScraperGroups() {
+  const tbody = $('tblScrapeGroupsBody');
+  if (!tbody) return;
 
-$('targetGroupUrls').addEventListener('input', () => {
-  const urls = $('targetGroupUrls').value.split('\n').map(l => l.trim()).filter(Boolean);
-  if ($('targetGroupCountBadge')) $('targetGroupCountBadge').textContent = `${urls.length} group${urls.length === 1 ? '' : 's'} loaded`;
-  if ($('countScraperGroups')) $('countScraperGroups').textContent = urls.length;
-});
+  const search = ($('scraperGroupSearch') ? $('scraperGroupSearch').value : '').toLowerCase().trim();
+  const visible = targetGroups.filter(g => {
+    if (!search) return true;
+    const name = (g.name || '').toLowerCase();
+    const url = (g.url || '').toLowerCase();
+    return name.includes(search) || url.includes(search);
+  });
 
-$('watchedGroups').addEventListener('input', () => {
-  const urls = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
-  if ($('monitoredGroupCountBadge')) $('monitoredGroupCountBadge').textContent = `${urls.length} group${urls.length === 1 ? '' : 's'} loaded`;
-  if ($('countMonitoredGroups')) $('countMonitoredGroups').textContent = urls.length;
-});
+  const selectedCount = targetGroups.filter(g => g.selected).length;
+  updateGroupCountUI();
+
+  const chkAll = $('chkAllScrape');
+  if (chkAll) {
+    chkAll.checked = targetGroups.length > 0 && selectedCount === targetGroups.length;
+    chkAll.indeterminate = selectedCount > 0 && selectedCount < targetGroups.length;
+  }
+
+  // Keep targetGroupUrls textarea synced with selected groups
+  const selectedUrls = targetGroups.filter(g => g.selected).map(g => g.url).filter(Boolean);
+  $('targetGroupUrls').value = selectedUrls.join('\n');
+  if ($('watchedGroups')) $('watchedGroups').value = targetGroups.map(g => g.url).filter(Boolean).join('\n');
+
+  if (!visible.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--mute)">No groups match your search filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = visible.map(g => {
+    const origIdx = targetGroups.indexOf(g);
+    const members = g.membersText || (g.membersNumber ? Number(g.membersNumber).toLocaleString() : '—');
+    const isPriv = g.visibility === 'Private' || g.isPrivate;
+    const privacy = isPriv 
+      ? '<span class="badge" style="background:#ef444422;color:#f87171">Private</span>' 
+      : '<span class="badge" style="background:#00ffcc22;color:var(--teal)">Public</span>';
+    const url = g.url || ('https://www.facebook.com/groups/' + g.id + '/');
+
+    return '<tr>' +
+      '<td><input type="checkbox" class="chk-scrape-group" data-idx="' + origIdx + '" ' + (g.selected ? 'checked' : '') + '></td>' +
+      '<td>' +
+        '<b style="color:#fff">' + esc(g.name || 'Facebook Group') + '</b>' +
+        (g.description ? '<div style="font-size:11px;color:var(--mute);max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(g.description) + '</div>' : '') +
+      '</td>' +
+      '<td class="num">' + esc(members) + '</td>' +
+      '<td>' + privacy + '</td>' +
+      '<td><a href="' + esc(url) + '" target="_blank" rel="noopener">Open Group &rarr;</a></td>' +
+      '<td style="text-align:right">' +
+        '<button type="button" class="btn-scrape-single" data-url="' + esc(url) + '" data-name="' + esc(g.name || 'Group') + '" style="padding:5px 12px;font-size:12px;background:#0d1320;border:1px solid var(--lime);color:var(--lime);border-radius:6px;cursor:pointer;font-weight:700">⚡ Scrape</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  // Attach row checkbox toggles
+  tbody.querySelectorAll('.chk-scrape-group').forEach(chk => {
+    chk.onchange = (e) => {
+      const idx = +e.target.dataset.idx;
+      if (targetGroups[idx]) {
+        targetGroups[idx].selected = e.target.checked;
+        localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+        renderScraperGroups();
+      }
+    };
+  });
+
+  // Attach single-group Scrape buttons
+  tbody.querySelectorAll('.btn-scrape-single').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const url = btn.dataset.url;
+      const name = btn.dataset.name;
+      await runVacancyScrapePipeline([url], name);
+    };
+  });
+}
+
+// Scraper table selection controls
+if ($('chkAllScrape')) {
+  $('chkAllScrape').onchange = (e) => {
+    const val = e.target.checked;
+    targetGroups.forEach(g => g.selected = val);
+    localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+    renderScraperGroups();
+  };
+}
+if ($('btnSelectAllScrape')) {
+  $('btnSelectAllScrape').onclick = () => {
+    targetGroups.forEach(g => g.selected = true);
+    localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+    renderScraperGroups();
+  };
+}
+if ($('btnClearScrape')) {
+  $('btnClearScrape').onclick = () => {
+    targetGroups.forEach(g => g.selected = false);
+    localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+    renderScraperGroups();
+  };
+}
+if ($('scraperGroupSearch')) {
+  $('scraperGroupSearch').oninput = renderScraperGroups;
+}
+
+// Collapsible Custom URL input
+if ($('btnToggleCustomUrl')) {
+  $('btnToggleCustomUrl').onclick = () => {
+    const box = $('customUrlBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  };
+}
+if ($('btnCloseCustomUrl')) {
+  $('btnCloseCustomUrl').onclick = () => {
+    $('customUrlBox').style.display = 'none';
+  };
+}
+if ($('btnAddCustomUrls')) {
+  $('btnAddCustomUrls').onclick = () => {
+    const raw = $('customGroupInput').value;
+    const urls = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!urls.length) return;
+
+    const existingSet = new Set(targetGroups.map(g => (g.url || '').trim().toLowerCase().replace(/\/+$/, '')));
+    let added = 0;
+    urls.forEach(u => {
+      const clean = u.trim().toLowerCase().replace(/\/+$/, '');
+      if (clean && !existingSet.has(clean)) {
+        const slug = clean.split('/').filter(Boolean).pop() || 'Custom Group';
+        targetGroups.unshift({
+          id: slug,
+          name: slug.replace(/[-_]/g, ' '),
+          url: u,
+          membersText: '—',
+          visibility: 'Public',
+          selected: true
+        });
+        existingSet.add(clean);
+        added++;
+      }
+    });
+
+    $('customGroupInput').value = '';
+    $('customUrlBox').style.display = 'none';
+    localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+    renderScraperGroups();
+    alert('✓ Added ' + added + ' new group(s) to Scraper list!');
+  };
+}
+
+renderScraperGroups();
 
 /* NAVIGATION */
 document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
@@ -2399,27 +2601,32 @@ $('btnAddSelectedToScraper').onclick = () => {
     return;
   }
 
-  const newUrls = checked.map(c => {
-    const g = discoveredGroups[c.dataset.idx];
-    return g ? (g.url || `https://www.facebook.com/groups/${g.id}/`) : null;
-  }).filter(Boolean);
-
-  const existingSet = new Set(watchedGroupList.map(u => (u || '').trim().toLowerCase().replace(/\/+$/, '')));
+  const existingSet = new Set(targetGroups.map(u => (u.url || '').trim().toLowerCase().replace(/\/+$/, '')));
   let addedCount = 0;
 
-  newUrls.forEach(u => {
-    const clean = (u || '').trim().toLowerCase().replace(/\/+$/, '');
-    if (clean && !existingSet.has(clean)) {
-      watchedGroupList.push(u);
+  checked.forEach(c => {
+    const g = discoveredGroups[c.dataset.idx];
+    if (!g) return;
+    const url = g.url || ('https://www.facebook.com/groups/' + g.id + '/');
+    const clean = url.trim().toLowerCase().replace(/\/+$/, '');
+    if (!existingSet.has(clean)) {
+      targetGroups.unshift({
+        id: g.id || clean.split('/').pop(),
+        name: g.name || 'Facebook Group',
+        url: url,
+        membersNumber: g.membersNumber || 0,
+        membersText: g.membersText || (g.membersNumber ? Number(g.membersNumber).toLocaleString() : 'N/A'),
+        visibility: g.visibility || (g.isPrivate ? 'Private' : 'Public'),
+        description: g.description || '',
+        selected: true
+      });
       existingSet.add(clean);
       addedCount++;
     }
   });
 
-  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
-  $('watchedGroups').value = watchedGroupList.join('\n');
-  $('targetGroupUrls').value = watchedGroupList.join('\n');
-  updateGroupCountUI();
+  localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+  renderScraperGroups();
 
   // Navigate directly to the Run Group Scrape page
   const scraperTab = document.querySelector('[data-page="scraper"]');
@@ -2428,7 +2635,7 @@ $('btnAddSelectedToScraper').onclick = () => {
   const scrapeStatus = $('scrapeStatus');
   if (scrapeStatus) {
     scrapeStatus.style.display = 'block';
-    scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Added ${checked.length} group${checked.length > 1 ? 's' : ''} to Scraper! (${watchedGroupList.length} total groups loaded). Click "Start Vacancy Scrape" below.</span>`;
+    scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Added ${checked.length} group${checked.length > 1 ? 's' : ''} to Scraper! (${targetGroups.length} total groups loaded). Click "⚡ Scrape" on any group or "Start Vacancy Scrape" below.</span>`;
   }
 };
 
@@ -2588,28 +2795,38 @@ $('typeFilter').onchange = renderFeed;
 $('geoFilter').onchange = renderFeed;
 $('btnRefresh').onclick = loadVacancies;
 
-/* SCRAPER ACTION */
-$('btnStartScrape').onclick = async () => {
-  const urls = $('targetGroupUrls').value.split('\n').map(l => l.trim()).filter(Boolean);
-  if (!urls.length) {
-    alert('Please enter at least one Facebook group URL.');
+/* SCRAPER PIPELINE ACTIONS */
+async function runVacancyScrapePipeline(urls, groupLabel = null) {
+  if (!urls || !urls.length) {
+    alert('Please select at least one Facebook group to scrape.');
     return;
   }
-  $('btnStartScrape').disabled = true;
-  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape (filtering exclusively for emails &amp; Google Forms)...</span>';
+  const btnStart = $('btnStartScrape');
+  if (btnStart) btnStart.disabled = true;
+  document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = true);
+
+  const label = groupLabel ? ('"' + groupLabel + '"') : (urls.length + ' group' + (urls.length === 1 ? '' : 's'));
+  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape on ' + esc(label) + '... (filtering exclusively for emails &amp; Google Forms)...</span>';
+
   try {
     const res = await post('/rr-vacancy-scrape', {
       groupUrls: urls,
       maxPosts: +$('maxPosts').value || 25,
       newerThan: $('newerThan').value || '3 days'
     });
-    $('scrapeStatus').innerHTML = '<span style="color:var(--lime);font-weight:700">✓ Scrape run started! Extracting hiring openings with emails and docs...</span>';
+    $('scrapeStatus').innerHTML = '<span style="color:var(--lime);font-weight:700">✓ Scrape run started on ' + esc(label) + '! Cloudflare Workers AI is extracting hiring openings with emails &amp; docs to Supabase...</span>';
     setTimeout(loadVacancies, 15000);
   } catch (err) {
     $('scrapeStatus').innerHTML = '<span style="color:var(--red)">Error: ' + esc(err.message) + '</span>';
   } finally {
-    $('btnStartScrape').disabled = false;
+    if (btnStart) btnStart.disabled = false;
+    document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = false);
   }
+}
+
+$('btnStartScrape').onclick = async () => {
+  const selectedUrls = targetGroups.filter(g => g.selected).map(g => g.url).filter(Boolean);
+  await runVacancyScrapePipeline(selectedUrls);
 };
 
 // Initial bootstrap: clean and manual
