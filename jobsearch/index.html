@@ -357,143 +357,1618 @@ const DEFAULT_GROUPS = [
 // Exact RoleRover Taxonomy & Aliases from Supabase std_roles & std_role_aliases
 const ROLE_TAXONOMY = [
   {
-    family: "Administrative & Executive Support",
-    roles: [
-      { name: "Executive Assistant", aliases: ["Personal Assistant", "Executive Assistant to CEO", "Exec Assistant", "EA", "Executive Assistant"], userDemand: 3 },
-      { name: "Virtual Assistant", aliases: ["General Virtual Assistant", "Remote Virtual Assistant", "VA", "Virtual Assistant"], userDemand: 2 },
-      { name: "Administrative Assistant", aliases: ["Admin Officer", "Admin Support Specialist", "Administrative Coordinator", "Admin Assistant", "Administrative Assistant"], userDemand: 1 },
-      { name: "Travel / Itinerary Coordinator", aliases: ["Itinerary Planner", "Short-Term Rental Coordinator", "Airbnb Coordinator", "Travel Coordinator", "Travel / Itinerary Coordinator"], userDemand: 1 },
-      { name: "Office Manager", aliases: ["Front Office Manager", "Facilities and Office Manager", "Office Administrator", "Office Manager"], userDemand: 0 },
-      { name: "Chief of Staff", aliases: ["Chief of Staff"], userDemand: 0 },
-      { name: "Scheduling Coordinator", aliases: ["Appointment Coordinator", "Calendar Coordinator", "Scheduling Coordinator"], userDemand: 0 }
+    "family": "Administrative & Executive Support",
+    "roles": [
+      {
+        "name": "Administrative Assistant",
+        "aliases": [
+          "Admin Assistant",
+          "Admin Officer",
+          "Admin Support Specialist",
+          "Administrative Assistant",
+          "Administrative Coordinator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Chief of Staff",
+        "aliases": [
+          "Chief of Staff"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Executive Assistant",
+        "aliases": [
+          "EA",
+          "Exec Assistant",
+          "Executive Assistant",
+          "Executive Assistant to CEO",
+          "Personal Assistant"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Office Manager",
+        "aliases": [
+          "Facilities and Office Manager",
+          "Front Office Manager",
+          "Office Administrator",
+          "Office Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Scheduling Coordinator",
+        "aliases": [
+          "Appointment Coordinator",
+          "Calendar Coordinator",
+          "Scheduling Coordinator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Travel / Itinerary Coordinator",
+        "aliases": [
+          "Airbnb Coordinator",
+          "Itinerary Planner",
+          "Short-Term Rental Coordinator",
+          "Travel / Itinerary Coordinator",
+          "Travel Coordinator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Virtual Assistant",
+        "aliases": [
+          "General Virtual Assistant",
+          "Remote Virtual Assistant",
+          "VA",
+          "Virtual Assistant"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Customer Success & Support",
-    roles: [
-      { name: "Customer Support Representative", aliases: ["Customer Care Representative", "Support Agent", "Customer Service Representative", "Customer Support Representative"], userDemand: 3 },
-      { name: "Customer Success Manager", aliases: ["Client Success Manager", "CSM", "Customer Success Manager"], userDemand: 0 },
-      { name: "Technical Support Engineer", aliases: ["Support Engineer", "Application Support Engineer", "Tier 2 Support Engineer", "Technical Support Engineer"], userDemand: 0 },
-      { name: "IT Help Desk Technician", aliases: ["Desktop Support Technician", "IT Support Technician", "Help Desk Technician", "IT Help Desk Technician"], userDemand: 0 }
+    "family": "AI & Machine Learning",
+    "roles": [
+      {
+        "name": "AI Engineer",
+        "aliases": [
+          "AI Engineer",
+          "Artificial Intelligence Engineer",
+          "Generative AI Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "AI Research Scientist",
+        "aliases": [
+          "AI Research Scientist",
+          "AI Researcher",
+          "Machine Learning Research Scientist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Machine Learning Engineer",
+        "aliases": [
+          "Machine Learning Developer",
+          "Machine Learning Engineer",
+          "ML Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "MLOps Engineer",
+        "aliases": [
+          "Machine Learning Operations Engineer",
+          "ML Platform Engineer",
+          "MLOps Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "NLP Engineer",
+        "aliases": [
+          "Natural Language Processing Engineer",
+          "NLP Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Prompt Engineer",
+        "aliases": [
+          "AI Prompt Designer",
+          "Prompt Engineer",
+          "Prompt Engineering Specialist"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Frontend & Mobile Engineering",
-    roles: [
-      { name: "Frontend Engineer", aliases: ["Front End Developer", "Frontend Developer", "Front-End Engineer", "Frontend Engineer"], userDemand: 3 },
-      { name: "Mobile Engineer (cross-platform)", aliases: ["Flutter Developer", "React Native Developer", "Mobile Developer", "Mobile Engineer (cross-platform)"], userDemand: 0 },
-      { name: "Android Developer", aliases: ["Android Engineer", "Android Developer"], userDemand: 0 },
-      { name: "iOS Developer", aliases: ["iOS Engineer", "iOS Developer"], userDemand: 0 }
+    "family": "AI Data Labelling & Evaluation",
+    "roles": [
+      {
+        "name": "AI Trainer / Data Annotator",
+        "aliases": [
+          "AI Data Trainer",
+          "AI Trainer",
+          "AI Trainer / Data Annotator",
+          "Data Annotator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Data Labeling Specialist",
+        "aliases": [
+          "Annotation Specialist",
+          "Data Labeler",
+          "Data Labeling Specialist"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Full Stack Engineering",
-    roles: [
-      { name: "Full Stack Developer", aliases: ["Full Stack Engineer", "Full-Stack Developer"], userDemand: 2 },
-      { name: "Web Applications Engineer", aliases: ["Web App Engineer", "Web Application Developer", "Web Applications Engineer"], userDemand: 0 }
+    "family": "Backend Engineering",
+    "roles": [
+      {
+        "name": "API Developer",
+        "aliases": [
+          "API Developer",
+          "API Engineer",
+          "Backend API Developer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Backend Engineer",
+        "aliases": [
+          "Back-End Engineer",
+          "Backend Developer",
+          "Backend Engineer",
+          "Backend Software Engineer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Product Design",
-    roles: [
-      { name: "Product Designer", aliases: ["UI/UX Designer", "UX/UI Designer", "Product Designer"], userDemand: 2 },
-      { name: "UX Designer", aliases: ["User Experience Designer", "UX Designer"], userDemand: 1 },
-      { name: "Visual / Web Designer", aliases: ["Graphic Designer", "Web Designer", "Visual Designer", "Visual / Web Designer"], userDemand: 0 },
-      { name: "UX Researcher", aliases: ["User Researcher", "UX Researcher"], userDemand: 0 }
+    "family": "Communications & Public Affairs",
+    "roles": [
+      {
+        "name": "Communications Manager",
+        "aliases": [
+          "Comms Manager",
+          "Communications Manager",
+          "Corporate Communications Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Internal Communications Specialist",
+        "aliases": [
+          "Employee Communications Specialist",
+          "Internal Comms Specialist",
+          "Internal Communications Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "PR Specialist / Public Relations Manager",
+        "aliases": [
+          "PR Manager",
+          "PR Specialist",
+          "PR Specialist / Public Relations Manager",
+          "Public Relations Manager",
+          "Public Relations Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Public Affairs Specialist",
+        "aliases": [
+          "Government Affairs Specialist",
+          "Public Affairs Manager",
+          "Public Affairs Specialist"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Data & Analytics",
-    roles: [
-      { name: "Data Analyst", aliases: ["Data Analytics Specialist", "Data Analyst"], userDemand: 2 },
-      { name: "Data Scientist", aliases: ["Applied Data Scientist", "Data Scientist"], userDemand: 0 },
-      { name: "Business Analyst", aliases: ["Business Systems Analyst", "BA", "Business Analyst"], userDemand: 0 },
-      { name: "Business Intelligence Analyst", aliases: ["BI Developer", "BI Analyst", "Business Intelligence Analyst"], userDemand: 0 }
+    "family": "Content & Technical Writing",
+    "roles": [
+      {
+        "name": "Content Writer",
+        "aliases": [
+          "Blog Writer",
+          "Content Writer",
+          "SEO Content Writer",
+          "Web Content Writer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Copywriter",
+        "aliases": [
+          "Advertising Copywriter",
+          "Copywriter",
+          "Marketing Copywriter"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Editor / Proofreader",
+        "aliases": [
+          "Copy Editor",
+          "Editor",
+          "Editor / Proofreader",
+          "Proofreader"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Journalist",
+        "aliases": [
+          "Journalist",
+          "News Writer",
+          "Reporter"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Writer",
+        "aliases": [
+          "Documentation Specialist",
+          "Knowledge Base Writer",
+          "Technical Documentation Writer",
+          "Technical Writer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Translator",
+        "aliases": [
+          "Language Translator",
+          "Localization Translator",
+          "Translator"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Software Engineering (general)",
-    roles: [
-      { name: "Software Engineer", aliases: ["SWE", "Software Developer", "Software Engineer"], userDemand: 2 },
-      { name: "Systems Engineer", aliases: ["Systems Software Engineer", "Systems Engineer"], userDemand: 0 },
-      { name: "Game Developer", aliases: ["Video Game Developer", "Game Programmer", "Game Developer"], userDemand: 0 }
+    "family": "Customer Success & Support",
+    "roles": [
+      {
+        "name": "Customer Success Manager",
+        "aliases": [
+          "Client Success Manager",
+          "CSM",
+          "Customer Success Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Customer Support Representative",
+        "aliases": [
+          "Customer Care Representative",
+          "Customer Service Representative",
+          "Customer Support Representative",
+          "Support Agent"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Implementation Manager",
+        "aliases": [
+          "Client Implementation Manager",
+          "Implementation Manager",
+          "Onboarding Implementation Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "IT Help Desk Technician",
+        "aliases": [
+          "Desktop Support Technician",
+          "Help Desk Technician",
+          "IT Help Desk Technician",
+          "IT Support Technician"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Onboarding Specialist",
+        "aliases": [
+          "Client Onboarding Specialist",
+          "Customer Onboarding Manager",
+          "Onboarding Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Account Manager",
+        "aliases": [
+          "TAM",
+          "Technical Account Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Support Engineer",
+        "aliases": [
+          "Application Support Engineer",
+          "Support Engineer",
+          "Technical Support Engineer",
+          "Tier 2 Support Engineer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Backend Engineering",
-    roles: [
-      { name: "Backend Engineer", aliases: ["Backend Software Engineer", "Back-End Engineer", "Backend Developer", "Backend Engineer"], userDemand: 1 },
-      { name: "API Developer", aliases: ["Backend API Developer", "API Engineer", "API Developer"], userDemand: 0 }
+    "family": "Cybersecurity & Security Operations",
+    "roles": [
+      {
+        "name": "GRC / Compliance Analyst",
+        "aliases": [
+          "Governance Risk and Compliance Analyst",
+          "GRC / Compliance Analyst",
+          "GRC Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Incident Responder",
+        "aliases": [
+          "Incident Responder",
+          "Incident Response Analyst",
+          "Security Incident Responder"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Penetration Tester",
+        "aliases": [
+          "Ethical Hacker",
+          "Offensive Security Engineer",
+          "Pen Tester",
+          "Penetration Tester"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Security Analyst / SOC Analyst",
+        "aliases": [
+          "Cybersecurity Analyst",
+          "Security Analyst",
+          "Security Analyst / SOC Analyst",
+          "SOC Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Security Engineer",
+        "aliases": [
+          "Information Security Engineer",
+          "InfoSec Engineer",
+          "Security Engineer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Platform & DevOps Engineering",
-    roles: [
-      { name: "DevOps Engineer", aliases: ["Dev Ops Engineer", "DevOps Engineer"], userDemand: 1 },
-      { name: "Cloud Engineer", aliases: ["AWS Engineer", "Cloud Infrastructure Engineer", "Cloud Engineer"], userDemand: 0 },
-      { name: "Site Reliability Engineer", aliases: ["SRE", "Site Reliability Engineer"], userDemand: 0 }
+    "family": "Data & Analytics",
+    "roles": [
+      {
+        "name": "Business Analyst",
+        "aliases": [
+          "BA",
+          "Business Analyst",
+          "Business Systems Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Business Intelligence Analyst",
+        "aliases": [
+          "BI Analyst",
+          "BI Developer",
+          "Business Intelligence Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Data Analyst",
+        "aliases": [
+          "Data Analyst",
+          "Data Analytics Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Data Scientist",
+        "aliases": [
+          "Applied Data Scientist",
+          "Data Scientist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Market Research Analyst",
+        "aliases": [
+          "Consumer Insights Analyst",
+          "Market Research Analyst",
+          "Market Researcher"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "QA & Testing",
-    roles: [
-      { name: "Manual Tester", aliases: ["QA Tester", "Manual QA Tester", "Manual Tester"], userDemand: 1 },
-      { name: "QA Analyst", aliases: ["Quality Assurance Analyst", "QA Analyst"], userDemand: 0 },
-      { name: "QA Engineer", aliases: ["QA Software Engineer", "Quality Assurance Engineer", "QA Engineer"], userDemand: 0 },
-      { name: "SDET / Automation Test Engineer", aliases: ["QA Automation Engineer", "Automation Test Engineer", "SDET", "SDET / Automation Test Engineer"], userDemand: 0 }
+    "family": "Data Engineering",
+    "roles": [
+      {
+        "name": "Analytics Engineer",
+        "aliases": [
+          "Analytics Engineer",
+          "BI Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Data Architect",
+        "aliases": [
+          "Data Architect",
+          "Data Solutions Architect"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Data Engineer",
+        "aliases": [
+          "Big Data Engineer",
+          "Data Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "ETL Engineer",
+        "aliases": [
+          "Data Pipeline Engineer",
+          "ETL Developer",
+          "ETL Engineer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Workflow Automation & Integrations",
-    roles: [
-      { name: "No-Code Developer", aliases: ["No-Code/Low-Code Developer", "Low-Code Developer", "No Code Developer"], userDemand: 1 },
-      { name: "Workflow Automation Engineer", aliases: ["AI Automation", "Workflow Automation Specialist", "Workflow Automation Engineer", "Zapier Expert", "n8n Automation Engineer"], userDemand: 0 }
+    "family": "Data Entry & Transcription",
+    "roles": [
+      {
+        "name": "Data Entry Specialist",
+        "aliases": [
+          "Data Entry Clerk",
+          "Data Entry Operator",
+          "Data Entry Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Transcriptionist / Captioner",
+        "aliases": [
+          "Captioner",
+          "Transcriptionist",
+          "Transcriptionist / Captioner"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Product Management",
-    roles: [
-      { name: "Product Manager", aliases: ["PM", "Product Manager"], userDemand: 1 },
-      { name: "Product Owner", aliases: ["PO", "Product Owner"], userDemand: 0 }
+    "family": "Education & Training",
+    "roles": [
+      {
+        "name": "Academic Advisor",
+        "aliases": [
+          "Academic Advisor",
+          "Academic Counselor",
+          "Student Advisor"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Corporate Trainer",
+        "aliases": [
+          "Corporate Trainer",
+          "Learning Facilitator",
+          "Training Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Curriculum Developer / Instructional Designer",
+        "aliases": [
+          "Curriculum Designer",
+          "Curriculum Developer",
+          "Curriculum Developer / Instructional Designer",
+          "Instructional Designer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Teacher / Instructor",
+        "aliases": [
+          "Instructor",
+          "Teacher",
+          "Teacher / Instructor",
+          "Virtual Teacher"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Tutor",
+        "aliases": [
+          "Online Tutor",
+          "Private Tutor",
+          "Tutor"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Content & Technical Writing",
-    roles: [
-      { name: "Content Writer", aliases: ["Blog Writer", "Web Content Writer", "SEO Content Writer", "Content Writer"], userDemand: 1 },
-      { name: "Journalist", aliases: ["News Writer", "Reporter", "Journalist"], userDemand: 1 },
-      { name: "Technical Writer", aliases: ["Knowledge Base Writer", "Technical Documentation Writer", "Documentation Specialist", "Technical Writer"], userDemand: 1 },
-      { name: "Copywriter", aliases: ["Marketing Copywriter", "Advertising Copywriter", "Copywriter"], userDemand: 0 }
+    "family": "Engineering Leadership",
+    "roles": [
+      {
+        "name": "Director of Engineering",
+        "aliases": [
+          "Director of Engineering",
+          "Engineering Director",
+          "Head of Engineering"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Engineering Manager",
+        "aliases": [
+          "EM",
+          "Engineering Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Lead",
+        "aliases": [
+          "Lead Engineer",
+          "Tech Lead",
+          "Technical Lead"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "VP of Engineering",
+        "aliases": [
+          "Vice President of Engineering",
+          "VP Engineering",
+          "VP of Engineering"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Communications & Public Affairs",
-    roles: [
-      { name: "Internal Communications Specialist", aliases: ["Employee Communications Specialist", "Internal Comms Specialist", "Internal Communications Specialist"], userDemand: 1 },
-      { name: "PR Specialist / Public Relations Manager", aliases: ["PR Manager", "Public Relations Specialist", "PR Specialist"], userDemand: 0 }
+    "family": "Finance & Accounting",
+    "roles": [
+      {
+        "name": "Accountant",
+        "aliases": [
+          "Accountant",
+          "General Accountant",
+          "Staff Accountant"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Auditor",
+        "aliases": [
+          "Auditor",
+          "External Auditor",
+          "Internal Auditor"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Bookkeeper",
+        "aliases": [
+          "Bookkeeper",
+          "Full-Charge Bookkeeper"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Controller",
+        "aliases": [
+          "Controller",
+          "Financial Controller"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Financial Analyst",
+        "aliases": [
+          "Financial Analyst",
+          "FP&A Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Tax Specialist",
+        "aliases": [
+          "Tax Accountant",
+          "Tax Associate",
+          "Tax Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Treasury Analyst",
+        "aliases": [
+          "Treasury Analyst",
+          "Treasury Specialist"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Marketing & Growth",
-    roles: [
-      { name: "Content Marketing Manager", aliases: ["Content Marketing Lead", "Content Marketing Manager"], userDemand: 1 },
-      { name: "Email / CRM Marketing Manager", aliases: ["Email Marketing Specialist", "CRM Marketing Specialist", "Email Marketing Manager"], userDemand: 1 },
-      { name: "Digital Marketing Manager", aliases: ["Digital Marketer", "Digital Marketing Specialist", "Digital Marketing Manager"], userDemand: 0 },
-      { name: "Growth Marketing Manager", aliases: ["Performance Marketing Manager", "Growth Marketer", "Growth Marketing Manager"], userDemand: 0 }
+    "family": "Frontend & Mobile Engineering",
+    "roles": [
+      {
+        "name": "Android Developer",
+        "aliases": [
+          "Android Developer",
+          "Android Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Frontend Engineer",
+        "aliases": [
+          "Front End Developer",
+          "Front-End Engineer",
+          "Frontend Developer",
+          "Frontend Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "iOS Developer",
+        "aliases": [
+          "iOS Developer",
+          "iOS Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Mobile Engineer (cross-platform)",
+        "aliases": [
+          "Flutter Developer",
+          "Mobile Developer",
+          "Mobile Engineer (cross-platform)",
+          "React Native Developer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Operations & Supply Chain",
-    roles: [
-      { name: "Operations Manager", aliases: ["Business Operations Manager", "Ops Manager"], userDemand: 1 },
-      { name: "Operations Analyst", aliases: ["Business Operations Analyst", "Ops Analyst"], userDemand: 0 }
+    "family": "Full Stack Engineering",
+    "roles": [
+      {
+        "name": "Full Stack Developer",
+        "aliases": [
+          "Full Stack Engineer",
+          "Full-Stack Developer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Web Applications Engineer",
+        "aliases": [
+          "Web App Engineer",
+          "Web Application Developer",
+          "Web Applications Engineer"
+        ],
+        "userDemand": 1
+      }
     ]
   },
   {
-    family: "Cybersecurity & Security Operations",
-    roles: [
-      { name: "Penetration Tester", aliases: ["Offensive Security Engineer", "Ethical Hacker", "Pen Tester", "Penetration Tester"], userDemand: 1 },
-      { name: "Security Analyst / SOC Analyst", aliases: ["Cybersecurity Analyst", "SOC Analyst", "Security Analyst"], userDemand: 0 }
+    "family": "Hardware & Robotics Engineering",
+    "roles": [
+      {
+        "name": "Hardware Engineer",
+        "aliases": [
+          "Electrical Hardware Engineer",
+          "Electronics Engineer",
+          "Hardware Design Engineer",
+          "Hardware Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Robotics Engineer",
+        "aliases": [
+          "Mechatronics Engineer",
+          "Robotics Engineer",
+          "Robotics Software Engineer"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Human Resources",
+    "roles": [
+      {
+        "name": "Compensation & Benefits Specialist",
+        "aliases": [
+          "Benefits Specialist",
+          "Comp and Benefits Analyst",
+          "Compensation & Benefits Specialist",
+          "Compensation and Benefits Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "HR Business Partner",
+        "aliases": [
+          "HR Business Partner",
+          "HRBP"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "HR Generalist",
+        "aliases": [
+          "HR Generalist",
+          "HR Officer",
+          "Human Resources Generalist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "L&D / Training Coordinator",
+        "aliases": [
+          "L&D / Training Coordinator",
+          "L&D Specialist",
+          "Learning and Development Coordinator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "People Operations Specialist",
+        "aliases": [
+          "People Operations Coordinator",
+          "People Ops Specialist"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Legal & Compliance",
+    "roles": [
+      {
+        "name": "Compliance Officer / Analyst",
+        "aliases": [
+          "Compliance Analyst",
+          "Compliance Officer",
+          "Compliance Officer / Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Contracts Specialist / Contracts Manager",
+        "aliases": [
+          "Contract Administrator",
+          "Contracts Manager",
+          "Contracts Specialist",
+          "Contracts Specialist / Contracts Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Legal Counsel (in-house)",
+        "aliases": [
+          "Corporate Counsel",
+          "General Counsel",
+          "In-House Counsel",
+          "Legal Counsel (in-house)"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Legal Operations Specialist",
+        "aliases": [
+          "Legal Operations Manager",
+          "Legal Ops Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Paralegal",
+        "aliases": [
+          "Legal Assistant",
+          "Paralegal"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Marketing & Growth",
+    "roles": [
+      {
+        "name": "Brand Manager",
+        "aliases": [
+          "Brand Manager",
+          "Brand Marketing Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Community Manager",
+        "aliases": [
+          "Community Manager",
+          "Online Community Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Content Marketing Manager",
+        "aliases": [
+          "Content Marketing Lead",
+          "Content Marketing Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Content Strategist",
+        "aliases": [
+          "Content Strategist",
+          "Content Strategy Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Creative Director",
+        "aliases": [
+          "Creative Director",
+          "Creative Lead",
+          "Executive Creative Director",
+          "Head of Creative"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Digital Marketing Manager",
+        "aliases": [
+          "Digital Marketer",
+          "Digital Marketing Manager",
+          "Digital Marketing Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Email / CRM Marketing Manager",
+        "aliases": [
+          "CRM Marketing Specialist",
+          "Email / CRM Marketing Manager",
+          "Email Marketing Manager",
+          "Email Marketing Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Growth Marketing Manager",
+        "aliases": [
+          "Growth Marketer",
+          "Growth Marketing Manager",
+          "Performance Marketing Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Media Buyer",
+        "aliases": [
+          "Ad Buyer",
+          "Media Buyer",
+          "Paid Media Buyer",
+          "Programmatic Media Buyer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Product Marketing Manager",
+        "aliases": [
+          "PMM",
+          "Product Marketing Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "SEO Manager",
+        "aliases": [
+          "Search Engine Optimization Manager",
+          "SEO Manager",
+          "SEO Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Social Media Manager",
+        "aliases": [
+          "Social Media Coordinator",
+          "Social Media Manager",
+          "Social Media Specialist"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Motion Design & VFX",
+    "roles": [
+      {
+        "name": "3D Animator / Artist",
+        "aliases": [
+          "3D Animator",
+          "3D Animator / Artist",
+          "3D Artist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Motion Designer",
+        "aliases": [
+          "Motion Designer",
+          "Motion Graphics Designer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "VFX Artist",
+        "aliases": [
+          "VFX Artist",
+          "Visual Effects Artist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Video Editor",
+        "aliases": [
+          "Video Editor",
+          "Video Production Editor"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Operations & Supply Chain",
+    "roles": [
+      {
+        "name": "Logistics Coordinator",
+        "aliases": [
+          "Logistics Coordinator",
+          "Logistics Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Operations Analyst",
+        "aliases": [
+          "Business Operations Analyst",
+          "Ops Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Operations Manager",
+        "aliases": [
+          "Business Operations Manager",
+          "Ops Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Process Improvement Specialist",
+        "aliases": [
+          "Continuous Improvement Specialist",
+          "Process Improvement Analyst",
+          "Process Improvement Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Procurement Specialist",
+        "aliases": [
+          "Buyer",
+          "Procurement Officer",
+          "Procurement Specialist",
+          "Purchasing Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Supply Chain Manager",
+        "aliases": [
+          "Supply Chain Manager",
+          "Supply Chain Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Vendor Manager",
+        "aliases": [
+          "Supplier Manager",
+          "Vendor Management Specialist",
+          "Vendor Manager"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Platform & DevOps Engineering",
+    "roles": [
+      {
+        "name": "Cloud Engineer",
+        "aliases": [
+          "AWS Engineer",
+          "Cloud Engineer",
+          "Cloud Infrastructure Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "DevOps Engineer",
+        "aliases": [
+          "Dev Ops Engineer",
+          "DevOps Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Network Engineer",
+        "aliases": [
+          "Network Administrator",
+          "Network Engineer",
+          "Network Infrastructure Engineer",
+          "Systems Network Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Platform Engineer",
+        "aliases": [
+          "Infrastructure Engineer",
+          "Platform Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Site Reliability Engineer",
+        "aliases": [
+          "Site Reliability Engineer",
+          "SRE"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Product Design",
+    "roles": [
+      {
+        "name": "Product Designer",
+        "aliases": [
+          "Product Designer",
+          "UI/UX Designer",
+          "UX/UI Designer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "UX Designer",
+        "aliases": [
+          "User Experience Designer",
+          "UX Designer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "UX Researcher",
+        "aliases": [
+          "User Researcher",
+          "UX Researcher"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Visual / Web Designer",
+        "aliases": [
+          "Graphic Designer",
+          "Visual / Web Designer",
+          "Visual Designer",
+          "Web Designer"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Product Management",
+    "roles": [
+      {
+        "name": "Product Manager",
+        "aliases": [
+          "PM",
+          "Product Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Product Operations Manager",
+        "aliases": [
+          "Product Ops Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Product Owner",
+        "aliases": [
+          "PO",
+          "Product Owner"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Product Manager",
+        "aliases": [
+          "Technical Product Manager",
+          "TPM"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Project & Program Management",
+    "roles": [
+      {
+        "name": "Delivery Manager",
+        "aliases": [
+          "Delivery Manager",
+          "Project Delivery Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Program Manager",
+        "aliases": [
+          "Program Manager",
+          "Programme Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Project Manager",
+        "aliases": [
+          "Project Lead",
+          "Project Manager",
+          "Technical Project Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Project Portfolio Manager",
+        "aliases": [
+          "IT Portfolio Manager",
+          "Portfolio Manager (Projects)",
+          "Project Portfolio Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Scrum Master",
+        "aliases": [
+          "Agile Coach",
+          "Agile Project Manager",
+          "Scrum Master"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "QA & Testing",
+    "roles": [
+      {
+        "name": "Manual Tester",
+        "aliases": [
+          "Manual QA Tester",
+          "Manual Tester",
+          "QA Tester"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "QA Analyst",
+        "aliases": [
+          "QA Analyst",
+          "Quality Assurance Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "QA Engineer",
+        "aliases": [
+          "QA Engineer",
+          "QA Software Engineer",
+          "Quality Assurance Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "SDET / Automation Test Engineer",
+        "aliases": [
+          "Automation Test Engineer",
+          "QA Automation Engineer",
+          "SDET",
+          "SDET / Automation Test Engineer"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Quantitative Finance & Trading",
+    "roles": [
+      {
+        "name": "Credit / Risk Analyst",
+        "aliases": [
+          "Credit / Risk Analyst",
+          "Credit Analyst",
+          "Risk Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Investment Analyst",
+        "aliases": [
+          "Investment Analyst",
+          "Investment Research Analyst"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Portfolio Manager (Investments)",
+        "aliases": [
+          "Fund Manager",
+          "Investment Portfolio Manager",
+          "Portfolio Manager (Investments)"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Quantitative Analyst / Researcher",
+        "aliases": [
+          "Quant Analyst",
+          "Quant Researcher",
+          "Quantitative Analyst / Researcher",
+          "Quantitative Researcher"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Trader",
+        "aliases": [
+          "Equity Trader",
+          "Proprietary Trader",
+          "Trader"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Sales & Account Management",
+    "roles": [
+      {
+        "name": "Account Executive",
+        "aliases": [
+          "Account Executive",
+          "AE",
+          "New Business Account Executive"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Account Manager",
+        "aliases": [
+          "Account Manager",
+          "Client Account Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Appointment Setter",
+        "aliases": [
+          "Appointment Scheduler",
+          "Appointment Setter"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Business Development Manager",
+        "aliases": [
+          "BDM",
+          "Business Development Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Business Development Representative (BDR)",
+        "aliases": [
+          "BDR",
+          "Business Development Representative (BDR)"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Channel Manager / Territory Manager",
+        "aliases": [
+          "Channel Manager",
+          "Channel Manager / Territory Manager",
+          "Channel Sales Manager",
+          "Territory Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Lead Generation Specialist",
+        "aliases": [
+          "Lead Gen Specialist",
+          "Lead Generation Executive",
+          "Lead Generation Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Sales Development Representative (SDR)",
+        "aliases": [
+          "Sales Development Representative (SDR)",
+          "SDR"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Sales Manager",
+        "aliases": [
+          "Regional Sales Manager",
+          "Sales Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Sales Operations / RevOps",
+        "aliases": [
+          "Revenue Operations Manager",
+          "RevOps Manager",
+          "Sales Operations / RevOps",
+          "Sales Ops Manager"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Sales Representative",
+        "aliases": [
+          "Technical Sales Executive",
+          "Technical Sales Rep",
+          "Technical Sales Representative"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Telemarketing Representative",
+        "aliases": [
+          "Telemarketer",
+          "Telemarketing Representative",
+          "Telesales Representative"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Software Engineering (general)",
+    "roles": [
+      {
+        "name": "Blockchain Engineer",
+        "aliases": [
+          "Blockchain Developer",
+          "Blockchain Engineer",
+          "Smart Contract Engineer",
+          "Web3 Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Embedded / Firmware Engineer",
+        "aliases": [
+          "Embedded / Firmware Engineer",
+          "Embedded Engineer",
+          "Embedded Systems Engineer",
+          "Firmware Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Game Developer",
+        "aliases": [
+          "Game Developer",
+          "Game Programmer",
+          "Video Game Developer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Software Engineer",
+        "aliases": [
+          "Software Developer",
+          "Software Engineer",
+          "SWE"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Systems Engineer",
+        "aliases": [
+          "Systems Engineer",
+          "Systems Software Engineer"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Solutions Engineering & Pre-Sales",
+    "roles": [
+      {
+        "name": "Sales Engineer",
+        "aliases": [
+          "Pre-Sales Engineer",
+          "Sales Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Solutions Architect",
+        "aliases": [
+          "Solutions Architect",
+          "Technical Solutions Architect"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Solutions Engineer",
+        "aliases": [
+          "Pre-Sales Solutions Engineer",
+          "Solutions Consultant",
+          "Solutions Engineer"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Talent Acquisition & Recruiting",
+    "roles": [
+      {
+        "name": "Recruiter",
+        "aliases": [
+          "HR Recruiter",
+          "Recruiter",
+          "Talent Acquisition Specialist"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Recruiting Coordinator",
+        "aliases": [
+          "Recruiting Coordinator",
+          "Recruitment Coordinator",
+          "Talent Acquisition Coordinator"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Sourcer",
+        "aliases": [
+          "Candidate Sourcer",
+          "Sourcer",
+          "Talent Sourcer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Talent Acquisition Partner",
+        "aliases": [
+          "TA Partner",
+          "Talent Acquisition Business Partner",
+          "Talent Acquisition Partner"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Technical Recruiter",
+        "aliases": [
+          "IT Recruiter",
+          "Tech Recruiter",
+          "Technical Recruiter"
+        ],
+        "userDemand": 1
+      }
+    ]
+  },
+  {
+    "family": "Workflow Automation & Integrations",
+    "roles": [
+      {
+        "name": "No-Code Developer",
+        "aliases": [
+          "Low-Code Developer",
+          "No Code Developer",
+          "No-Code/Low-Code Developer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "RevOps Automation Developer",
+        "aliases": [
+          "Revenue Operations Automation Developer",
+          "RevOps Automation Developer",
+          "RevOps Automation Engineer"
+        ],
+        "userDemand": 1
+      },
+      {
+        "name": "Workflow Automation Engineer",
+        "aliases": [
+          "AI Automation",
+          "AI Automation Engineer",
+          "AI Automation Specialist",
+          "AI Workflow Engineer",
+          "Automation Engineer",
+          "Automation Engineer (n8n / Zapier / Make)",
+          "Automation Specialist",
+          "n8n Automation Engineer",
+          "Workflow Automation Engineer",
+          "Workflow Automation Specialist",
+          "Zapier Expert"
+        ],
+        "userDemand": 1
+      }
     ]
   }
 ];
