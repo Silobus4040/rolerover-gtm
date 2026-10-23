@@ -160,19 +160,17 @@
           <input id="qFilter" placeholder="Search by role, skill, company...">
           <select id="roleFamilyFilter" style="max-width:240px">
             <option value="all">All Roles &amp; Families</option>
-            <optgroup label="🔥 Highest Demand (3+ Users)">
-              <option value="executive assistant">Executive Assistant (3 users)</option>
-              <option value="customer support">Customer Support Rep (3 users)</option>
-              <option value="frontend">Frontend Engineer (3 users)</option>
+            <optgroup label="High Demand Roles">
+              <option value="executive assistant">Executive Assistant</option>
+              <option value="customer support">Customer Support Rep</option>
+              <option value="frontend">Frontend Engineer</option>
+              <option value="virtual assistant">Virtual Assistant</option>
+              <option value="full stack">Full Stack Developer</option>
+              <option value="product designer">Product Designer / UX</option>
+              <option value="data analyst">Data Analyst</option>
+              <option value="software engineer">Software Engineer</option>
             </optgroup>
-            <optgroup label="⚡ Strong Demand (2 Users)">
-              <option value="virtual assistant">Virtual Assistant (2 users)</option>
-              <option value="full stack">Full Stack Developer (2 users)</option>
-              <option value="product designer">Product Designer / UX (2 users)</option>
-              <option value="data analyst">Data Analyst (2 users)</option>
-              <option value="software engineer">Software Engineer (2 users)</option>
-            </optgroup>
-            <optgroup label="🎯 Specialized Roles (1 User)">
+            <optgroup label="Specialized Roles">
               <option value="backend">Backend Engineer</option>
               <option value="devops">DevOps Engineer</option>
               <option value="qa">Manual Tester / QA</option>
@@ -207,49 +205,36 @@
       <!-- PAGE: GROUP FINDER MATRIX -->
       <section class="page" id="page-finder">
         <div class="card">
-          <div class="step">Targeted Facebook Group Discovery &middot; User Country &times; Role Matrix</div>
+          <div class="step">Targeted Facebook Group Discovery &middot; Country &times; Role Matrix</div>
           <p style="color:var(--mute);font-size:13px;margin:0 0 16px">
-            Select a target country where your users are based, and choose their role. The system pulls that role's <b>exact database aliases</b> (e.g. <i>Customer Care Rep</i>, <i>Support Agent</i>) plus native language pairings (e.g. French translations for Cameroon) to locate relevant hiring communities.
+            Select a target role and choose your target countries. The system matches that role's <b>exact database aliases</b> (e.g. <i>Customer Care Rep</i>, <i>Support Agent</i>) plus native language pairings (e.g. French translations for Cameroon) to locate relevant hiring communities.
           </p>
 
           <div class="row" style="align-items:flex-start">
-            <div style="flex:1.2;min-width:280px">
-              <label for="matrixRole">Target Role (Exact Database Taxonomy)</label>
+            <div style="flex:1;min-width:260px">
+              <label for="matrixRole">Target Role</label>
               <select id="matrixRole"></select>
             </div>
 
-            <div style="flex:2;min-width:320px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <label style="margin:0">Target Countries (Multi-Select &middot; Click to Toggle)</label>
-                <div style="display:flex;gap:6px">
-                  <button type="button" class="ghost" id="btnSelectAllUserCountries" style="padding:2px 8px;font-size:11px">+ All User Countries</button>
-                  <button type="button" class="ghost" id="btnClearCountries" style="padding:2px 8px;font-size:11px">Clear</button>
-                </div>
+            <div style="flex:1.2;min-width:280px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                <label style="margin:0" for="countrySelect">Select Target Countries</label>
+                <button type="button" class="ghost" id="btnClearCountries" style="padding:1px 8px;font-size:11px">Clear all</button>
               </div>
-              <div id="quickCountryChips" class="pill-box" style="margin:0 0 8px"></div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <select id="addMoreCountrySelect" style="max-width:240px">
-                  <option value="">+ Add any other country...</option>
-                </select>
-                <span class="muted small" id="countryCountLabel">1 country selected</span>
-              </div>
+              <select id="countrySelect"></select>
+              <div id="selectedCountriesPills" class="pill-box" style="margin-top:8px;min-height:28px"></div>
             </div>
           </div>
 
-          <div style="margin-top:16px">
-            <label>Suggested In-Demand Roles (Active RoleRover Users &mdash; Click to Select):</label>
-            <div id="suggestedRolePills" class="pill-box"></div>
-          </div>
-
-          <div style="margin-top:12px">
-            <label>Exact Role Aliases Loaded From System Database (<span id="aliasCount">0</span> aliases):</label>
+          <div style="margin-top:14px">
+            <label>Exact Role Aliases Loaded From Database (<span id="aliasCount">0</span> aliases):</label>
             <div id="aliasPills" class="pill-box"></div>
           </div>
 
           <div style="margin-top:10px">
-            <label>Generated Facebook Search Phrases (Live Preview for <span id="selectedCountriesLabel" style="color:var(--lime)">Nigeria</span>):</label>
+            <label>Generated Search Phrases (Live Preview):</label>
             <div id="queryPills" class="pill-box"></div>
-            <textarea id="customQueries" rows="3" placeholder="Generated search phrases appear here, you can edit or add custom keywords..."></textarea>
+            <textarea id="customQueries" rows="3" placeholder="Generated search phrases appear here..."></textarea>
           </div>
 
           <div class="row" style="margin-top:14px">
@@ -573,9 +558,10 @@ Object.entries(USER_COUNTRY_ROLES).forEach(([cName, list]) => {
   });
 });
 
-// Standard World Countries (Clean Country Names)
+// Standard World Countries (Clean Country Names Only)
 const WORLD_COUNTRIES = [
-  "Worldwide", "Nigeria", "Kenya", "Cameroon", "Ghana", "South Africa", "Niger",
+  "Worldwide / Remote",
+  "Nigeria", "Kenya", "Cameroon", "Ghana", "South Africa", "Niger",
   "United States", "Canada", "United Kingdom", "Germany", "France", "Netherlands",
   "Australia", "Brazil", "Egypt", "Ethiopia", "India", "Ireland", "Ivory Coast",
   "Morocco", "Philippines", "Poland", "Portugal", "Rwanda", "Senegal", "Singapore",
@@ -583,42 +569,8 @@ const WORLD_COUNTRIES = [
   "United Arab Emirates", "Zambia", "Zimbabwe"
 ];
 
-const QUICK_COUNTRIES = [
-  { name: "Worldwide", label: "🌐 Worldwide / Global" },
-  { name: "Nigeria", label: "🇳🇬 Nigeria" },
-  { name: "Kenya", label: "🇰🇪 Kenya" },
-  { name: "Cameroon", label: "🇨🇲 Cameroon" },
-  { name: "Ghana", label: "🇬🇭 Ghana" },
-  { name: "South Africa", label: "🇿🇦 South Africa" },
-  { name: "Niger", label: "🇳🇪 Niger" },
-  { name: "United States", label: "🇺🇸 United States" },
-  { name: "Canada", label: "🇨🇦 Canada" },
-  { name: "United Kingdom", label: "🇬🇧 United Kingdom" }
-];
-
-const IN_DEMAND_ROLES = [
-  { role: "Executive Assistant", count: 3 },
-  { role: "Customer Support Representative", count: 3 },
-  { role: "Frontend Engineer", count: 3 },
-  { role: "Virtual Assistant", count: 2 },
-  { role: "Full Stack Developer", count: 2 },
-  { role: "Product Designer", count: 2 },
-  { role: "Data Analyst", count: 2 },
-  { role: "Software Engineer", count: 2 },
-  { role: "Product Manager", count: 1 },
-  { role: "Administrative Assistant", count: 1 },
-  { role: "Internal Communications Specialist", count: 1 },
-  { role: "Backend Engineer", count: 1 },
-  { role: "DevOps Engineer", count: 1 },
-  { role: "No-Code Developer", count: 1 },
-  { role: "Technical Writer", count: 1 },
-  { role: "Content Writer", count: 1 },
-  { role: "Operations Manager", count: 1 },
-  { role: "Penetration Tester", count: 1 },
-  { role: "Manual Tester", count: 1 }
-];
-
-const selectedCountries = new Set(["Nigeria"]);
+// User selects countries dynamically - not preloaded
+const selectedCountries = new Set();
 
 let vacancies = [];
 let discoveredGroups = [];
@@ -676,17 +628,15 @@ function populateRoleDropdown() {
     sel.appendChild(optGroup);
   });
   sel.value = 'Executive Assistant';
+  sel.onchange = updateMatrixPreview;
 }
 
-/* POPULATE ADD MORE COUNTRY DROPDOWN */
-function populateMoreCountriesDropdown() {
-  const sel = $('addMoreCountrySelect');
-  sel.innerHTML = '<option value="">+ Add any other country...</option>';
+/* POPULATE COUNTRY DROPDOWN (USER SELECTS MANUALLY) */
+function populateCountryDropdown() {
+  const sel = $('countrySelect');
+  sel.innerHTML = '<option value="">+ Click to choose country (or Worldwide)...</option>';
   
-  const quickSet = new Set(QUICK_COUNTRIES.map(c => c.name));
-  const remaining = WORLD_COUNTRIES.filter(c => !quickSet.has(c)).sort();
-  
-  remaining.forEach(c => {
+  WORLD_COUNTRIES.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c;
     opt.textContent = c;
@@ -697,89 +647,40 @@ function populateMoreCountriesDropdown() {
     if (sel.value) {
       selectedCountries.add(sel.value);
       sel.value = '';
-      renderCountryChips();
+      renderSelectedCountryPills();
       updateMatrixPreview();
     }
   };
 }
 
-/* RENDER COUNTRY CHIPS (MULTI-SELECT) */
-function renderCountryChips() {
-  const box = $('quickCountryChips');
-  const quickNames = new Set(QUICK_COUNTRIES.map(c => c.name));
-
-  // Quick list
-  let html = QUICK_COUNTRIES.map(c => {
-    const active = selectedCountries.has(c.name);
-    return `<button type="button" class="pill pill-suggest ${active ? 'active' : ''}" onclick="toggleCountry('${esc(c.name)}')">
-      ${esc(c.label)} ${active ? '&check;' : ''}
-    </button>`;
-  }).join('');
-
-  // Custom countries added beyond quick list
-  selectedCountries.forEach(c => {
-    if (!quickNames.has(c)) {
-      html += `<button type="button" class="pill pill-suggest active" onclick="toggleCountry('${esc(c)}')">
-        📍 ${esc(c)} &times;
-      </button>`;
-    }
-  });
-
-  box.innerHTML = html;
-
-  const count = selectedCountries.size;
-  $('countryCountLabel').textContent = count ? `${count} countr${count>1?'ies':'y'} selected` : 'No country selected';
-  $('selectedCountriesLabel').textContent = count ? Array.from(selectedCountries).join(', ') : 'None';
-}
-
-function toggleCountry(cName) {
-  if (selectedCountries.has(cName)) {
-    if (selectedCountries.size > 1) {
-      selectedCountries.delete(cName);
-    }
-  } else {
-    selectedCountries.add(cName);
+function renderSelectedCountryPills() {
+  const box = $('selectedCountriesPills');
+  if (!selectedCountries.size) {
+    box.innerHTML = '<span class="muted small" style="font-style:italic">No country selected yet &mdash; pick from the dropdown above.</span>';
+    return;
   }
-  renderCountryChips();
-  updateMatrixPreview();
+
+  box.innerHTML = Array.from(selectedCountries).map(c => `
+    <span class="pill pill-suggest active" style="cursor:default">
+      ${esc(c)}
+      <span class="chip-x" style="cursor:pointer;margin-left:7px;font-weight:bold" onclick="removeCountry('${esc(c)}')">&times;</span>
+    </span>
+  `).join('');
 }
 
-$('btnSelectAllUserCountries').onclick = () => {
-  ["Nigeria", "Kenya", "Cameroon", "Ghana", "Niger", "United States", "Canada"].forEach(c => selectedCountries.add(c));
-  renderCountryChips();
+function removeCountry(c) {
+  selectedCountries.delete(c);
+  renderSelectedCountryPills();
   updateMatrixPreview();
-};
+}
 
 $('btnClearCountries').onclick = () => {
   selectedCountries.clear();
-  selectedCountries.add("Worldwide");
-  renderCountryChips();
+  renderSelectedCountryPills();
   updateMatrixPreview();
 };
 
-/* RENDER SUGGESTED IN-DEMAND ROLES */
-function renderSuggestedRolePills() {
-  const current = $('matrixRole').value;
-  $('suggestedRolePills').innerHTML = IN_DEMAND_ROLES.map(r => {
-    const active = r.role === current;
-    return `<span class="pill pill-suggest ${active ? 'active' : ''}" onclick="selectSuggestedRole('${esc(r.role)}')">
-      🔥 ${esc(r.role)} (${r.count} users)
-    </span>`;
-  }).join('');
-}
-
-function selectSuggestedRole(roleName) {
-  $('matrixRole').value = roleName;
-  renderSuggestedRolePills();
-  updateMatrixPreview();
-}
-
-$('matrixRole').onchange = () => {
-  renderSuggestedRolePills();
-  updateMatrixPreview();
-};
-
-/* UPDATE SEARCH QUERY PREVIEW FOR ALL SELECTED COUNTRIES */
+/* UPDATE SEARCH QUERY PREVIEW BASED ON USER-CHOSEN COUNTRIES & ROLE */
 function updateMatrixPreview() {
   const roleName = $('matrixRole').value;
   const roleData = findRoleData(roleName);
@@ -789,12 +690,16 @@ function updateMatrixPreview() {
   $('aliasCount').textContent = aliases.length;
   $('aliasPills').innerHTML = aliases.map(a => `<span class="pill pill-role"><span class="pill-tag">Alias</span>${esc(a)}</span>`).join('');
 
-  let queries = [];
-  const countries = selectedCountries.size ? Array.from(selectedCountries) : ["Worldwide"];
+  if (!selectedCountries.size) {
+    $('queryPills').innerHTML = '<span class="muted small" style="font-style:italic">Select a country or Worldwide above to generate search phrases.</span>';
+    $('customQueries').value = '';
+    return;
+  }
 
-  countries.forEach(country => {
+  let queries = [];
+  selectedCountries.forEach(country => {
     const isCameroon = country.toLowerCase() === 'cameroon';
-    const isWorldwide = country.toLowerCase() === 'worldwide';
+    const isWorldwide = country.toLowerCase().includes('worldwide') || country.toLowerCase().includes('remote');
 
     if (isWorldwide) {
       queries.push(`Remote Jobs`);
@@ -808,7 +713,7 @@ function updateMatrixPreview() {
       queries.push(`${roleName} Cameroon`);
       aliases.slice(0, 2).forEach(al => queries.push(`${al} Cameroon`));
 
-      // French mappings for top roles
+      // French mappings
       if (roleName.includes('Executive') || roleName.includes('Virtual Assistant')) {
         queries.push(`Assistante Virtuelle Cameroun`);
         queries.push(`Assistante de Direction Cameroun`);
@@ -1106,11 +1011,10 @@ $('btnStartScrape').onclick = async () => {
   }
 };
 
-// Initial bootstrap
+// Initial bootstrap: clean and manual
 populateRoleDropdown();
-populateMoreCountriesDropdown();
-renderCountryChips();
-renderSuggestedRolePills();
+populateCountryDropdown();
+renderSelectedCountryPills();
 updateMatrixPreview();
 loadVacancies();
 </script>
