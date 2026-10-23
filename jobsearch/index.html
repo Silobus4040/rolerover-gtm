@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>RoleRover &middot; Job Vacancy Discovery (Direct Email &amp; Google Forms)</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0b0f17; --card:#121826; --card2:#161d2d; --line:#232c40; --text:#e8ecf4; --mute:#8b96ad;
+    --lime:#D4FF33; --teal:#00FFCC; --red:#f87171; --orange:#fb923c; --blue:#60a5fa; --amber:#fbbf24; --purple:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .app-layout{display:flex;min-height:100vh}
+  .app-sidebar{width:260px;min-width:260px;background:#0d121d;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sidebar-logo-area{display:flex;align-items:center;gap:12px;min-height:70px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--lime),var(--teal));display:grid;place-items:center;font-weight:800;color:#0b0f17;box-shadow:0 6px 20px #d4ff3333}
+  .sidebar-logo-area b{display:block;font-size:15px;line-height:1.2}
+  .sidebar-logo-area span{display:block;font-size:11px;color:var(--mute)}
+  .sidebar-nav{padding:14px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .sidebar-nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:9px;border:0;border-left:3px solid transparent;background:transparent;color:var(--mute);font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+  .sidebar-nav-item:hover{background:#ffffff0a;color:var(--text)}
+  .sidebar-nav-item.active{background:#d4ff3314;color:var(--text);font-weight:700;border-left-color:var(--lime)}
+  .sidebar-badge{margin-left:auto;background:var(--teal);color:#0b0f17;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px}
+  .sidebar-foot{padding:14px 16px;border-top:1px solid var(--line);font-size:12px}
+  .sidebar-foot a{color:var(--lime);text-decoration:none;font-weight:700}
+  .app-main{flex:1;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);background:var(--bg)}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+  .step{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:10px}
+  label{display:block;font-size:11px;color:var(--mute);font-weight:600;margin-bottom:5px}
+  input,select,textarea{width:100%;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit}
+  input:focus,select:focus,textarea:focus{outline:2px solid #d4ff3366;border-color:var(--lime)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:140px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:700;color:#0b0f17;background:linear-gradient(90deg,var(--lime),var(--teal))}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:#0d1320;border:1px solid var(--line);color:var(--text);font-weight:600;padding:8px 12px}
+  button.ghost:hover{border-color:var(--lime)}
+  .status{margin-top:12px;color:var(--mute);display:flex;gap:8px;align-items:center}
+  .spin{width:14px;height:14px;border:2px solid #d4ff3344;border-top-color:var(--lime);border-radius:50%;animation:s .8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left}
+  .stat-card b{display:block;font-size:26px;color:var(--lime);font-weight:800}
+  .stat-card span{color:var(--mute);font-size:12px}
+  .vacancies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px}
+  .vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s}
+  .vcard:hover{border-color:#d4ff3366}
+  .vcard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .vcard-title{font-size:16px;font-weight:700;color:#fff;line-height:1.3}
+  .vcard-company{font-size:12px;color:var(--mute);margin-top:2px}
+  .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+  .badge-email{background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55}
+  .badge-doc{background:#fbbf2422;color:var(--amber);border:1px solid #fbbf2455}
+  .badge-remote{background:#d4ff3322;color:var(--lime);border:1px solid #d4ff3355}
+  .badge-family{background:#a78bfa22;color:var(--purple);border:1px solid #a78bfa55}
+  .vcard-snippet{background:#0d1320;border:1px solid #1a2236;border-radius:8px;padding:10px;font-size:12px;line-height:1.5;color:#c7d0e0;max-height:110px;overflow-y:auto;white-space:pre-wrap}
+  .apply-box{background:#162032;border:1px solid #23314d;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .apply-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+  .apply-row a{color:var(--teal);text-decoration:none;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .apply-row a:hover{text-decoration:underline}
+  .btn-copy{background:#0d1320;border:1px solid var(--line);color:var(--text);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer}
+  .btn-copy:hover{border-color:var(--lime)}
+  .vcard-foot{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--line);margin-top:auto}
+  .empty{padding:40px;text-align:center;color:var(--mute)}
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .filter-bar input{max-width:280px}
+  .page{display:none} .page.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="app-sidebar">
+    <div class="sidebar-logo-area">
+      <div class="logo">RR</div>
+      <div>
+        <b>RoleRover Job Search</b>
+        <span>Direct Vacancies Feed</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button type="button" class="sidebar-nav-item active" data-page="feed">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+        <span>Live Job Vacancies</span>
+        <span class="sidebar-badge" id="countLive">0</span>
+      </button>
+      <button type="button" class="sidebar-nav-item" data-page="scraper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Run Group Scrape</span>
+      </button>
+      <button type="button" class="sidebar-nav-item" data-page="groups">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Monitored Groups</span>
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="muted small">Part of RoleRover &middot; </span>
+      <a href="../">Go to GTM Lead Review &rarr;</a>
+    </div>
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div>
+        <h2 style="margin:0;font-size:18px" id="pageHeading">Live Job Vacancies</h2>
+        <div style="font-size:12px;color:var(--mute)">Direct hiring announcements auto-mapped to RoleRover roles (Email &amp; Google Forms only)</div>
+      </div>
+      <div>
+        <button type="button" class="ghost" id="btnRefresh">↻ Refresh Feed</button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <!-- PAGE 1: FEED -->
+      <section class="page active" id="page-feed">
+        <div class="stats-bar">
+          <div class="stat-card">
+            <b id="sTotal">0</b>
+            <span>Total Verified Vacancies</span>
+          </div>
+          <div class="stat-card">
+            <b id="sEmail" style="color:var(--teal)">0</b>
+            <span>With Direct Apply Email</span>
+          </div>
+          <div class="stat-card">
+            <b id="sDoc" style="color:var(--amber)">0</b>
+            <span>With Google Form / Doc</span>
+          </div>
+          <div class="stat-card">
+            <b id="sRemote" style="color:var(--lime)">0</b>
+            <span>Remote Friendly</span>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input id="qFilter" placeholder="Search by role, skill, company...">
+          <select id="roleFamilyFilter" style="max-width:200px">
+            <option value="all">All Role Families</option>
+            <option value="tech">Tech &amp; Software</option>
+            <option value="admin">Admin &amp; Virtual Assistant</option>
+            <option value="support">Customer Support &amp; Success</option>
+            <option value="data">Data &amp; Analytics</option>
+            <option value="marketing">Marketing, Design &amp; Content</option>
+            <option value="sales">Sales &amp; Business Dev</option>
+            <option value="ops">Operations &amp; Finance</option>
+          </select>
+          <select id="typeFilter" style="max-width:180px">
+            <option value="all">All Channels</option>
+            <option value="email">Email Only</option>
+            <option value="doc">Google Form/Doc Only</option>
+          </select>
+          <select id="geoFilter" style="max-width:160px">
+            <option value="all">All Locations</option>
+            <option value="remote">Remote Only</option>
+          </select>
+        </div>
+
+        <div id="vacanciesList" class="vacancies-grid"></div>
+        <div id="emptyFeed" class="empty">No job vacancies found yet. Click <b>Run Group Scrape</b> to discover open roles.</div>
+      </section>
+
+      <!-- PAGE 2: SCRAPER -->
+      <section class="page" id="page-scraper">
+        <div class="card">
+          <div class="step">Step 1 &middot; Configure Vacancy Scraper</div>
+          <p style="color:var(--mute);font-size:13px;margin:0 0 16px">Scrapes Facebook groups for hiring announcements. Automatically drops 100% of posts that lack an <b>email</b> or <b>Google Form/Doc</b>, then maps the post to standard RoleRover roles.</p>
+          
+          <div class="row">
+            <div>
+              <label>Target Facebook Groups (13 GTM Groups Pre-loaded)</label>
+              <textarea id="targetGroupUrls" rows="7" placeholder="Paste group URLs here...">https://www.facebook.com/groups/FindRemoteJobs/
+https://www.facebook.com/groups/4135438206495664/
+https://www.facebook.com/groups/301312318828550/
+https://www.facebook.com/groups/1369874337227607/
+https://www.facebook.com/groups/1175978272559466/
+https://www.facebook.com/groups/146067042755662/
+https://www.facebook.com/groups/1695153690875529/
+https://www.facebook.com/groups/229614498540492/
+https://www.facebook.com/groups/292799300883685/
+https://www.facebook.com/groups/859091059134962/
+https://www.facebook.com/groups/913342749801435/
+https://www.facebook.com/groups/internshipsph/
+https://www.facebook.com/groups/2860123447535416/</textarea>
+            </div>
+          </div>
+          
+          <div class="row" style="margin-top:14px">
+            <div>
+              <label>Posts per group</label>
+              <input id="maxPosts" type="number" min="5" value="25">
+            </div>
+            <div>
+              <label>Posts newer than</label>
+              <input id="newerThan" value="3 days">
+            </div>
+            <div style="flex:0">
+              <button id="btnStartScrape">Start Vacancy Scrape</button>
+            </div>
+          </div>
+          <div class="status" id="scrapeStatus"></div>
+        </div>
+      </section>
+
+      <!-- PAGE 3: GROUPS -->
+      <section class="page" id="page-groups">
+        <div class="card">
+          <div class="step">Monitored Facebook Groups (13 Ready)</div>
+          <p style="color:var(--mute);font-size:13px">These groups are transferred directly from your GTM database so you don't spend money discovering groups again.</p>
+          <textarea id="watchedGroups" rows="8">https://www.facebook.com/groups/FindRemoteJobs/
+https://www.facebook.com/groups/4135438206495664/
+https://www.facebook.com/groups/301312318828550/
+https://www.facebook.com/groups/1369874337227607/
+https://www.facebook.com/groups/1175978272559466/
+https://www.facebook.com/groups/146067042755662/
+https://www.facebook.com/groups/1695153690875529/
+https://www.facebook.com/groups/229614498540492/
+https://www.facebook.com/groups/292799300883685/
+https://www.facebook.com/groups/859091059134962/
+https://www.facebook.com/groups/913342749801435/
+https://www.facebook.com/groups/internshipsph/
+https://www.facebook.com/groups/2860123447535416/</textarea>
+          <div style="margin-top:12px">
+            <button class="ghost" id="btnSaveWatch">Save Watched Groups</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const ACCESS_KEY = '9272b5b3ddd2fdc4806e9c05';
+const API_BASE = 'https://n8n.leadscompass.ai/webhook';
+
+let vacancies = [];
+
+/* NAVIGATION */
+document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('page-' + btn.dataset.page).classList.add('active');
+    const titles = { feed: 'Live Job Vacancies', scraper: 'Run Group Scrape', groups: 'Monitored Groups' };
+    $('pageHeading').textContent = titles[btn.dataset.page] || 'Job Vacancies';
+  };
+});
+
+/* API POST HELPER */
+async function post(path, body) {
+  const r = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ key: ACCESS_KEY }, body))
+  });
+  if (!r.ok) throw new Error('Server returned ' + r.status);
+  const t = await r.text();
+  try { return JSON.parse(t); } catch (e) { return { raw: t }; }
+}
+
+/* LOAD VACANCIES */
+async function loadVacancies() {
+  $('btnRefresh').disabled = true;
+  $('btnRefresh').textContent = 'Loading...';
+  try {
+    const res = await post('/rr-vacancy-leads', {});
+    vacancies = res.leads || res.vacancies || [];
+    renderFeed();
+  } catch (err) {
+    console.warn('Could not load vacancies from n8n webhook, falling back to direct load:', err);
+    renderFeed();
+  } finally {
+    $('btnRefresh').disabled = false;
+    $('btnRefresh').textContent = '↻ Refresh Feed';
+  }
+}
+
+function renderFeed() {
+  const q = $('qFilter').value.trim().toLowerCase();
+  const roleFamily = $('roleFamilyFilter').value;
+  const typeFilter = $('typeFilter').value;
+  const geoFilter = $('geoFilter').value;
+
+  const filtered = vacancies.filter(v => {
+    const txt = ((v.job_title || '') + ' ' + (v.company_name || '') + ' ' + (v.post_text || '') + ' ' + (v.role_family || '')).toLowerCase();
+    if (q && !txt.includes(q)) return false;
+    if (typeFilter === 'email' && !(v.contact_email || (v.emails_found && v.emails_found.length))) return false;
+    if (typeFilter === 'doc' && !(v.google_doc_urls && v.google_doc_urls.length)) return false;
+    if (geoFilter === 'remote' && !(v.detected_workplace_type === 'Remote' || txt.includes('remote'))) return false;
+    if (roleFamily !== 'all') {
+      const rf = (v.role_family || '').toLowerCase();
+      if (!rf.includes(roleFamily) && !txt.includes(roleFamily)) return false;
+    }
+    return true;
+  });
+
+  $('sTotal').textContent = vacancies.length;
+  $('sEmail').textContent = vacancies.filter(v => v.contact_email || (v.emails_found && v.emails_found.length)).length;
+  $('sDoc').textContent = vacancies.filter(v => v.google_doc_urls && v.google_doc_urls.length).length;
+  $('sRemote').textContent = vacancies.filter(v => v.detected_workplace_type === 'Remote' || (v.post_text || '').toLowerCase().includes('remote')).length;
+  $('countLive').textContent = vacancies.length;
+
+  $('emptyFeed').style.display = filtered.length ? 'none' : 'block';
+
+  $('vacanciesList').innerHTML = filtered.map((v, i) => {
+    const emails = v.contact_email ? [v.contact_email] : (v.emails_found || []);
+    const docs = v.google_doc_urls || [];
+    const isRemote = v.detected_workplace_type === 'Remote' || (v.post_text || '').toLowerCase().includes('remote');
+    const title = v.job_title || 'Job Opening';
+    const company = v.company_name || v.author_name || 'Hiring Manager';
+    const family = v.role_family || 'Direct Role';
+
+    return `
+    <div class="vcard">
+      <div class="vcard-head">
+        <div>
+          <div class="vcard-title">${esc(title)}</div>
+          <div class="vcard-company">🏢 ${esc(company)} &middot; ${esc(v.group_name || 'Facebook Group')}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${isRemote ? '<span class="badge badge-remote">Remote</span>' : ''}
+          <span class="badge badge-family">${esc(family)}</span>
+        </div>
+      </div>
+
+      <div class="vcard-snippet">${esc(v.post_text || v.item_text || '')}</div>
+
+      <div class="apply-box">
+        <label style="color:var(--teal)">Direct Application Channels</label>
+        ${emails.map(em => `
+          <div class="apply-row">
+            <span>✉️ <a href="mailto:${esc(em)}">${esc(em)}</a></span>
+            <button class="btn-copy" onclick="copyText('${esc(em)}')">Copy Email</button>
+          </div>
+        `).join('')}
+        ${docs.map(doc => `
+          <div class="apply-row">
+            <span>📄 <a href="${esc(doc)}" target="_blank" rel="noopener">Open Google Form / Doc &rarr;</a></span>
+            <button class="btn-copy" onclick="copyText('${esc(doc)}')">Copy Link</button>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="vcard-foot">
+        <span style="font-size:11px;color:var(--mute)">Source: Facebook</span>
+        <a href="${esc(v.post_url || '#')}" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;color:var(--lime)">View Original Post &rarr;</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyText(txt) {
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('Copied to clipboard: ' + txt);
+  });
+}
+
+$('qFilter').oninput = renderFeed;
+$('roleFamilyFilter').onchange = renderFeed;
+$('typeFilter').onchange = renderFeed;
+$('geoFilter').onchange = renderFeed;
+$('btnRefresh').onclick = loadVacancies;
+
+/* SCRAPER ACTION */
+$('btnStartScrape').onclick = async () => {
+  const urls = $('targetGroupUrls').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!urls.length) {
+    alert('Please enter at least one Facebook group URL.');
+    return;
+  }
+  $('btnStartScrape').disabled = true;
+  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape (filtering for emails &amp; Google Forms)...</span>';
+  try {
+    const res = await post('/rr-vacancy-scrape', {
+      groupUrls: urls,
+      maxPosts: +$('maxPosts').value || 25,
+      newerThan: $('newerThan').value || '3 days'
+    });
+    $('scrapeStatus').innerHTML = '✓ Scrape run started! Processing posts in background...';
+    setTimeout(loadVacancies, 15000);
+  } catch (err) {
+    $('scrapeStatus').innerHTML = '<span style="color:var(--red)">Error: ' + esc(err.message) + '</span>';
+  } finally {
+    $('btnStartScrape').disabled = false;
+  }
+};
+
+loadVacancies();
+</script>
+</body>
+</html>
