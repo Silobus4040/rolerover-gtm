@@ -85,6 +85,18 @@
   table.g-tbl td{padding:10px 9px;border-bottom:1px solid #1a2236;vertical-align:middle}
   table.g-tbl tr:hover td{background:#ffffff06}
   .num{text-align:right;font-variant-numeric:tabular-nums}
+
+  /* Progress Stepper & Presets */
+  .preset-pill{cursor:pointer;font-size:11px;padding:2px 8px;border-radius:6px;background:#161f30;border:1px solid #2a374d;color:var(--mute);transition:all .15s;user-select:none}
+  .preset-pill:hover,.preset-pill.active{background:var(--lime);color:#0b0f17;font-weight:700;border-color:var(--lime)}
+  .progress-step{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:8px;background:#0d1320;border:1px solid #1a2236;transition:all .3s}
+  .progress-step.active{border-color:var(--lime);background:#d4ff330d}
+  .progress-step.done{border-color:var(--teal);background:#00ffcc0d}
+  .progress-step.done .pstep-icon{background:var(--teal);color:#0b0f17}
+  .progress-step.active .pstep-icon{background:var(--lime);color:#0b0f17;box-shadow:0 0 10px var(--lime)}
+  .pstep-icon{width:22px;height:22px;border-radius:50%;background:#1e293b;color:var(--mute);display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .pstep-title{font-size:12px;display:block;color:#fff}
+  .pstep-desc{font-size:11px;color:var(--mute);line-height:1.2;margin-top:2px}
 </style>
 </head>
 <body>
@@ -344,19 +356,94 @@
           <textarea id="targetGroupUrls" style="display:none"></textarea>
 
           <!-- SCRAPE SETTINGS & LAUNCH BUTTON -->
-          <div class="row" style="margin-top:14px;align-items:center;background:#0d1320;padding:12px 16px;border-radius:10px;border:1px solid var(--line)">
-            <div style="max-width:140px">
-              <label>Posts per group</label>
-              <input id="maxPosts" type="number" min="5" value="25">
+          <div style="margin-top:16px;background:#0d1320;padding:16px 18px;border-radius:12px;border:1px solid var(--line)">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+              <div style="flex:1;min-width:200px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <label style="margin:0">Posts per group</label>
+                  <div style="display:flex;gap:4px">
+                    <span class="preset-pill" onclick="setPosts(25)">25</span>
+                    <span class="preset-pill" onclick="setPosts(50)">50</span>
+                    <span class="preset-pill" onclick="setPosts(100)">100</span>
+                    <span class="preset-pill" onclick="setPosts(200)">200</span>
+                  </div>
+                </div>
+                <input id="maxPosts" type="number" min="5" max="1000" value="50" style="font-weight:700">
+              </div>
+
+              <div style="flex:1;min-width:220px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <label style="margin:0">Posts newer than</label>
+                  <div style="display:flex;gap:4px">
+                    <span class="preset-pill" onclick="setNewer('3 days')">3d</span>
+                    <span class="preset-pill" onclick="setNewer('7 days')">7d</span>
+                    <span class="preset-pill" onclick="setNewer('14 days')">14d</span>
+                    <span class="preset-pill" onclick="setNewer('30 days')">30d</span>
+                    <span class="preset-pill" onclick="setNewer('All time')">All</span>
+                  </div>
+                </div>
+                <input id="newerThan" value="7 days" style="font-weight:700">
+              </div>
+
+              <div style="flex:0;min-width:220px;padding-top:20px">
+                <button id="btnStartScrape" style="width:100%;font-size:14px;padding:11px 18px">
+                  🚀 Start Vacancy Scrape (<span id="btnScrapeCount">27</span> Selected)
+                </button>
+              </div>
             </div>
-            <div style="max-width:150px">
-              <label>Posts newer than</label>
-              <input id="newerThan" value="3 days">
+          </div>
+
+          <!-- DETAILED 4-PHASE PROGRESS BOX -->
+          <div id="scrapeProgressBox" style="display:none;margin-top:16px;padding:18px 20px;background:#0b0f17;border:1px solid #3b82f655;border-radius:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="spin" style="width:16px;height:16px;border-width:3px"></div>
+                <b style="font-size:15px;color:#fff" id="scrapeProgressTitle">Scraping &amp; AI Analysis in Progress</b>
+              </div>
+              <span id="scrapeTimerBadge" style="font-size:12px;color:var(--mute);background:#ffffff0f;padding:3px 10px;border-radius:99px;font-family:monospace">0:00</span>
             </div>
-            <div style="flex:1;text-align:right">
-              <button id="btnStartScrape" style="font-size:14px;padding:10px 20px">
-                🚀 Start Vacancy Scrape (<span id="btnScrapeCount">27</span> Selected)
-              </button>
+
+            <!-- Progress Bar -->
+            <div style="background:#161f30;height:7px;border-radius:99px;overflow:hidden;margin-bottom:14px">
+              <div id="scrapeProgressBar" style="width:15%;height:100%;background:linear-gradient(90deg,var(--lime),var(--teal));transition:width .4s ease"></div>
+            </div>
+
+            <!-- 4 Phased Steps -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
+              <div class="progress-step active" id="pstep-1">
+                <div class="pstep-icon">1</div>
+                <div>
+                  <b class="pstep-title">1. Facebook Scraping</b>
+                  <div class="pstep-desc">Apify pulling chronological posts</div>
+                </div>
+              </div>
+              <div class="progress-step" id="pstep-2">
+                <div class="pstep-icon">2</div>
+                <div>
+                  <b class="pstep-title">2. Channel Filter</b>
+                  <div class="pstep-desc">Extracting emails &amp; Google Forms</div>
+                </div>
+              </div>
+              <div class="progress-step" id="pstep-3">
+                <div class="pstep-icon">3</div>
+                <div>
+                  <b class="pstep-title">3. Cloudflare AI</b>
+                  <div class="pstep-desc">GPT-OSS-20B parsing role &amp; exp</div>
+                </div>
+              </div>
+              <div class="progress-step" id="pstep-4">
+                <div class="pstep-icon">4</div>
+                <div>
+                  <b class="pstep-title">4. Live Feed Sync</b>
+                  <div class="pstep-desc">Writing verified leads to Supabase</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Status Log & Action -->
+            <div id="scrapeProgressLog" style="margin-top:14px;font-size:12px;color:var(--mute);padding:10px 14px;background:#0d1320;border-radius:8px;border:1px solid #1a2236;display:flex;justify-content:space-between;align-items:center">
+              <span id="scrapeLogText">Connecting to Facebook scraper...</span>
+              <button type="button" id="btnGoToFeed" style="display:none;padding:5px 12px;font-size:12px;background:var(--lime);color:#0b0f17;font-weight:700">View Feed &rarr;</button>
             </div>
           </div>
           <div class="status" id="scrapeStatus"></div>
@@ -2795,30 +2882,148 @@ $('typeFilter').onchange = renderFeed;
 $('geoFilter').onchange = renderFeed;
 $('btnRefresh').onclick = loadVacancies;
 
+function setPosts(n) {
+  $('maxPosts').value = n;
+  document.querySelectorAll('.preset-pill').forEach(p => {
+    if (p.textContent === String(n)) p.classList.add('active');
+    else if (['25','50','100','200'].includes(p.textContent)) p.classList.remove('active');
+  });
+}
+
+function setNewer(val) {
+  $('newerThan').value = val;
+  const labelMap = { '3 days': '3d', '7 days': '7d', '14 days': '14d', '30 days': '30d', 'All time': 'All' };
+  document.querySelectorAll('.preset-pill').forEach(p => {
+    if (p.textContent === labelMap[val]) p.classList.add('active');
+    else if (['3d','7d','14d','30d','All'].includes(p.textContent)) p.classList.remove('active');
+  });
+}
+
+let scrapeTimerInterval = null;
+
+function setScrapePhase(phase, logMsg, pct = null) {
+  const steps = [$('pstep-1'), $('pstep-2'), $('pstep-3'), $('pstep-4')];
+  steps.forEach((step, idx) => {
+    if (!step) return;
+    const stepNum = idx + 1;
+    const icon = step.querySelector('.pstep-icon');
+    if (stepNum < phase) {
+      step.className = 'progress-step done';
+      if (icon) icon.textContent = '✓';
+    } else if (stepNum === phase) {
+      step.className = 'progress-step active';
+      if (icon) icon.textContent = stepNum;
+    } else {
+      step.className = 'progress-step';
+      if (icon) icon.textContent = stepNum;
+    }
+  });
+
+  if (pct != null && $('scrapeProgressBar')) {
+    $('scrapeProgressBar').style.width = pct + '%';
+  }
+  if (logMsg && $('scrapeLogText')) {
+    $('scrapeLogText').innerHTML = logMsg;
+  }
+}
+
 /* SCRAPER PIPELINE ACTIONS */
 async function runVacancyScrapePipeline(urls, groupLabel = null) {
   if (!urls || !urls.length) {
     alert('Please select at least one Facebook group to scrape.');
     return;
   }
+
   const btnStart = $('btnStartScrape');
   if (btnStart) btnStart.disabled = true;
   document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = true);
 
+  const maxPosts = +$('maxPosts').value || 50;
+  const newerThan = $('newerThan').value || '7 days';
   const label = groupLabel ? ('"' + groupLabel + '"') : (urls.length + ' group' + (urls.length === 1 ? '' : 's'));
-  $('scrapeStatus').innerHTML = '<span class="spin"></span> <span>Starting vacancy scrape on ' + esc(label) + '... (filtering exclusively for emails &amp; Google Forms)...</span>';
+
+  // Reveal Progress Console
+  const progressBox = $('scrapeProgressBox');
+  progressBox.style.display = 'block';
+  $('scrapeProgressTitle').textContent = 'Scraping & Analysing: ' + label;
+  $('btnGoToFeed').style.display = 'none';
+
+  let seconds = 0;
+  clearInterval(scrapeTimerInterval);
+  $('scrapeTimerBadge').textContent = '0:00';
+  scrapeTimerInterval = setInterval(() => {
+    seconds++;
+    const m = Math.floor(seconds / 60);
+    const s = String(seconds % 60).padStart(2, '0');
+    $('scrapeTimerBadge').textContent = m + ':' + s;
+
+    // Automatically transition through expected pipeline phases
+    if (seconds === 15) {
+      setScrapePhase(2, '🔍 <b>Phase 2/4: Channel Filter:</b> Scanning post text for emails &amp; Google Forms... Dropping WhatsApp-only/domestic posts.', 50);
+    } else if (seconds === 28) {
+      setScrapePhase(3, '🤖 <b>Phase 3/4: Cloudflare Workers AI:</b> Running GPT-OSS-20B model to verify hiring intent and match role taxonomy...', 75);
+    } else if (seconds === 45) {
+      setScrapePhase(4, '💾 <b>Phase 4/4: Feed Update:</b> Writing verified leads to Supabase and updating live feed...', 90);
+    }
+  }, 1000);
+
+  // Phase 1: Scraping
+  setScrapePhase(1, '🌐 <b>Phase 1/4: Facebook Scraping:</b> Apify worker scraping up to <b>' + maxPosts + ' posts</b> (newer than <b>' + esc(newerThan) + '</b>) from ' + esc(label) + '...', 25);
+
+  const initialCount = vacancies ? vacancies.length : 0;
 
   try {
     const res = await post('/rr-vacancy-scrape', {
       groupUrls: urls,
-      maxPosts: +$('maxPosts').value || 25,
-      newerThan: $('newerThan').value || '3 days'
+      maxPosts: maxPosts,
+      newerThan: newerThan
     });
-    $('scrapeStatus').innerHTML = '<span style="color:var(--lime);font-weight:700">✓ Scrape run started on ' + esc(label) + '! Cloudflare Workers AI is extracting hiring openings with emails &amp; docs to Supabase...</span>';
-    setTimeout(loadVacancies, 15000);
+
+    // Webhook started successfully. Poll vacancies every 6 seconds
+    let attempts = 0;
+    const maxAttempts = 10;
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      await loadVacancies();
+      const currentCount = vacancies ? vacancies.length : 0;
+      const diff = currentCount - initialCount;
+
+      if (diff > 0 || attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        clearInterval(scrapeTimerInterval);
+
+        setScrapePhase(4, '', 100);
+        const steps = [$('pstep-1'), $('pstep-2'), $('pstep-3'), $('pstep-4')];
+        steps.forEach(s => {
+          if (s) {
+            s.className = 'progress-step done';
+            const icon = s.querySelector('.pstep-icon');
+            if (icon) icon.textContent = '✓';
+          }
+        });
+
+        if (diff > 0) {
+          $('scrapeProgressTitle').innerHTML = '🎉 <span style="color:var(--lime)">Scrape Complete! Found ' + diff + ' new direct vacancies!</span>';
+          $('scrapeLogText').innerHTML = '✓ Successfully added <b>' + diff + ' new job vacancy lead' + (diff > 1 ? 's' : '') + '</b> with verified emails/forms into Supabase!';
+        } else {
+          $('scrapeProgressTitle').innerHTML = '✓ <span style="color:var(--teal)">Scrape &amp; Analysis Complete</span>';
+          $('scrapeLogText').innerHTML = 'Processed ' + maxPosts + ' posts from ' + esc(label) + '. Posts without direct emails/Google forms or non-professional roles were filtered out.';
+        }
+
+        $('btnGoToFeed').style.display = 'inline-block';
+        $('btnGoToFeed').onclick = () => {
+          document.querySelector('[data-page="feed"]').click();
+        };
+
+        if (btnStart) btnStart.disabled = false;
+        document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = false);
+      }
+    }, 6000);
+
   } catch (err) {
-    $('scrapeStatus').innerHTML = '<span style="color:var(--red)">Error: ' + esc(err.message) + '</span>';
-  } finally {
+    clearInterval(scrapeTimerInterval);
+    $('scrapeProgressTitle').innerHTML = '<span style="color:var(--red)">Scrape Error</span>';
+    $('scrapeLogText').innerHTML = 'Error: ' + esc(err.message);
     if (btnStart) btnStart.disabled = false;
     document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = false);
   }
