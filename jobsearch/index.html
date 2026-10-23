@@ -139,24 +139,45 @@
 
         <div class="filter-bar">
           <input id="qFilter" placeholder="Search by role, skill, company...">
-          <select id="roleFamilyFilter" style="max-width:200px">
-            <option value="all">All Role Families</option>
-            <option value="tech">Tech &amp; Software</option>
-            <option value="admin">Admin &amp; Virtual Assistant</option>
-            <option value="support">Customer Support &amp; Success</option>
-            <option value="data">Data &amp; Analytics</option>
-            <option value="marketing">Marketing, Design &amp; Content</option>
-            <option value="sales">Sales &amp; Business Dev</option>
-            <option value="ops">Operations &amp; Finance</option>
+          <select id="roleFamilyFilter" style="max-width:240px">
+            <option value="all">All Roles &amp; Families</option>
+            <optgroup label="🔥 Highest Demand (3+ Users)">
+              <option value="executive assistant">Executive Assistant (3 users)</option>
+              <option value="customer support">Customer Support Rep (3 users)</option>
+              <option value="frontend">Frontend Engineer (3 users)</option>
+            </optgroup>
+            <optgroup label="⚡ Strong Demand (2 Users)">
+              <option value="virtual assistant">Virtual Assistant (2 users)</option>
+              <option value="full stack">Full Stack Developer (2 users)</option>
+              <option value="product designer">Product Designer / UX (2 users)</option>
+              <option value="data analyst">Data Analyst (2 users)</option>
+              <option value="software engineer">Software Engineer (2 users)</option>
+            </optgroup>
+            <optgroup label="🎯 Specialized Roles (1 User)">
+              <option value="backend">Backend Engineer</option>
+              <option value="devops">DevOps Engineer</option>
+              <option value="qa">Manual Tester / QA</option>
+              <option value="no-code">No-Code Developer</option>
+              <option value="product manager">Product Manager</option>
+              <option value="content writer">Content &amp; Technical Writer</option>
+              <option value="marketing">Marketing &amp; CRM Manager</option>
+              <option value="operations">Operations Manager</option>
+              <option value="travel">Travel Coordinator</option>
+              <option value="security">Penetration Tester</option>
+            </optgroup>
           </select>
           <select id="typeFilter" style="max-width:180px">
             <option value="all">All Channels</option>
-            <option value="email">Email Only</option>
+            <option value="email">Direct Email Only</option>
             <option value="doc">Google Form/Doc Only</option>
           </select>
-          <select id="geoFilter" style="max-width:160px">
+          <select id="geoFilter" style="max-width:180px">
             <option value="all">All Locations</option>
-            <option value="remote">Remote Only</option>
+            <option value="remote">Remote (Worldwide)</option>
+            <option value="nigeria">Nigeria Friendly</option>
+            <option value="kenya">Kenya Friendly</option>
+            <option value="cameroon">Cameroon Friendly</option>
+            <option value="us">US / Canada Friendly</option>
           </select>
         </div>
 
