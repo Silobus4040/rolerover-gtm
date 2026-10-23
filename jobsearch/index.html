@@ -213,22 +213,20 @@
             <div>
               <label for="matrixCountry">Target Country (Where RoleRover Users Live)</label>
               <select id="matrixCountry">
-                <optgroup label="Primary User Bases">
-                  <option value="Nigeria" selected>Nigeria 🇳🇬 (Executive Assistant, Customer Support, Frontend, VA, Fullstack)</option>
-                  <option value="Kenya">Kenya 🇰🇪 (Executive Assistant, Virtual Assistant, Data Analyst, No-Code)</option>
-                  <option value="Cameroon">Cameroon 🇨🇲 (Executive Assistant, Admin Assistant, UX, Comms) - Bilingual EN/FR</option>
-                  <option value="Ghana">Ghana 🇬🇭 (Product Manager)</option>
-                  <option value="Niger">Niger 🇳🇪 (Frontend Engineer)</option>
-                  <option value="South Africa">South Africa 🇿🇦 (General African Tech &amp; Remote)</option>
-                  <option value="United States">United States 🇺🇸 (Customer Support Representative)</option>
-                  <option value="Canada">Canada 🇨🇦 (Data Analyst)</option>
-                  <option value="Worldwide">Worldwide / Remote 🌐 (Global remote groups)</option>
-                </optgroup>
+                <option value="Nigeria" selected>Nigeria 🇳🇬 (18 Roles: EA, Support, Frontend, VA, Devs...)</option>
+                <option value="Kenya">Kenya 🇰🇪 (4 Roles: EA, VA, Data Analyst, No-Code)</option>
+                <option value="Cameroon">Cameroon 🇨🇲 (5 Roles: EA, Admin, UX, Comms, Design - Bilingual EN/FR)</option>
+                <option value="Ghana">Ghana 🇬🇭 (1 Role: Product Manager)</option>
+                <option value="Niger">Niger 🇳🇪 (1 Role: Frontend Engineer)</option>
+                <option value="United States">United States 🇺🇸 (1 Role: Customer Support)</option>
+                <option value="Canada">Canada 🇨🇦 (1 Role: Data Analyst)</option>
+                <option value="South Africa">South Africa 🇿🇦 (Pan-African Tech / Remote)</option>
+                <option value="Worldwide">Worldwide / Remote 🌐 (Global Remote Groups)</option>
               </select>
             </div>
 
             <div>
-              <label for="matrixRole">Target Role (Exact Database Taxonomy)</label>
+              <label for="matrixRole">Target Role (Synchronized with Country)</label>
               <select id="matrixRole"></select>
             </div>
           </div>
@@ -505,6 +503,66 @@ const ROLE_TAXONOMY = [
   }
 ];
 
+// Exact User Role Demand by Country (From Live RoleRover User Base)
+const USER_COUNTRY_ROLES = {
+  Nigeria: [
+    { role: "Executive Assistant", count: 1 },
+    { role: "Customer Support Representative", count: 2 },
+    { role: "Frontend Engineer", count: 2 },
+    { role: "Virtual Assistant", count: 1 },
+    { role: "Full Stack Developer", count: 2 },
+    { role: "Product Designer", count: 1 },
+    { role: "Software Engineer", count: 2 },
+    { role: "Travel / Itinerary Coordinator", count: 1 },
+    { role: "Backend Engineer", count: 1 },
+    { role: "Content Writer", count: 1 },
+    { role: "Journalist", count: 1 },
+    { role: "Technical Writer", count: 1 },
+    { role: "Penetration Tester", count: 1 },
+    { role: "Content Marketing Manager", count: 1 },
+    { role: "Email / CRM Marketing Manager", count: 1 },
+    { role: "Operations Manager", count: 1 },
+    { role: "DevOps Engineer", count: 1 },
+    { role: "Manual Tester", count: 1 }
+  ],
+  Kenya: [
+    { role: "Executive Assistant", count: 1 },
+    { role: "Virtual Assistant", count: 1 },
+    { role: "Data Analyst", count: 1 },
+    { role: "No-Code Developer", count: 1 }
+  ],
+  Cameroon: [
+    { role: "Executive Assistant", count: 1 },
+    { role: "Administrative Assistant", count: 1 },
+    { role: "Internal Communications Specialist", count: 1 },
+    { role: "Product Designer", count: 1 },
+    { role: "UX Designer", count: 1 }
+  ],
+  Ghana: [
+    { role: "Product Manager", count: 1 }
+  ],
+  Niger: [
+    { role: "Frontend Engineer", count: 1 }
+  ],
+  "United States": [
+    { role: "Customer Support Representative", count: 1 }
+  ],
+  Canada: [
+    { role: "Data Analyst", count: 1 }
+  ],
+  "South Africa": [],
+  Worldwide: []
+};
+
+// Map each role to the countries where RoleRover users live
+const ROLE_TO_COUNTRIES = {};
+Object.entries(USER_COUNTRY_ROLES).forEach(([cName, list]) => {
+  list.forEach(item => {
+    if (!ROLE_TO_COUNTRIES[item.role]) ROLE_TO_COUNTRIES[item.role] = [];
+    ROLE_TO_COUNTRIES[item.role].push(cName);
+  });
+});
+
 let vacancies = [];
 let discoveredGroups = [];
 let watchedGroupList = [...DEFAULT_GROUPS];
@@ -535,43 +593,6 @@ document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
   };
 });
 
-/* POPULATE ROLE DROPDOWN */
-function populateRoleDropdown() {
-  const sel = $('matrixRole');
-  sel.innerHTML = '';
-
-  // Sort high demand first
-  const highDemand = [];
-  ROLE_TAXONOMY.forEach(fam => {
-    fam.roles.forEach(r => {
-      if (r.userDemand >= 2) highDemand.push(r);
-    });
-  });
-
-  const optGroupHigh = document.createElement('optgroup');
-  optGroupHigh.label = '🔥 Highest RoleRover Demand';
-  highDemand.forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r.name;
-    opt.textContent = `${r.name} (${r.userDemand} users)`;
-    optGroupHigh.appendChild(opt);
-  });
-  sel.appendChild(optGroupHigh);
-
-  // All families
-  ROLE_TAXONOMY.forEach(fam => {
-    const optGroup = document.createElement('optgroup');
-    optGroup.label = fam.family;
-    fam.roles.forEach(r => {
-      const opt = document.createElement('option');
-      opt.value = r.name;
-      opt.textContent = r.userDemand > 0 ? `${r.name} (${r.userDemand} user${r.userDemand>1?'s':''})` : r.name;
-      optGroup.appendChild(opt);
-    });
-    sel.appendChild(optGroup);
-  });
-}
-
 function findRoleData(roleName) {
   for (const fam of ROLE_TAXONOMY) {
     for (const r of fam.roles) {
@@ -580,6 +601,121 @@ function findRoleData(roleName) {
   }
   return null;
 }
+
+/* SYNCHRONIZE ROLE DROPDOWN FOR SELECTED COUNTRY */
+let isSyncing = false;
+
+function syncRolesForCountry(country, preferredRole) {
+  const sel = $('matrixRole');
+  const countryRoles = USER_COUNTRY_ROLES[country] || [];
+  sel.innerHTML = '';
+
+  let roleToSelect = null;
+
+  if (countryRoles.length > 0) {
+    // 1. Specific in-demand roles for this country
+    const optGroupCountry = document.createElement('optgroup');
+    optGroupCountry.label = `📍 Active User Demand in ${country} (${countryRoles.length} role${countryRoles.length>1?'s':''})`;
+    
+    countryRoles.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.role;
+      opt.textContent = `${item.role} (${item.count} user${item.count>1?'s':''})`;
+      optGroupCountry.appendChild(opt);
+      if (preferredRole && item.role === preferredRole) {
+        roleToSelect = item.role;
+      }
+    });
+    sel.appendChild(optGroupCountry);
+
+    // If preferredRole wasn't in this country, default to the first role in this country
+    if (!roleToSelect && countryRoles.length) {
+      roleToSelect = countryRoles[0].role;
+    }
+
+    // 2. Secondary section: Other database roles (in case user wants to broaden)
+    const countryRoleSet = new Set(countryRoles.map(i => i.role));
+    const optGroupOther = document.createElement('optgroup');
+    optGroupOther.label = '🌐 Other Database Roles';
+    
+    ROLE_TAXONOMY.forEach(fam => {
+      fam.roles.forEach(r => {
+        if (!countryRoleSet.has(r.name)) {
+          const opt = document.createElement('option');
+          opt.value = r.name;
+          opt.textContent = `${r.name} (${fam.family})`;
+          optGroupOther.appendChild(opt);
+        }
+      });
+    });
+    sel.appendChild(optGroupOther);
+  } else {
+    // Fallback for South Africa / Worldwide: all roles grouped by demand
+    const highDemand = [];
+    ROLE_TAXONOMY.forEach(fam => {
+      fam.roles.forEach(r => {
+        if (r.userDemand >= 2) highDemand.push(r);
+      });
+    });
+
+    const optGroupHigh = document.createElement('optgroup');
+    optGroupHigh.label = '🔥 High Demand Roles';
+    highDemand.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.name;
+      opt.textContent = `${r.name} (${r.userDemand} users)`;
+      optGroupHigh.appendChild(opt);
+    });
+    sel.appendChild(optGroupHigh);
+
+    ROLE_TAXONOMY.forEach(fam => {
+      const optGroup = document.createElement('optgroup');
+      optGroup.label = fam.family;
+      fam.roles.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.name;
+        opt.textContent = r.name;
+        optGroup.appendChild(opt);
+      });
+      sel.appendChild(optGroup);
+    });
+
+    roleToSelect = preferredRole || 'Executive Assistant';
+  }
+
+  if (roleToSelect) {
+    sel.value = roleToSelect;
+  }
+}
+
+/* EVENT: COUNTRY CHANGED -> SYNC ROLES */
+$('matrixCountry').onchange = () => {
+  if (isSyncing) return;
+  isSyncing = true;
+  const country = $('matrixCountry').value;
+  syncRolesForCountry(country);
+  updateMatrixPreview();
+  isSyncing = false;
+};
+
+/* EVENT: ROLE CHANGED -> SYNC COUNTRY */
+$('matrixRole').onchange = () => {
+  if (isSyncing) return;
+  isSyncing = true;
+  const roleName = $('matrixRole').value;
+  const matchingCountries = ROLE_TO_COUNTRIES[roleName];
+
+  if (matchingCountries && matchingCountries.length) {
+    const currentCountry = $('matrixCountry').value;
+    // If the currently selected country does not contain this role, switch to the primary country
+    if (!matchingCountries.includes(currentCountry)) {
+      $('matrixCountry').value = matchingCountries[0];
+      syncRolesForCountry(matchingCountries[0], roleName);
+    }
+  }
+  updateMatrixPreview();
+  isSyncing = false;
+};
 
 /* UPDATE SEARCH QUERY PREVIEW */
 function updateMatrixPreview() {
@@ -649,9 +785,6 @@ function updateMatrixPreview() {
   $('queryPills').innerHTML = queries.map(q => `<span class="pill pill-query">${esc(q)}</span>`).join('');
   $('customQueries').value = queries.join(', ');
 }
-
-$('matrixCountry').onchange = updateMatrixPreview;
-$('matrixRole').onchange = updateMatrixPreview;
 
 /* API POST HELPER */
 async function post(path, body) {
@@ -925,8 +1058,8 @@ $('btnStartScrape').onclick = async () => {
   }
 };
 
-// Initial bootstrap
-populateRoleDropdown();
+// Initial bootstrap: country and role in strict sync
+syncRolesForCountry($('matrixCountry').value);
 updateMatrixPreview();
 loadVacancies();
 </script>
