@@ -203,7 +203,13 @@ async function loadCoverage() {
 
 async function scrapeOne(role, country, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Scraping...'; }
-  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Scraping LinkedIn for ' + esc(role) + ' &middot; ' + esc(country) + '...</span>';
+  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Starting LinkedIn scrape for ' + esc(role) + ' &middot; ' + esc(country) + '...</span>';
+
+  // Remember the row's state before this click, so polling can tell when THIS scrape actually finishes
+  // (not just that the row happens to already have a last_scraped_at from a previous run).
+  const before = rows.find(r => r.role === role && r.country === country);
+  const beforeScrapedAt = before ? before.last_scraped_at : null;
+
   try {
     const res = await fetch(API_BASE + '/rr-linkedin-scrape-now', {
       method: 'POST',
@@ -211,8 +217,27 @@ async function scrapeOne(role, country, btn) {
       body: JSON.stringify({ search_keyword: role, country: country })
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
-    const data = await res.json();
-    $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Found ' + (data.lead_count ?? '?') + ' qualifying leads for ' + esc(role) + ' &middot; ' + esc(country) + '.</span>';
+    await res.json(); // just the instant "started" ack - real work continues in the background
+
+    let seconds = 0;
+    const maxSeconds = 600; // 10 min safety cutoff, same spirit as the Facebook page's own poll limit
+    while (seconds < maxSeconds) {
+      $('pageStatus').innerHTML = '<span class="spin"></span> <span>Scraping ' + esc(role) + ' &middot; ' + esc(country) + '... (' + seconds + 's elapsed, running in the background)</span>';
+      await new Promise(r => setTimeout(r, 5000));
+      seconds += 5;
+
+      const covRes = await fetch(API_BASE + '/rr-linkedin-coverage');
+      if (!covRes.ok) continue;
+      const freshRows = await covRes.json();
+      const match = freshRows.find(r => r.role === role && r.country === country);
+      if (match && match.last_scraped_at && match.last_scraped_at !== beforeScrapedAt) {
+        rows = freshRows;
+        render();
+        $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Done - ' + match.available_leads + ' leads now available for ' + esc(role) + ' &middot; ' + esc(country) + '.</span>';
+        return;
+      }
+    }
+    $('pageStatus').innerHTML = '<span style="color:var(--amber)">Still running after 10 minutes - it will finish in the background. Refresh later to see the real result.</span>';
     await loadCoverage();
   } catch (err) {
     $('pageStatus').innerHTML = '<span style="color:var(--red)">Error scraping: ' + esc(err.message) + '</span>';
