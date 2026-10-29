@@ -49,6 +49,7 @@
   .badge-new{background:#fb923c22;color:var(--orange);border:1px solid #fb923c55}
   .badge-needs{background:#fbbf2422;color:var(--amber);border:1px solid #fbbf2455}
   .badge-sufficient{background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55}
+  .badge-scraping{background:#60a5fa22;color:var(--blue);border:1px solid #60a5fa55}
   .empty{padding:40px;text-align:center;color:var(--mute)}
   .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
   .filter-bar input{max-width:280px;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit}
@@ -150,6 +151,7 @@ function timeAgo(iso) {
 }
 
 function statusBadge(status) {
+  if (status === 'scraping') return '<span class="badge badge-scraping"><span class="spin" style="width:9px;height:9px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span>Scraping...</span>';
   if (status === 'new') return '<span class="badge badge-new">&#127867; New</span>';
   if (status === 'needs_scrape') return '<span class="badge badge-needs">&#9203; Needs scrape</span>';
   return '<span class="badge badge-sufficient">&#10003; Sufficient</span>';
@@ -176,9 +178,11 @@ function render() {
       <td class="num">${r.available_leads}</td>
       <td>${esc(timeAgo(r.last_scraped_at))}</td>
       <td style="text-align:right">
-        ${r.status !== 'sufficient'
-          ? `<button type="button" class="ghost small btn-scrape-one" data-role="${esc(r.role)}" data-country="${esc(r.country)}">Scrape Now</button>`
-          : '&mdash;'}
+        ${r.status === 'scraping'
+          ? '<span style="color:var(--mute);font-size:11px">in progress...</span>'
+          : (r.status !== 'sufficient'
+            ? `<button type="button" class="ghost small btn-scrape-one" data-role="${esc(r.role)}" data-country="${esc(r.country)}">Scrape Now</button>`
+            : '&mdash;')}
       </td>
     </tr>
   `).join('');
@@ -196,6 +200,7 @@ async function loadCoverage() {
     rows = await res.json();
     render();
     $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Loaded ' + rows.length + ' real role&times;country combos.</span>';
+    watchInProgress(); // resumes automatically if the server says anything is still scraping - survives any refresh
   } catch (err) {
     $('pageStatus').innerHTML = '<span style="color:var(--red)">Error loading coverage: ' + esc(err.message) + '</span>';
   }
@@ -217,28 +222,9 @@ async function scrapeOne(role, country, btn) {
       body: JSON.stringify({ search_keyword: role, country: country })
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
-    await res.json(); // just the instant "started" ack - real work continues in the background
-
-    let seconds = 0;
-    const maxSeconds = 600; // 10 min safety cutoff, same spirit as the Facebook page's own poll limit
-    while (seconds < maxSeconds) {
-      $('pageStatus').innerHTML = '<span class="spin"></span> <span>Scraping ' + esc(role) + ' &middot; ' + esc(country) + '... (' + seconds + 's elapsed, running in the background)</span>';
-      await new Promise(r => setTimeout(r, 5000));
-      seconds += 5;
-
-      const covRes = await fetch(API_BASE + '/rr-linkedin-coverage');
-      if (!covRes.ok) continue;
-      const freshRows = await covRes.json();
-      const match = freshRows.find(r => r.role === role && r.country === country);
-      if (match && match.last_scraped_at && match.last_scraped_at !== beforeScrapedAt) {
-        rows = freshRows;
-        render();
-        $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Done - ' + match.available_leads + ' leads now available for ' + esc(role) + ' &middot; ' + esc(country) + '.</span>';
-        return;
-      }
-    }
-    $('pageStatus').innerHTML = '<span style="color:var(--amber)">Still running after 10 minutes - it will finish in the background. Refresh later to see the real result.</span>';
-    await loadCoverage();
+    await res.json(); // just the instant "started" ack - the real server-side flag is what matters now
+    $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Started - watching for real progress...</span>';
+    await loadCoverage(); // picks up the real 'scraping' status immediately; the watcher below takes it from here
   } catch (err) {
     $('pageStatus').innerHTML = '<span style="color:var(--red)">Error scraping: ' + esc(err.message) + '</span>';
     if (btn) { btn.disabled = false; btn.textContent = 'Scrape Now'; }
@@ -246,21 +232,43 @@ async function scrapeOne(role, country, btn) {
 }
 
 async function scrapeAllFlagged() {
-  const flagged = rows.filter(r => r.status !== 'sufficient');
-  if (!flagged.length) { alert('Nothing flagged right now — everything has enough coverage.'); return; }
+  const flagged = rows.filter(r => r.status !== 'sufficient' && r.status !== 'scraping');
+  if (!flagged.length) { alert('Nothing flagged right now — everything has enough coverage, or is already scraping.'); return; }
   $('btnScrapeAll').disabled = true;
   for (const r of flagged) {
-    $('pageStatus').innerHTML = '<span class="spin"></span> <span>Scraping ' + esc(r.role) + ' &middot; ' + esc(r.country) + '... (' + (flagged.indexOf(r)+1) + '/' + flagged.length + ')</span>';
-    await scrapeOne(r.role, r.country, null);
+    await fetch(API_BASE + '/rr-linkedin-scrape-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ search_keyword: r.role, country: r.country })
+    }).catch(() => {});
+    await new Promise(res => setTimeout(res, 1500)); // small stagger - Apify caps concurrent jobs per account
   }
+  await loadCoverage();
   $('btnScrapeAll').disabled = false;
+}
+
+// Real-time watcher: as long as the SERVER says anything is 'scraping', keep polling - this is what
+// makes progress survive a refresh (a fresh page load sees the real status and resumes watching it,
+// instead of relying on any in-memory state from the tab that originally clicked Scrape Now).
+let watcherRunning = false;
+async function watchInProgress() {
+  if (watcherRunning) return;
+  watcherRunning = true;
+  try {
+    while (rows.some(r => r.status === 'scraping')) {
+      await new Promise(r => setTimeout(r, 5000));
+      await loadCoverage();
+    }
+  } finally {
+    watcherRunning = false;
+  }
 }
 
 $('btnRefresh').onclick = loadCoverage;
 $('btnScrapeAll').onclick = scrapeAllFlagged;
 $('qFilter').oninput = render;
 
-loadCoverage();
+loadCoverage().then(watchInProgress);
 </script>
 </body>
 </html>
