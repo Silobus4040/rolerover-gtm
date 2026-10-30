@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>RoleRover &middot; Twitter / X Vacancy Coverage</title>
+<style>
+  :root{
+    --bg:#0b0f17; --card:#121826; --card2:#161d2d; --line:#232c40; --text:#e8ecf4; --mute:#8b96ad;
+    --lime:#D4FF33; --teal:#00FFCC; --red:#f87171; --orange:#fb923c; --blue:#60a5fa; --amber:#fbbf24; --purple:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .app-layout{display:flex;min-height:100vh}
+  .app-sidebar{width:260px;min-width:260px;background:#0d121d;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sidebar-logo-area{display:flex;align-items:center;gap:12px;min-height:70px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1d9bf0,#00FFCC);display:grid;place-items:center;font-weight:800;color:#0b0f17;box-shadow:0 6px 20px #1d9bf033}
+  .sidebar-logo-area b{display:block;font-size:15px;line-height:1.2}
+  .sidebar-logo-area span{display:block;font-size:11px;color:var(--mute)}
+  .sidebar-nav{padding:14px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .sidebar-nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:9px;border:0;border-left:3px solid transparent;background:transparent;color:var(--mute);font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer;text-decoration:none;transition:all .15s}
+  .sidebar-nav-item:hover{background:#ffffff0a;color:var(--text)}
+  .sidebar-nav-item.active{background:#1d9bf014;color:var(--text);font-weight:700;border-left-color:#1d9bf0}
+  .sidebar-foot{padding:14px 16px;border-top:1px solid var(--line);font-size:12px}
+  .sidebar-foot a{color:var(--lime);text-decoration:none;font-weight:700}
+  .app-main{flex:1;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);background:var(--bg);flex-wrap:wrap;gap:10px}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:700;color:#0b0f17;background:linear-gradient(90deg,var(--lime),var(--teal));transition:opacity .15s}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:#0d1320;border:1px solid var(--line);color:var(--text);font-weight:600;padding:8px 12px}
+  button.ghost:hover{border-color:var(--lime)}
+  button.small{padding:5px 12px;font-size:12px}
+  .status{margin-top:12px;color:var(--mute);display:flex;gap:8px;align-items:center}
+  .spin{width:14px;height:14px;border:2px solid #d4ff3344;border-top-color:var(--lime);border-radius:50%;animation:s .8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left}
+  .stat-card b{display:block;font-size:26px;font-weight:800}
+  .stat-card span{color:var(--mute);font-size:12px}
+  table.g-tbl{width:100%;border-collapse:collapse}
+  table.g-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);text-align:left;padding:9px;border-bottom:1px solid var(--line)}
+  table.g-tbl td{padding:10px 9px;border-bottom:1px solid #1a2236;vertical-align:middle}
+  table.g-tbl tr:hover td{background:#ffffff06}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap}
+  .badge-new{background:#fb923c22;color:var(--orange);border:1px solid #fb923c55}
+  .badge-needs{background:#fbbf2422;color:var(--amber);border:1px solid #fbbf2455}
+  .badge-sufficient{background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55}
+  .badge-scraping{background:#60a5fa22;color:var(--blue);border:1px solid #60a5fa55}
+  .badge-global{background:#a78bfa22;color:var(--purple);border:1px solid #a78bfa55}
+  .empty{padding:40px;text-align:center;color:var(--mute)}
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .filter-bar input{max-width:280px;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit}
+  .leads-link{color:var(--lime);text-decoration:underline;cursor:pointer;background:none;border:0;font:inherit;font-variant-numeric:tabular-nums;padding:0}
+  .leads-link:hover{color:var(--teal)}
+  .modal-backdrop{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:50}
+  .modal-box{background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:720px;width:100%;max-height:85vh;overflow-y:auto;padding:22px}
+  .lead-item{border-bottom:1px solid #1a2236;padding:14px 0}
+  .lead-item:last-child{border-bottom:0}
+  .lead-item b{color:#fff;display:block;margin-bottom:4px;font-size:14px}
+  .lead-item .snippet{color:#c7d0e0;font-size:13px;line-height:1.5;margin:6px 0;max-height:80px;overflow:hidden;white-space:pre-wrap}
+  .lead-item a{color:var(--teal);font-size:12px;text-decoration:none;font-weight:600}
+  .lead-item a:hover{text-decoration:underline}
+  .meta-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .meta-tag{font-size:11px;padding:2px 8px;border-radius:6px;background:#0d1320;border:1px solid var(--line);color:var(--mute)}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="app-sidebar">
+    <div class="sidebar-logo-area">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </div>
+      <div>
+        <b>RoleRover Job Search</b>
+        <span>Twitter / X Coverage</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="index.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+        <span>Facebook Discovery</span>
+      </a>
+      <a class="sidebar-nav-item" href="linkedin.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 00-4 0"/></svg>
+        <span>LinkedIn Coverage</span>
+      </a>
+      <a class="sidebar-nav-item active" href="twitter.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        <span>Twitter / X Coverage</span>
+        <span class="badge badge-needs" id="navNeedsCount" style="margin-left:auto">0</span>
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <span style="color:var(--mute)">Part of RoleRover &middot; </span>
+      <a href="../">Go to GTM Lead Review &rarr;</a>
+    </div>
+  </aside>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div>
+        <h2 style="margin:0;font-size:18px">Twitter / X Vacancy Coverage</h2>
+        <div style="font-size:12px;color:var(--mute)">Global role demand monitoring on 𝕏 &middot; Powered by xquik scraper with Cloudflare Vision flyer OCR</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="ghost" id="btnRefresh">&#8635; Refresh</button>
+        <button type="button" id="btnScrapeAll">&#9889; Scrape All Flagged (<span id="flaggedCount">0</span>)</button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="stats-bar">
+        <div class="stat-card"><b id="sTotal" style="color:#fff">0</b><span>Target Roles Monitored</span></div>
+        <div class="stat-card"><b id="sNeeds" style="color:var(--amber)">0</b><span>Needs Scrape</span></div>
+        <div class="stat-card"><b id="sScraping" style="color:var(--blue)">0</b><span>Scraping in Progress</span></div>
+        <div class="stat-card"><b id="sLeads" style="color:var(--teal)">0</b><span>Total Verified Leads</span></div>
+      </div>
+
+      <div class="card">
+        <div class="filter-bar">
+          <input id="qFilter" placeholder="Filter by target role...">
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="g-tbl" id="covTable">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th class="num">Leads Available</th>
+                <th>Last Scraped</th>
+                <th style="text-align:right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="covTableBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyCov" class="empty" style="display:none">No active target roles found &mdash; check enabled taxonomy families.</div>
+      </div>
+
+      <div class="status" id="pageStatus"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const API_BASE = 'https://n8n.leadscompass.ai/webhook';
+
+let rows = [];
+
+function timeAgo(iso) {
+  if (!iso) return 'never';
+  const d = new Date(iso);
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+
+function statusBadge(status) {
+  if (status === 'scraping') return '<span class="badge badge-scraping"><span class="spin" style="width:9px;height:9px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span>Scraping...</span>';
+  if (status === 'new') return '<span class="badge badge-new">&#127867; New</span>';
+  if (status === 'needs_scrape') return '<span class="badge badge-needs">&#9203; Needs scrape</span>';
+  return '<span class="badge badge-sufficient">&#10003; Sufficient</span>';
+}
+
+function render() {
+  const q = ($('qFilter').value || '').toLowerCase().trim();
+  const filtered = rows.filter(r => !q || r.role.toLowerCase().includes(q));
+
+  const totalLeads = rows.reduce((sum, r) => sum + (parseInt(r.available_leads, 10) || 0), 0);
+  const scrapingCount = rows.filter(r => r.status === 'scraping').length;
+  const needsCount = rows.filter(r => r.status === 'needs_scrape' || r.status === 'new').length;
+
+  $('sTotal').textContent = rows.length;
+  $('sNeeds').textContent = needsCount;
+  $('sScraping').textContent = scrapingCount;
+  $('sLeads').textContent = totalLeads;
+  $('navNeedsCount').textContent = needsCount;
+  $('flaggedCount').textContent = needsCount;
+
+  $('emptyCov').style.display = filtered.length ? 'none' : 'block';
+
+  $('covTableBody').innerHTML = filtered.map(r => `
+    <tr>
+      <td><b>${esc(r.role)}</b></td>
+      <td><span class="badge badge-global">Global</span></td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="num">
+        ${parseInt(r.available_leads, 10) > 0
+          ? `<button type="button" class="leads-link" data-role="${esc(r.role)}">${r.available_leads}</button>`
+          : '0'}
+      </td>
+      <td>${esc(timeAgo(r.last_scraped_at))}</td>
+      <td style="text-align:right">
+        ${r.status === 'scraping'
+          ? '<span style="color:var(--mute);font-size:12px"><span class="spin" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Running...</span>'
+          : `<button type="button" class="ghost small btn-scrape-one" data-role="${esc(r.role)}">Scrape Now</button>`}
+      </td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.btn-scrape-one').forEach(btn => {
+    btn.onclick = () => scrapeOne(btn.dataset.role, btn);
+  });
+  document.querySelectorAll('.leads-link').forEach(btn => {
+    btn.onclick = () => showLeadsModal(btn.dataset.role);
+  });
+}
+
+async function showLeadsModal(role) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px">
+        <div>
+          <b style="font-size:16px;color:#fff">${esc(role)}</b>
+          <div style="font-size:12px;color:var(--mute)">Verified 𝕏 Vacancies with Contact Details</div>
+        </div>
+        <button type="button" class="ghost small" id="btnCloseModal">Close</button>
+      </div>
+      <div id="modalLeadsList" style="color:var(--mute)"><span class="spin"></span> Loading leads from database...</div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
+  $('btnCloseModal').onclick = () => backdrop.remove();
+
+  try {
+    const res = await fetch(API_BASE + '/rr-x-leads?role=' + encodeURIComponent(role));
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const text = await res.text();
+    const leads = text ? JSON.parse(text) : [];
+    if (!leads.length) {
+      $('modalLeadsList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--mute)">No leads recorded yet for this role. Click <b>Scrape Now</b> to fetch posts from 𝕏.</div>';
+      return;
+    }
+    $('modalLeadsList').innerHTML = leads.map(l => `
+      <div class="lead-item">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <b>${esc(l.company_name || l.author_name || 'Hiring Poster')}</b>
+          <span style="font-size:11px;color:var(--mute)">${esc(timeAgo(l.posted_at || l.created_at))}</span>
+        </div>
+        <div class="snippet">${esc((l.post_text || '').slice(0, 300))}</div>
+        <div class="meta-tags">
+          ${l.contact_email ? `<span class="meta-tag" style="border-color:#00ffcc55;color:var(--teal)">&#9993; ${esc(l.contact_email)}</span>` : ''}
+          ${l.detected_job_level ? `<span class="meta-tag">${esc(l.detected_job_level)}</span>` : ''}
+          ${l.detected_workplace_type ? `<span class="meta-tag">${esc(l.detected_workplace_type)}</span>` : ''}
+          ${l.post_url ? `<a href="${esc(l.post_url)}" target="_blank" rel="noopener" style="margin-left:auto">View on 𝕏 &rarr;</a>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    $('modalLeadsList').innerHTML = '<span style="color:var(--red)">Error loading leads: ' + esc(err.message) + '</span>';
+  }
+}
+
+async function loadCoverage() {
+  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Loading Twitter / X coverage...</span>';
+  try {
+    const res = await fetch(API_BASE + '/rr-x-coverage');
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    rows = await res.json();
+    render();
+    $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Loaded ' + rows.length + ' monitored target roles.</span>';
+    watchInProgress();
+  } catch (err) {
+    $('pageStatus').innerHTML = '<span style="color:var(--red)">Error loading coverage: ' + esc(err.message) + '</span>';
+  }
+}
+
+async function scrapeOne(role, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Scraping...'; }
+  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Starting 𝕏 scrape for ' + esc(role) + '...</span>';
+
+  try {
+    const res = await fetch(API_BASE + '/rr-x-scrape-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ search_keyword: role })
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    await res.json();
+    $('pageStatus').innerHTML = '<span style="color:var(--teal)">&#10003; Started scrape for "' + esc(role) + '" - watching progress...</span>';
+    await loadCoverage();
+  } catch (err) {
+    $('pageStatus').innerHTML = '<span style="color:var(--red)">Error starting scrape: ' + esc(err.message) + '</span>';
+    if (btn) { btn.disabled = false; btn.textContent = 'Scrape Now'; }
+  }
+}
+
+async function scrapeAllFlagged() {
+  const flagged = rows.filter(r => r.status !== 'sufficient' && r.status !== 'scraping');
+  if (!flagged.length) {
+    alert('Nothing flagged right now — all roles have sufficient leads, or are already scraping.');
+    return;
+  }
+  $('btnScrapeAll').disabled = true;
+  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Triggering batch scrape for ' + flagged.length + ' roles...</span>';
+
+  for (const r of flagged) {
+    await fetch(API_BASE + '/rr-x-scrape-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ search_keyword: r.role })
+    }).catch(() => {});
+    await new Promise(res => setTimeout(res, 1500));
+  }
+  await loadCoverage();
+  $('btnScrapeAll').disabled = false;
+}
+
+let watcherRunning = false;
+async function watchInProgress() {
+  if (watcherRunning) return;
+  watcherRunning = true;
+  try {
+    while (rows.some(r => r.status === 'scraping')) {
+      await new Promise(r => setTimeout(r, 5000));
+      await loadCoverage();
+    }
+  } finally {
+    watcherRunning = false;
+  }
+}
+
+$('btnRefresh').onclick = loadCoverage;
+$('btnScrapeAll').onclick = scrapeAllFlagged;
+$('qFilter').oninput = render;
+
+loadCoverage().then(watchInProgress);
+</script>
+</body>
+</html>
