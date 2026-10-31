@@ -95,7 +95,8 @@
   .progress-step.done .pstep-icon{background:var(--teal);color:#0b0f17}
   .progress-step.active .pstep-icon{background:var(--lime);color:#0b0f17;box-shadow:0 0 10px var(--lime)}
   .pstep-icon{width:22px;height:22px;border-radius:50%;background:#1e293b;color:var(--mute);display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
-  .pstep-title{font-size:12px;display:block;color:#fff}
+  .progress-step.error{border-color:#ef4444!important;background:#2a0e12!important}.progress-step.error .pstep-icon{background:#ef4444;color:#fff}.progress-step.warn .pstep-icon{background:#f59e0b;color:#0b0f17}.live-line{display:flex;gap:8px;padding:2px 0;border-bottom:1px dashed #1a2236}.live-line .t{color:#566178;flex-shrink:0}.live-line.ok .m{color:#5eead4}.live-line.warn .m{color:#fbbf24}.live-line.error .m{color:#f87171;font-weight:700}.live-line.info .m{color:#cbd5e1}
+.pstep-title{font-size:12px;display:block;color:#fff}
   .pstep-desc{font-size:11px;color:var(--mute);line-height:1.2;margin-top:2px}
 </style>
 </head>
@@ -455,6 +456,7 @@
               <span id="scrapeLogText">Connecting to Facebook scraper...</span>
               <button type="button" id="btnGoToFeed" style="display:none;padding:5px 12px;font-size:12px;background:var(--lime);color:#0b0f17;font-weight:700">View Feed &rarr;</button>
             </div>
+            <div style="margin-top:10px"><div style="font-size:11px;color:var(--mute);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Live backend activity</div><div id="scrapeLiveConsole" style="max-height:210px;overflow-y:auto;font:12px/1.5 ui-monospace,Consolas,monospace;background:#070b13;border:1px solid #1a2236;border-radius:8px;padding:8px 12px"></div></div>
           </div>
           <div class="status" id="scrapeStatus"></div>
         </div>
@@ -3246,107 +3248,94 @@ function setScrapePhase(phase, logMsg, pct = null) {
   }
 }
 
-/* SCRAPER PIPELINE ACTIONS */
+/* SCRAPER PIPELINE ACTIONS - driven by REAL backend events (rr_scrape_run_events) */
+const STAGE_STEP = { scrape: 1, filter: 2, ai: 3, fraud: 4, save: 4 };
+function liveLine(ev) {
+  const box = $('scrapeLiveConsole'); if (!box) return;
+  const d = new Date(ev.created_at || Date.now());
+  const t = d.toLocaleTimeString([], { hour12: false });
+  const div = document.createElement('div');
+  div.className = 'live-line ' + (ev.status || 'info');
+  div.innerHTML = '<span class="t">' + t + '</span><span class="m"><b>' + esc(ev.stage) + '</b> &middot; ' + esc(ev.message || '') + '</span>';
+  box.appendChild(div); box.scrollTop = box.scrollHeight;
+}
+function applyStageEvent(ev) {
+  const idx = STAGE_STEP[ev.stage];
+  if (!idx) return;
+  const steps = [$('pstep-1'), $('pstep-2'), $('pstep-3'), $('pstep-4')];
+  steps.forEach((st, k) => {
+    if (!st) return;
+    const n = k + 1, icon = st.querySelector('.pstep-icon');
+    if (n < idx || (n === idx && ev.status !== 'error' && ev.stage !== 'fraud' && ev.stage !== 'save')) { st.className = 'progress-step done'; if (icon) icon.textContent = '\u2713'; }
+    else if (n === idx && ev.status === 'error') { st.className = 'progress-step error'; if (icon) icon.textContent = '\u2715'; }
+    else if (n === idx && ev.stage === 'fraud') { st.className = 'progress-step active'; }
+    else if (n === idx + 1 && ev.status !== 'error') { st.className = 'progress-step active'; if (icon) icon.textContent = n; }
+  });
+  const st = steps[idx - 1];
+  const desc = st && st.querySelector('.pstep-desc');
+  if (desc && ev.message) desc.textContent = ev.message.length > 90 ? ev.message.slice(0, 88) + '\u2026' : ev.message;
+  if (ev.stage === 'save' && st) { st.className = ev.status === 'ok' ? 'progress-step done' : 'progress-step warn'; const ic = st.querySelector('.pstep-icon'); if (ic) ic.textContent = ev.status === 'ok' ? '\u2713' : '!'; }
+  $('scrapeProgressBar').style.width = ({ 1: 25, 2: 50, 3: 75, 4: 95 })[idx] + '%';
+}
 async function runVacancyScrapePipeline(urls, groupLabel = null) {
-  if (!urls || !urls.length) {
-    alert('Please select at least one Facebook group to scrape.');
-    return;
-  }
-
+  if (!urls || !urls.length) { alert('Please select at least one Facebook group to scrape.'); return; }
   const btnStart = $('btnStartScrape');
-  if (btnStart) btnStart.disabled = true;
-  document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = true);
+  const lock = (v) => { if (btnStart) btnStart.disabled = v; document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = v); };
+  lock(true);
 
   const rawPosts = ($('maxPosts').value || 'All').trim();
   const maxPosts = rawPosts.toLowerCase() === 'all' ? 'All' : (+rawPosts || 50);
   const newerThan = $('newerThan').value || '7 days';
   const label = groupLabel ? ('"' + groupLabel + '"') : (urls.length + ' group' + (urls.length === 1 ? '' : 's'));
-  const countDisplay = maxPosts === 'All' ? 'ALL posts' : ('up to ' + maxPosts + ' posts');
 
-  // Reveal Progress Console
-  const progressBox = $('scrapeProgressBox');
-  progressBox.style.display = 'block';
+  $('scrapeProgressBox').style.display = 'block';
   $('scrapeProgressTitle').textContent = 'Scraping & Analysing: ' + label;
   $('btnGoToFeed').style.display = 'none';
+  $('scrapeLiveConsole').innerHTML = '';
+  setScrapePhase(1, 'Sending request to backend...', 5);
+  [1, 2, 3, 4].forEach(n => { $('pstep-' + n).querySelector('.pstep-desc').textContent = ({ 1: 'Apify pulling chronological posts', 2: 'Extracting emails & Google Forms', 3: 'AI verifying hiring intent & role', 4: 'Fraud check & saving to live feed' })[n]; });
 
   let seconds = 0;
   clearInterval(scrapeTimerInterval);
   $('scrapeTimerBadge').textContent = '0:00';
-  scrapeTimerInterval = setInterval(() => {
-    seconds++;
-    const m = Math.floor(seconds / 60);
-    const s = String(seconds % 60).padStart(2, '0');
-    $('scrapeTimerBadge').textContent = m + ':' + s;
+  scrapeTimerInterval = setInterval(() => { seconds++; $('scrapeTimerBadge').textContent = Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0'); }, 1000);
 
-    // Automatically transition through expected pipeline phases
-    if (seconds === 15) {
-      setScrapePhase(2, '🔍 <b>Phase 2/4: Channel Filter:</b> Scanning post text for emails &amp; Google Forms... Dropping WhatsApp-only/domestic posts.', 50);
-    } else if (seconds === 28) {
-      setScrapePhase(3, '🤖 <b>Phase 3/4: Cloudflare Workers AI:</b> Running GPT-OSS-20B model to verify hiring intent and match role taxonomy...', 75);
-    } else if (seconds === 45) {
-      setScrapePhase(4, '💾 <b>Phase 4/4: Feed Update:</b> Writing verified leads to Supabase and updating live feed...', 90);
-    }
-  }, 1000);
-
-  // Phase 1: Scraping
-  setScrapePhase(1, '🌐 <b>Phase 1/4: Facebook Scraping:</b> Apify worker scraping <b>' + countDisplay + '</b> (newer than <b>' + esc(newerThan) + '</b>) from ' + esc(label) + '...', 25);
-
-  const initialCount = vacancies ? vacancies.length : 0;
+  const finish = (kind, title, msg) => {
+    clearInterval(scrapeTimerInterval);
+    const color = kind === 'error' ? 'var(--red)' : kind === 'warn' ? '#fbbf24' : 'var(--lime)';
+    $('scrapeProgressTitle').innerHTML = '<span style="color:' + color + '">' + title + '</span>';
+    $('scrapeLogText').innerHTML = msg;
+    if (kind === 'ok') $('scrapeProgressBar').style.width = '100%';
+    $('btnGoToFeed').style.display = 'inline-block';
+    $('btnGoToFeed').onclick = () => document.querySelector('[data-page="feed"]').click();
+    lock(false);
+  };
 
   try {
-    const res = await post('/rr-vacancy-scrape', {
-      groupUrls: urls,
-      maxPosts: maxPosts,
-      newerThan: newerThan
-    });
-
-    // Webhook started successfully. Poll vacancies every 6 seconds
-    let attempts = 0;
-    const maxAttempts = 12;
-    const pollInterval = setInterval(async () => {
-      attempts++;
-      await loadVacancies();
-      const currentCount = vacancies ? vacancies.length : 0;
-      const diff = currentCount - initialCount;
-
-      if (diff > 0 || attempts >= maxAttempts) {
-        clearInterval(pollInterval);
-        clearInterval(scrapeTimerInterval);
-
-        setScrapePhase(4, '', 100);
-        const steps = [$('pstep-1'), $('pstep-2'), $('pstep-3'), $('pstep-4')];
-        steps.forEach(s => {
-          if (s) {
-            s.className = 'progress-step done';
-            const icon = s.querySelector('.pstep-icon');
-            if (icon) icon.textContent = '✓';
+    const res = await post('/rr-vacancy-scrape', { groupUrls: urls, maxPosts: maxPosts, newerThan: newerThan });
+    const runId = res.run_id;
+    if (!runId) throw new Error('Backend did not return a run id.');
+    liveLine({ stage: 'request', status: 'ok', message: 'Backend accepted run ' + runId });
+    let after = 0, finished = false, idle = 0;
+    const poll = setInterval(async () => {
+      idle++;
+      try {
+        const r = await post('/rr-scrape-status', { run_id: runId, after });
+        (r.events || []).forEach(ev => {
+          after = Math.max(after, ev.id); idle = 0;
+          liveLine(ev); applyStageEvent(ev);
+          if (ev.stage === 'done' && !finished) {
+            finished = true; clearInterval(poll);
+            if (ev.status === 'error') finish('error', 'Scrape Failed', esc(ev.message));
+            else if (ev.status === 'warn') finish('warn', 'Finished: nothing new to add', esc(ev.message));
+            else { finish('ok', 'Scrape Complete', '<b>' + ((ev.data && ev.data.saved) || 0) + '</b> verified vacancy lead(s) saved.'); loadVacancies(); }
           }
         });
-
-        if (diff > 0) {
-          $('scrapeProgressTitle').innerHTML = '🎉 <span style="color:var(--lime)">Scrape Complete! Found ' + diff + ' new direct vacancies!</span>';
-          $('scrapeLogText').innerHTML = '✓ Successfully added <b>' + diff + ' new job vacancy lead' + (diff > 1 ? 's' : '') + '</b> with verified emails/forms into Supabase!';
-        } else {
-          $('scrapeProgressTitle').innerHTML = '✓ <span style="color:var(--teal)">Scrape &amp; Analysis Complete</span>';
-          $('scrapeLogText').innerHTML = 'Processed ' + countDisplay + ' from ' + esc(label) + ' in ' + esc(newerThan) + '. Posts without direct emails/Google forms or non-professional roles were filtered out.';
-        }
-
-        $('btnGoToFeed').style.display = 'inline-block';
-        $('btnGoToFeed').onclick = () => {
-          document.querySelector('[data-page="feed"]').click();
-        };
-
-        if (btnStart) btnStart.disabled = false;
-        document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = false);
-      }
-    }, 6000);
-
+        if (!finished && idle > 120) { finished = true; clearInterval(poll); finish('error', 'No response from backend', 'No activity for 6 minutes. Check the n8n execution log for run ' + esc(runId) + '.'); }
+      } catch (e) { liveLine({ stage: 'poll', status: 'warn', message: 'Status check failed: ' + e.message }); }
+    }, 3000);
   } catch (err) {
-    clearInterval(scrapeTimerInterval);
-    $('scrapeProgressTitle').innerHTML = '<span style="color:var(--red)">Scrape Error</span>';
-    $('scrapeLogText').innerHTML = 'Error: ' + esc(err.message);
-    if (btnStart) btnStart.disabled = false;
-    document.querySelectorAll('.btn-scrape-single').forEach(b => b.disabled = false);
+    finish('error', 'Scrape Error', 'Error: ' + esc(err.message));
   }
 }
 
