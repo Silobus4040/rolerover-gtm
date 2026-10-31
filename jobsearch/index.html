@@ -462,17 +462,85 @@
 
       <!-- PAGE 4: MONITORED GROUPS -->
       <section class="page" id="page-groups">
+        <!-- Stats Summary Bar -->
+        <div class="stats-bar" style="margin-bottom:16px">
+          <div class="stat-card">
+            <b id="statMonitoredTotal" style="color:#fff">27</b>
+            <span>Total Verified Groups</span>
+          </div>
+          <div class="stat-card">
+            <b id="statMonitored24h" style="color:var(--lime)">0</b>
+            <span>24h Active Monitor</span>
+          </div>
+          <div class="stat-card">
+            <b id="statMonitoredScraped" style="color:var(--teal)">0</b>
+            <span>Already Scraped (In Feed)</span>
+          </div>
+          <div class="stat-card">
+            <b id="statMonitoredLeads" style="color:#60a5fa">0</b>
+            <span>Vacancies Generated</span>
+          </div>
+        </div>
+
         <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="step" style="margin:0">Monitored Facebook Groups</div>
-            <span id="monitoredGroupCountBadge" style="background:#2563eb22;color:#60a5fa;border:1px solid #3b82f644;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px">27 groups loaded</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px">
+            <div>
+              <div class="step" style="margin:0">Verified Communities & 24h Monitoring</div>
+              <p style="color:var(--mute);font-size:12px;margin:3px 0 0">
+                Identify high-yield groups already scraped, and toggle <b>24h Monitor</b> to schedule recurring automated scrapes.
+              </p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="ghost small" id="btnSelectAll24h">Select All 24h</button>
+              <button type="button" class="ghost small" id="btnClearAll24h">Clear All 24h</button>
+              <button type="button" class="ghost small" id="btnSave24hWatch" style="border-color:var(--lime);color:var(--lime);font-weight:700">💾 Save 24h Selection</button>
+              <button type="button" class="small" id="btnSend24hToScraper" style="background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17">⚡ Send Selected to Scraper &rarr;</button>
+            </div>
           </div>
-          <p style="color:var(--mute);font-size:13px">These groups are stored in your session and transferred directly to the scraper. New groups discovered in the <b>Discover Groups by Role</b> matrix are appended here automatically.</p>
-          <textarea id="watchedGroups" rows="9"></textarea>
-          <div style="margin-top:12px;display:flex;gap:10px">
-            <button class="ghost" id="btnSaveWatch">Save Watched Groups</button>
-            <button class="ghost" id="btnSendToScraper">Send All to Scraper &rarr;</button>
+
+          <!-- Filter & Search Toolbar -->
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:#0d1320;padding:10px 14px;border-radius:10px;border:1px solid var(--line)">
+            <input type="text" id="monitoredGroupSearch" placeholder="Filter by group name (e.g. Software, Abuja, Remote)..." style="flex:1;min-width:260px;background:#161d2d;border:1px solid var(--line);color:#fff;border-radius:8px;padding:8px 12px;font:inherit">
+            <div class="pill-box" style="margin:0;gap:6px">
+              <span class="preset-pill active" id="tabFilterAll">All Groups (<span id="pillCountAll">27</span>)</span>
+              <span class="preset-pill" id="tabFilter24h">24h Monitor (<span id="pillCount24h">0</span>)</span>
+              <span class="preset-pill" id="tabFilterScraped">Already Scraped (<span id="pillCountScraped">0</span>)</span>
+              <span class="preset-pill" id="tabFilterHighActivity">High Activity (&gt;20/day)</span>
+            </div>
           </div>
+
+          <div id="save24hNotice" style="display:none;margin-bottom:14px;padding:9px 14px;border-radius:8px;background:#00ffcc15;border:1px solid #00ffcc44;color:var(--teal);font-size:13px;font-weight:600"></div>
+
+          <!-- Groups Table -->
+          <div style="overflow-x:auto">
+            <table class="g-tbl" id="tblMonitoredGroups">
+              <thead>
+                <tr>
+                  <th style="width:130px">24h Monitor</th>
+                  <th>Group Community Name</th>
+                  <th class="num">Members</th>
+                  <th>Daily Activity</th>
+                  <th>Scrape History</th>
+                  <th style="text-align:right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyMonitoredGroups"></tbody>
+            </table>
+          </div>
+
+          <!-- Collapsible Raw URLs Drawer -->
+          <details style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+            <summary style="cursor:pointer;color:var(--mute);font-size:12px;user-select:none;font-weight:600">
+              ⚙ Advanced: View / Edit Raw URLs List (<span id="rawUrlCount">27</span> URLs)
+            </summary>
+            <div style="margin-top:10px">
+              <textarea id="watchedGroups" rows="6" style="width:100%;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-family:monospace;font-size:12px"></textarea>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <button type="button" class="ghost small" id="btnSaveWatch">Save Raw URLs</button>
+                <button type="button" class="ghost small" id="btnSendToScraper">Send All to Scraper &rarr;</button>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
     </div>
@@ -2232,11 +2300,15 @@ if (!targetGroups.length) {
     membersNumber: g.membersNumber,
     membersText: g.membersText,
     visibility: g.visibility,
+    postsPerDay: g.postsPerDay,
+    postsPerMonth: g.postsPerMonth,
+    locations: g.locations || [],
     description: g.description,
-    selected: true
+    selected: true,
+    monitor24h: (g.postsPerDay || 0) >= 15
   }));
 } else {
-  // Ensure all 27 core groups are present in targetGroups
+  // Ensure all 27 core groups are present in targetGroups with full metadata
   const existingUrls = new Set(targetGroups.map(g => (g.url || '').trim().toLowerCase().replace(/\/+$/, '')));
   INITIAL_DISCOVERED_GROUPS.forEach(g => {
     const clean = (g.url || '').trim().toLowerCase().replace(/\/+$/, '');
@@ -2248,10 +2320,32 @@ if (!targetGroups.length) {
         membersNumber: g.membersNumber,
         membersText: g.membersText,
         visibility: g.visibility,
+        postsPerDay: g.postsPerDay,
+        postsPerMonth: g.postsPerMonth,
+        locations: g.locations || [],
         description: g.description,
-        selected: true
+        selected: true,
+        monitor24h: (g.postsPerDay || 0) >= 15
       });
       existingUrls.add(clean);
+    }
+  });
+
+  // Re-sync metadata and 24h monitor flags
+  const saved24h = new Set(JSON.parse(localStorage.getItem('rr_24h_monitored_groups') || '[]'));
+  targetGroups.forEach(g => {
+    const meta = INITIAL_DISCOVERED_GROUPS.find(ig => ig.id === g.id || ig.url === g.url);
+    if (meta) {
+      if (g.postsPerDay == null && meta.postsPerDay != null) g.postsPerDay = meta.postsPerDay;
+      if (g.postsPerMonth == null && meta.postsPerMonth != null) g.postsPerMonth = meta.postsPerMonth;
+      if (!g.locations || !g.locations.length) g.locations = meta.locations || [];
+      if (!g.membersText && meta.membersText) g.membersText = meta.membersText;
+      if (!g.name && meta.name) g.name = meta.name;
+    }
+    if (saved24h.size > 0) {
+      g.monitor24h = saved24h.has(g.url);
+    } else if (g.monitor24h === undefined) {
+      g.monitor24h = (g.postsPerDay || 0) >= 15;
     }
   });
 }
@@ -2441,6 +2535,9 @@ document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
       groups: 'Monitored Groups'
     };
     $('pageHeading').textContent = titles[btn.dataset.page] || 'Job Vacancies';
+    if (btn.dataset.page === 'groups') {
+      renderMonitoredGroups();
+    }
   };
 });
 
@@ -2736,28 +2833,237 @@ $('btnAddSelectedToScraper').onclick = () => {
   }
 };
 
-/* MONITORED GROUPS ACTIONS */
-$('btnSaveWatch').onclick = () => {
-  watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
-  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
-  $('targetGroupUrls').value = watchedGroupList.join('\n');
-  updateGroupCountUI();
-  alert('Saved ' + watchedGroupList.length + ' monitored groups.');
-};
+/* MONITORED GROUPS & 24H MONITOR CONTROLS */
+let monitoredFilterTab = 'all'; // 'all', '24h', 'scraped', 'high'
 
-$('btnSendToScraper').onclick = () => {
-  watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
-  localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
-  $('targetGroupUrls').value = watchedGroupList.join('\n');
+function getGroupLeadCount(g) {
+  if (!vacancies || !vacancies.length) return 0;
+  const id = String(g.id || '').trim();
+  const rawUrl = (g.url || '').trim().toLowerCase();
+  const slug = rawUrl.replace(/https?:\/\/(www\.)?facebook\.com\/groups\//, '').replace(/\/.*$/, '').trim();
+  return vacancies.filter(v => {
+    const p = (v.post_url || '').toLowerCase();
+    const gUrl = (v.group_url || '').toLowerCase();
+    return (id && (p.includes(id) || gUrl.includes(id))) || 
+           (slug && (p.includes(slug) || gUrl.includes(slug)));
+  }).length;
+}
+
+function saveTargetGroupsMeta() {
+  localStorage.setItem('rr_target_groups_meta', JSON.stringify(targetGroups));
+  const urls = targetGroups.map(g => g.url).filter(Boolean);
+  localStorage.setItem('rr_watched_groups', JSON.stringify(urls));
+  if ($('targetGroupUrls')) $('targetGroupUrls').value = targetGroups.filter(g => g.selected).map(g => g.url).filter(Boolean).join('\n');
+  if ($('watchedGroups') && !document.activeElement?.isSameNode($('watchedGroups'))) $('watchedGroups').value = urls.join('\n');
   updateGroupCountUI();
-  const scraperTab = document.querySelector('[data-page="scraper"]');
-  if (scraperTab) scraperTab.click();
-  const scrapeStatus = $('scrapeStatus');
-  if (scrapeStatus) {
-    scrapeStatus.style.display = 'block';
-    scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Loaded ${watchedGroupList.length} monitored groups into Scraper. Ready to run!</span>`;
+}
+
+function renderMonitoredGroups() {
+  const tbody = $('tbodyMonitoredGroups');
+  if (!tbody) return;
+
+  const q = ($('monitoredGroupSearch') ? $('monitoredGroupSearch').value : '').toLowerCase().trim();
+
+  // Summary counts
+  const totalGroups = targetGroups.length;
+  const count24h = targetGroups.filter(g => g.monitor24h).length;
+  const scrapedGroups = targetGroups.filter(g => getGroupLeadCount(g) > 0);
+  const totalLeadsFromGroups = targetGroups.reduce((acc, g) => acc + getGroupLeadCount(g), 0);
+
+  // Update top summary cards
+  if ($('statMonitoredTotal')) $('statMonitoredTotal').textContent = totalGroups;
+  if ($('statMonitored24h')) $('statMonitored24h').textContent = count24h;
+  if ($('statMonitoredScraped')) $('statMonitoredScraped').textContent = scrapedGroups.length;
+  if ($('statMonitoredLeads')) $('statMonitoredLeads').textContent = totalLeadsFromGroups;
+
+  // Update pill counts
+  if ($('pillCountAll')) $('pillCountAll').textContent = totalGroups;
+  if ($('pillCount24h')) $('pillCount24h').textContent = count24h;
+  if ($('pillCountScraped')) $('pillCountScraped').textContent = scrapedGroups.length;
+  if ($('rawUrlCount')) $('rawUrlCount').textContent = totalGroups;
+  if ($('watchedGroups') && !document.activeElement?.isSameNode($('watchedGroups'))) {
+    $('watchedGroups').value = targetGroups.map(g => g.url).filter(Boolean).join('\n');
   }
-};
+
+  // Filter based on active tab and search query
+  const visible = targetGroups.filter(g => {
+    if (q) {
+      const name = (g.name || '').toLowerCase();
+      const desc = (g.description || '').toLowerCase();
+      const loc = (g.locations || []).join(' ').toLowerCase();
+      if (!name.includes(q) && !desc.includes(q) && !loc.includes(q)) return false;
+    }
+    if (monitoredFilterTab === '24h') return !!g.monitor24h;
+    if (monitoredFilterTab === 'scraped') return getGroupLeadCount(g) > 0;
+    if (monitoredFilterTab === 'high') return (g.postsPerDay || 0) >= 15;
+    return true;
+  });
+
+  if (!visible.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--mute)">No groups match this filter or search.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = visible.map(g => {
+    const origIdx = targetGroups.indexOf(g);
+    const leadCount = getGroupLeadCount(g);
+    const members = g.membersText || (g.membersNumber ? Number(g.membersNumber).toLocaleString() : '—');
+    const postsPerDay = g.postsPerDay != null ? g.postsPerDay : '—';
+    const url = g.url || ('https://www.facebook.com/groups/' + g.id + '/');
+    const is24h = !!g.monitor24h;
+
+    const activityBadge = typeof postsPerDay === 'number'
+      ? (postsPerDay >= 30
+          ? `<span class="badge" style="background:#d4ff3322;color:var(--lime);border:1px solid #d4ff3355">⚡ ${postsPerDay} posts/day</span>`
+          : (postsPerDay >= 10
+              ? `<span class="badge" style="background:#00ffcc22;color:var(--teal)">${postsPerDay} posts/day</span>`
+              : `<span class="badge" style="background:#8b96ad22;color:var(--mute)">${postsPerDay} posts/day</span>`))
+      : '<span class="badge" style="background:#8b96ad22;color:var(--mute)">Active</span>';
+
+    const scrapeStatusBadge = leadCount > 0
+      ? `<span class="badge" style="background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55;font-weight:700">✓ Scraped (${leadCount} lead${leadCount > 1 ? 's' : ''})</span>`
+      : `<span class="badge" style="background:#1e293b;color:var(--mute);border:1px solid #334155">Not scraped yet</span>`;
+
+    return `<tr>
+      <td>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" class="chk-24h-group" data-idx="${origIdx}" ${is24h ? 'checked' : ''}>
+          <span style="font-size:11px;font-weight:700;color:${is24h ? 'var(--lime)' : 'var(--mute)'}">${is24h ? '24h ON' : 'Off'}</span>
+        </label>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <b style="color:#fff;font-size:13px">${esc(g.name || 'Facebook Group')}</b>
+          <a href="${esc(url)}" target="_blank" rel="noopener" style="color:var(--teal);font-size:11px;text-decoration:none" title="Open Facebook Group in new tab">↗ Facebook</a>
+        </div>
+        ${g.description ? `<div style="font-size:11px;color:var(--mute);max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${esc(g.description)}</div>` : ''}
+      </td>
+      <td class="num"><span class="badge" style="background:#161d2d;color:#cbd5e1">${esc(members)}</span></td>
+      <td>${activityBadge}</td>
+      <td>${scrapeStatusBadge}</td>
+      <td style="text-align:right">
+        <button type="button" class="btn-scrape-single" data-url="${esc(url)}" data-name="${esc(g.name || 'Group')}" style="padding:5px 12px;font-size:12px;background:#0d1320;border:1px solid var(--lime);color:var(--lime);border-radius:6px;cursor:pointer;font-weight:700">⚡ Scrape</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Attach 24h checkbox changes
+  tbody.querySelectorAll('.chk-24h-group').forEach(chk => {
+    chk.onchange = (e) => {
+      const idx = +e.target.dataset.idx;
+      if (targetGroups[idx]) {
+        targetGroups[idx].monitor24h = e.target.checked;
+        saveTargetGroupsMeta();
+        renderMonitoredGroups();
+      }
+    };
+  });
+
+  // Attach single-group Scrape buttons
+  tbody.querySelectorAll('.btn-scrape-single').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const url = btn.dataset.url;
+      const name = btn.dataset.name;
+      await runVacancyScrapePipeline([url], name);
+    };
+  });
+}
+
+function setMonitoredFilterTab(tab) {
+  monitoredFilterTab = tab;
+  ['tabFilterAll', 'tabFilter24h', 'tabFilterScraped', 'tabFilterHighActivity'].forEach(id => {
+    if ($(id)) $(id).classList.remove('active');
+  });
+  const tabMap = { all: 'tabFilterAll', '24h': 'tabFilter24h', scraped: 'tabFilterScraped', high: 'tabFilterHighActivity' };
+  if ($(tabMap[tab])) $(tabMap[tab]).classList.add('active');
+  renderMonitoredGroups();
+}
+
+if ($('tabFilterAll')) $('tabFilterAll').onclick = () => setMonitoredFilterTab('all');
+if ($('tabFilter24h')) $('tabFilter24h').onclick = () => setMonitoredFilterTab('24h');
+if ($('tabFilterScraped')) $('tabFilterScraped').onclick = () => setMonitoredFilterTab('scraped');
+if ($('tabFilterHighActivity')) $('tabFilterHighActivity').onclick = () => setMonitoredFilterTab('high');
+if ($('monitoredGroupSearch')) $('monitoredGroupSearch').oninput = renderMonitoredGroups;
+
+if ($('btnSelectAll24h')) {
+  $('btnSelectAll24h').onclick = () => {
+    targetGroups.forEach(g => g.monitor24h = true);
+    saveTargetGroupsMeta();
+    renderMonitoredGroups();
+  };
+}
+
+if ($('btnClearAll24h')) {
+  $('btnClearAll24h').onclick = () => {
+    targetGroups.forEach(g => g.monitor24h = false);
+    saveTargetGroupsMeta();
+    renderMonitoredGroups();
+  };
+}
+
+if ($('btnSave24hWatch')) {
+  $('btnSave24hWatch').onclick = () => {
+    const list24h = targetGroups.filter(g => g.monitor24h).map(g => g.url);
+    localStorage.setItem('rr_24h_monitored_groups', JSON.stringify(list24h));
+    saveTargetGroupsMeta();
+    const notice = $('save24hNotice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.innerHTML = `✓ Successfully saved <b>${list24h.length} groups</b> configured for 24-Hour Continuous Monitoring!`;
+      setTimeout(() => { notice.style.display = 'none'; }, 4000);
+    }
+  };
+}
+
+if ($('btnSend24hToScraper')) {
+  $('btnSend24hToScraper').onclick = () => {
+    const list24h = targetGroups.filter(g => g.monitor24h);
+    const groupsToSend = list24h.length ? list24h : targetGroups;
+    targetGroups.forEach(g => g.selected = (list24h.length ? !!g.monitor24h : true));
+    saveTargetGroupsMeta();
+    renderScraperGroups();
+    const scraperTab = document.querySelector('[data-page="scraper"]');
+    if (scraperTab) scraperTab.click();
+    const scrapeStatus = $('scrapeStatus');
+    if (scrapeStatus) {
+      scrapeStatus.style.display = 'block';
+      scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Loaded ${groupsToSend.length} selected 24h groups into Scraper. Ready to run!</span>`;
+    }
+  };
+}
+
+/* MONITORED GROUPS ACTIONS (RAW URLS) */
+if ($('btnSaveWatch')) {
+  $('btnSaveWatch').onclick = () => {
+    watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+    localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+    $('targetGroupUrls').value = watchedGroupList.join('\n');
+    updateGroupCountUI();
+    const notice = $('save24hNotice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.innerHTML = `✓ Saved ${watchedGroupList.length} raw group URLs.`;
+      setTimeout(() => { notice.style.display = 'none'; }, 3000);
+    }
+  };
+}
+
+if ($('btnSendToScraper')) {
+  $('btnSendToScraper').onclick = () => {
+    watchedGroupList = $('watchedGroups').value.split('\n').map(l => l.trim()).filter(Boolean);
+    localStorage.setItem('rr_watched_groups', JSON.stringify(watchedGroupList));
+    $('targetGroupUrls').value = watchedGroupList.join('\n');
+    updateGroupCountUI();
+    const scraperTab = document.querySelector('[data-page="scraper"]');
+    if (scraperTab) scraperTab.click();
+    const scrapeStatus = $('scrapeStatus');
+    if (scrapeStatus) {
+      scrapeStatus.style.display = 'block';
+      scrapeStatus.innerHTML = `<span style="color:var(--lime);font-weight:700">✓ Loaded ${watchedGroupList.length} monitored groups into Scraper. Ready to run!</span>`;
+    }
+  };
+}
 
 /* LOAD VACANCIES */
 async function loadVacancies() {
@@ -2781,9 +3087,11 @@ async function loadVacancies() {
       );
     });
     renderFeed();
+    if (typeof renderMonitoredGroups === 'function') renderMonitoredGroups();
   } catch (err) {
     console.warn('Could not load vacancies from n8n webhook, falling back:', err);
     renderFeed();
+    if (typeof renderMonitoredGroups === 'function') renderMonitoredGroups();
   } finally {
     $('btnRefresh').disabled = false;
     $('btnRefresh').textContent = '↻ Refresh Feed';
@@ -3053,6 +3361,7 @@ populateCountryDropdown();
 renderSelectedCountryPills();
 updateMatrixPreview();
 renderFoundGroups();
+renderMonitoredGroups();
 loadVacancies();
 </script>
 </body>
