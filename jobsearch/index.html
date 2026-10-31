@@ -3368,7 +3368,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
   const lastGroupsRef = { rows: [] };
   const stats = { posts: 0, withEmail: 0, withDoc: 0, passed: 0, hiring: 0, flagged: 0, saved: 0, reached: 0 };
   setScrapePhase(1, 'Sending request to backend...', 5);
-  [1, 2, 3, 4].forEach(n => { $('pstep-' + n).querySelector('.pstep-desc').textContent = ({ 1: 'Apify pulling chronological posts', 2: 'Extracting emails & Google Forms', 3: 'AI verifying hiring intent & role', 4: 'Fraud check & saving to live feed' })[n]; });
+  [1, 2, 3, 4].forEach(n => { $('pstep-' + n).querySelector('.pstep-desc').textContent = ({ 1: 'Apify pulling chronological posts', 2: 'Extracting emails & Google Forms', 3: 'AI verifying hiring intent & role', 4: 'Saving vacancies to live feed (1-Click Verify on cards)' })[n]; });
 
   let seconds = 0;
   clearInterval(scrapeTimerInterval);
