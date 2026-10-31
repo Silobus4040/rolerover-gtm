@@ -51,6 +51,11 @@
   .badge-sufficient{background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55}
   .badge-scraping{background:#60a5fa22;color:var(--blue);border:1px solid #60a5fa55}
   .empty{padding:40px;text-align:center;color:var(--mute)}
+  .preset-pill{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;background:#0d1320;border:1px solid var(--line);color:var(--mute);cursor:pointer;user-select:none}
+  .preset-pill:hover{border-color:var(--lime);color:var(--text)}
+  .preset-pill.active{background:var(--lime);color:#0b0f17;border-color:var(--lime)}
+  .ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:14px 16px;background:#0d1320;border:1px solid var(--line);border-radius:12px;margin-bottom:16px}
+  .ctrl-input{width:100%;background:#121826;border:1px solid var(--line);color:#fff;border-radius:8px;padding:8px 11px;font:inherit;font-weight:700;margin-top:6px}
   .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
   .filter-bar input{max-width:280px;background:#0d1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit}
   .leads-link{color:var(--lime);text-decoration:underline;cursor:pointer;background:none;border:0;font:inherit;font-variant-numeric:tabular-nums;padding:0}
@@ -117,6 +122,41 @@
       </div>
 
       <div class="card">
+        <!-- Scrape Controls Bar (User-controlled Date Range & Unlimited Posts) -->
+        <div class="ctrl-grid">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <label style="font-size:12px;color:var(--mute);font-weight:600">Posts newer than (Date Range)</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap" id="datePills">
+                <span class="preset-pill active" data-val="24h">24h (Daily)</span>
+                <span class="preset-pill" data-val="7d">7d (Week)</span>
+                <span class="preset-pill" data-val="30d">30d (Month)</span>
+              </div>
+            </div>
+            <select id="scrapeDateRange" class="ctrl-input">
+              <option value="24h" selected>Last 24 hours (Daily run &mdash; recommended after first 7d scrape)</option>
+              <option value="7d">Last 7 days (First-time role backfill)</option>
+              <option value="30d">Last 30 days (Deep monthly backfill)</option>
+              <option value="1h">Last 1 hour</option>
+            </select>
+            <div style="font-size:11px;color:var(--mute);margin-top:4px">Run <b>7 days</b> once for a new role, then use <b>24 hours</b> daily so you never pay for old posts twice.</div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <label style="font-size:12px;color:var(--mute);font-weight:600">Posts per query</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap" id="limitPills">
+                <span class="preset-pill active" data-val="All">All (Unlimited)</span>
+                <span class="preset-pill" data-val="25">25</span>
+                <span class="preset-pill" data-val="50">50</span>
+                <span class="preset-pill" data-val="100">100</span>
+              </div>
+            </div>
+            <input id="scrapeMaxPosts" class="ctrl-input" value="All" placeholder="All (or type a number e.g. 50)">
+            <div style="font-size:11px;color:var(--mute);margin-top:4px"><b>All</b> removes the old 15-post cap and pulls every post inside your chosen date window.</div>
+          </div>
+        </div>
+
         <div class="filter-bar">
           <input id="qFilter" placeholder="Filter by role or country...">
         </div>
@@ -274,7 +314,7 @@ async function scrapeOne(role, country, btn) {
     const res = await fetch(API_BASE + '/rr-linkedin-scrape-now', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ search_keyword: role, country: country })
+      body: JSON.stringify({ search_keyword: role, country: country, postedLimit: getScrapeDateRange(), maxPosts: getScrapeMaxPosts() })
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
     await res.json(); // just the instant "started" ack - the real server-side flag is what matters now
@@ -294,7 +334,7 @@ async function scrapeAllFlagged() {
     await fetch(API_BASE + '/rr-linkedin-scrape-now', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ search_keyword: r.role, country: r.country })
+      body: JSON.stringify({ search_keyword: r.role, country: r.country, postedLimit: getScrapeDateRange(), maxPosts: getScrapeMaxPosts() })
     }).catch(() => {});
     await new Promise(res => setTimeout(res, 1500)); // small stagger - Apify caps concurrent jobs per account
   }
@@ -318,6 +358,59 @@ async function watchInProgress() {
     watcherRunning = false;
   }
 }
+
+
+function getScrapeDateRange() {
+  return ($('scrapeDateRange') && $('scrapeDateRange').value) || '24h';
+}
+function getScrapeMaxPosts() {
+  const raw = (($('scrapeMaxPosts') && $('scrapeMaxPosts').value) || 'All').trim();
+  return raw.toLowerCase() === 'all' ? 'All' : (+raw || 'All');
+}
+(function initScrapeControls() {
+  const savedDate = localStorage.getItem('rr_linkedin_date_range');
+  const savedMax = localStorage.getItem('rr_linkedin_max_posts');
+  if (savedDate && $('scrapeDateRange')) $('scrapeDateRange').value = savedDate;
+  if (savedMax && $('scrapeMaxPosts')) $('scrapeMaxPosts').value = savedMax;
+
+  function syncPills() {
+    const dv = getScrapeDateRange();
+    document.querySelectorAll('#datePills .preset-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.val === dv);
+    });
+    const mv = String(getScrapeMaxPosts());
+    document.querySelectorAll('#limitPills .preset-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.val.toLowerCase() === mv.toLowerCase());
+    });
+  }
+  document.querySelectorAll('#datePills .preset-pill').forEach(p => {
+    p.onclick = () => {
+      $('scrapeDateRange').value = p.dataset.val;
+      localStorage.setItem('rr_linkedin_date_range', p.dataset.val);
+      syncPills();
+    };
+  });
+  if ($('scrapeDateRange')) {
+    $('scrapeDateRange').onchange = () => {
+      localStorage.setItem('rr_linkedin_date_range', $('scrapeDateRange').value);
+      syncPills();
+    };
+  }
+  document.querySelectorAll('#limitPills .preset-pill').forEach(p => {
+    p.onclick = () => {
+      $('scrapeMaxPosts').value = p.dataset.val;
+      localStorage.setItem('rr_linkedin_max_posts', p.dataset.val);
+      syncPills();
+    };
+  });
+  if ($('scrapeMaxPosts')) {
+    $('scrapeMaxPosts').oninput = () => {
+      localStorage.setItem('rr_linkedin_max_posts', $('scrapeMaxPosts').value);
+      syncPills();
+    };
+  }
+  syncPills();
+})();
 
 $('btnRefresh').onclick = loadCoverage;
 $('btnScrapeAll').onclick = scrapeAllFlagged;
