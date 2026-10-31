@@ -2870,7 +2870,7 @@ function renderMonitoredGroups() {
   // Summary counts
   const totalGroups = targetGroups.length;
   const count24h = targetGroups.filter(g => g.monitor24h).length;
-  const scrapedGroups = targetGroups.filter(g => getGroupLeadCount(g) > 0);
+  const scrapedGroups = targetGroups.filter(g => groupHistoryFor(g).length > 0 || getGroupLeadCount(g) > 0);
   const totalLeadsFromGroups = targetGroups.reduce((acc, g) => acc + getGroupLeadCount(g), 0);
 
   // Update top summary cards
@@ -2897,7 +2897,7 @@ function renderMonitoredGroups() {
       if (!name.includes(q) && !desc.includes(q) && !loc.includes(q)) return false;
     }
     if (monitoredFilterTab === '24h') return !!g.monitor24h;
-    if (monitoredFilterTab === 'scraped') return getGroupLeadCount(g) > 0;
+    if (monitoredFilterTab === 'scraped') return groupHistoryFor(g).length > 0 || getGroupLeadCount(g) > 0;
     if (monitoredFilterTab === 'high') return (g.postsPerDay || 0) >= 15;
     return true;
   });
@@ -2923,9 +2923,21 @@ function renderMonitoredGroups() {
               : `<span class="badge" style="background:#8b96ad22;color:var(--mute)">${postsPerDay} posts/day</span>`))
       : '<span class="badge" style="background:#8b96ad22;color:var(--mute)">Active</span>';
 
-    const scrapeStatusBadge = leadCount > 0
-      ? `<span class="badge" style="background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55;font-weight:700">✓ Scraped (${leadCount} lead${leadCount > 1 ? 's' : ''})</span>`
-      : `<span class="badge" style="background:#1e293b;color:var(--mute);border:1px solid #334155">Not scraped yet</span>`;
+    const hist = groupHistoryFor(g);
+    const T = sumRows(hist);
+    const verdict = groupVerdict(T);
+    let scrapeStatusBadge;
+    if (!hist.length) {
+      scrapeStatusBadge = leadCount > 0
+        ? '<span class="badge" style="background:#00ffcc22;color:var(--teal);border:1px solid #00ffcc55;font-weight:700">✓ Scraped (' + leadCount + ' lead' + (leadCount > 1 ? 's' : '') + ' in feed)</span>'
+        : '<span class="badge" style="background:#1e293b;color:var(--mute);border:1px solid #334155">Not scraped yet</span>';
+    } else {
+      const last = hist[0];
+      scrapeStatusBadge = '<div style="min-width:260px">'
+        + '<span class="badge" style="background:' + verdict.bg + ';color:' + verdict.color + ';border:1px solid ' + verdict.color + '55;font-weight:700" title="' + esc(verdict.hint) + '">' + verdict.label + '</span>'
+        + '<div style="font-size:11px;color:#cbd5e1;margin-top:5px;line-height:1.5"><b>Last:</b> ' + esc(fmtWhen(last.started_at)) + ' &middot; ' + esc(last.scrape_window || '') + '<br>' + (last.posts_found || 0) + ' posts &middot; ' + (last.with_email || 0) + ' email &middot; ' + (last.with_doc || 0) + ' form &middot; ' + (last.no_channel || 0) + ' no contact &middot; <b style="color:var(--lime)">' + (last.saved || 0) + ' saved</b></div>'
+        + '<div style="font-size:11px;color:var(--mute);line-height:1.5"><b>All time (' + T.scrapes + ' scrape' + (T.scrapes > 1 ? 's' : '') + '):</b> ' + T.posts + ' posts &middot; ' + T.email + ' email &middot; ' + T.doc + ' form &middot; ' + T.nonPro + ' non-pro &middot; ' + T.notHiring + ' not hiring &middot; ' + T.otherRole + ' other roles &middot; ' + T.flagged + ' flagged &middot; ' + T.saved + ' saved</div></div>';
+    }
 
     return `<tr>
       <td>
@@ -3286,10 +3298,54 @@ function accumulateStats(s, ev) {
   if (ev.stage === 'fraud') { s.flagged = d.flagged || 0; }
   if (ev.stage === 'save') { s.saved = d.saved || 0; }
 }
-function renderScrapeSummary(s) {
-  const card = (n, label, color) => '<div style="background:#0d1320;border:1px solid #1a2236;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:24px;font-weight:800;color:' + color + '">' + n + '</div><div style="font-size:11px;color:var(--mute);margin-top:2px">' + label + '</div></div>';
+/* ---------- Per-group scrape history (from rr_group_scrape_runs) ---------- */
+let groupHistoryRows = [];
+const ghKey = (u) => { const m = String(u || '').match(/groups\/([^\/?#]+)/i); return m ? m[1].toLowerCase() : String(u || '').toLowerCase(); };
+async function loadGroupHistory() {
+  try { const r = await post('/rr-group-history', {}); groupHistoryRows = r.rows || []; } catch (e) { console.warn('group history failed', e); }
+}
+function groupHistoryFor(g) {
+  const keys = new Set([ghKey(g.url), String(g.id || '').toLowerCase()].filter(Boolean));
+  const rows = groupHistoryRows.filter(r => keys.has(String(r.group_key).toLowerCase()) && r.status !== 'running');
+  return rows;
+}
+function sumRows(rows) {
+  const t = { scrapes: rows.length, posts: 0, email: 0, doc: 0, noChannel: 0, nonPro: 0, notHiring: 0, otherRole: 0, hiring: 0, flagged: 0, saved: 0 };
+  rows.forEach(r => { t.posts += r.posts_found || 0; t.email += r.with_email || 0; t.doc += r.with_doc || 0; t.noChannel += r.no_channel || 0; t.nonPro += r.non_pro_role || 0; t.notHiring += r.not_hiring || 0; t.otherRole += r.irrelevant_role || 0; t.hiring += r.hiring_posts || 0; t.flagged += r.fraud_flagged || 0; t.saved += r.saved || 0; });
+  return t;
+}
+function groupVerdict(t) {
+  if (!t.scrapes) return null;
+  if (t.posts < 10) return { label: 'Too early to judge', color: 'var(--mute)', bg: '#1e293b', hint: 'Fewer than 10 posts scraped so far.' };
+  if (t.saved >= 2 || t.saved / t.posts >= 0.1) return { label: 'Keep', color: 'var(--lime)', bg: '#d4ff3322', hint: 'Yields real leads.' };
+  if (t.email + t.doc > 0 || t.hiring > 0) return { label: 'Marginal', color: '#fbbf24', bg: '#fbbf2422', hint: 'Some hiring posts but few usable leads.' };
+  return { label: 'Drop', color: '#f87171', bg: '#f8717122', hint: 'Enough posts scraped, no usable leads.' };
+}
+function fmtWhen(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); }
+function reasonText(rs) {
+  const parts = Object.entries(rs || {}).map(([k, v]) => v + ' ' + ({ job_seeker: 'job seekers', ad_or_course: 'ads/courses', pay_to_apply: 'pay-to-apply', spam: 'spam', other: 'other', unreadable: 'unreadable' }[k] || k));
+  return parts.join(', ');
+}
+function renderScrapeSummary(s, groupRows) {
+  const card = (n, label, color) => '<div style="background:#0d1320;border:1px solid #1a2236;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:22px;font-weight:800;color:' + color + '">' + n + '</div><div style="font-size:11px;color:var(--mute);margin-top:2px">' + label + '</div></div>';
   const box = $('scrapeSummary');
-  box.innerHTML = card(s.posts, 'Posts found', '#fff') + card(s.withEmail, 'With email', 'var(--teal)') + card(s.withDoc, 'With Google Form/Doc', '#60a5fa') + card(s.posts - s.passed, 'No email/form (dropped)', '#f87171') + card(s.hiring, 'Real vacancies (AI)', 'var(--lime)') + card(s.flagged, 'Flagged by fraud check', '#fbbf24') + card(s.saved, 'Leads saved to feed', 'var(--lime)');
+  let html = '';
+  if (groupRows && groupRows.length) {
+    html = groupRows.map(r => {
+      const t = sumRows([r]);
+      const reasons = reasonText(r.not_hiring_reasons);
+      const line = esc(r.scrape_window || '') + ' scraped &middot; <b>' + t.posts + '</b> posts &rarr; <b>' + t.email + '</b> with email, <b>' + t.doc + '</b> with Google Form/Doc, <b>' + t.noChannel + '</b> no email/form, <b>' + t.nonPro + '</b> non-professional role, <b>' + t.notHiring + '</b> not hiring' + (reasons ? ' (' + esc(reasons) + ')' : '') + ', <b>' + t.otherRole + '</b> hiring but not your roles, <b>' + t.flagged + '</b> flagged by fraud check &rarr; <b style="color:var(--lime)">' + t.saved + ' saved</b>';
+      return '<div style="grid-column:1/-1;background:#0b0f17;border:1px solid #1e293b;border-radius:10px;padding:12px 14px">'
+        + '<div style="font-weight:700;color:#fff;margin-bottom:6px">' + esc(r.group_name || r.group_url) + '</div>'
+        + '<div style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:10px">' + line + '</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px">'
+        + card(t.posts, 'Posts scraped', '#fff') + card(t.email, 'With email', 'var(--teal)') + card(t.doc, 'Google Form/Doc', '#60a5fa') + card(t.noChannel, 'No email/form', '#f87171') + card(t.nonPro, 'Non-professional role', '#f87171') + card(t.notHiring, 'Not hiring', '#fbbf24') + card(t.otherRole, 'Not your roles', '#fbbf24') + card(t.flagged, 'Fraud flagged', '#fbbf24') + card(t.saved, 'Saved to feed', 'var(--lime)')
+        + '</div></div>';
+    }).join('');
+  } else {
+    html = card(s.posts, 'Posts found', '#fff') + card(s.withEmail, 'With email', 'var(--teal)') + card(s.withDoc, 'With Google Form/Doc', '#60a5fa') + card(s.posts - s.passed, 'No email/form (dropped)', '#f87171') + card(s.hiring, 'Real vacancies (AI)', 'var(--lime)') + card(s.flagged, 'Flagged by fraud check', '#fbbf24') + card(s.saved, 'Leads saved to feed', 'var(--lime)');
+  }
+  box.innerHTML = html;
   box.style.display = 'grid';
 }
 async function runVacancyScrapePipeline(urls, groupLabel = null) {
@@ -3308,6 +3364,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
   $('btnGoToFeed').style.display = 'none';
   $('scrapeLiveConsole').innerHTML = '';
   $('scrapeSummary').style.display = 'none'; $('scrapeSummary').innerHTML = '';
+  const lastGroupsRef = { rows: [] };
   const stats = { posts: 0, withEmail: 0, withDoc: 0, passed: 0, hiring: 0, flagged: 0, saved: 0, reached: 0 };
   setScrapePhase(1, 'Sending request to backend...', 5);
   [1, 2, 3, 4].forEach(n => { $('pstep-' + n).querySelector('.pstep-desc').textContent = ({ 1: 'Apify pulling chronological posts', 2: 'Extracting emails & Google Forms', 3: 'AI verifying hiring intent & role', 4: 'Fraud check & saving to live feed' })[n]; });
@@ -3319,7 +3376,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
 
   const finish = (kind, title, msg) => {
     clearInterval(scrapeTimerInterval);
-    renderScrapeSummary(stats);
+    renderScrapeSummary(stats, lastGroupsRef.rows);
     const color = kind === 'error' ? 'var(--red)' : kind === 'warn' ? '#fbbf24' : 'var(--lime)';
     $('scrapeProgressTitle').innerHTML = '<span style="color:' + color + '">' + title + '</span>';
     $('scrapeLogText').innerHTML = msg;
@@ -3327,6 +3384,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
     $('btnGoToFeed').style.display = 'inline-block';
     $('btnGoToFeed').onclick = () => document.querySelector('[data-page="feed"]').click();
     lock(false);
+    loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} });
   };
 
   try {
@@ -3334,11 +3392,12 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
     const runId = res.run_id;
     if (!runId) throw new Error('Backend did not return a run id.');
     liveLine({ stage: 'request', status: 'ok', message: 'Backend accepted run ' + runId });
-    let after = 0, finished = false, idle = 0;
+    let after = 0, finished = false, idle = 0, lastGroups = [];
     const poll = setInterval(async () => {
       idle++;
       try {
         const r = await post('/rr-scrape-status', { run_id: runId, after });
+        if (r.groups) { lastGroups = r.groups; lastGroupsRef.rows = r.groups; }
         (r.events || []).forEach(ev => {
           after = Math.max(after, ev.id); idle = 0;
           liveLine(ev); applyStageEvent(ev); accumulateStats(stats, ev);
@@ -3370,6 +3429,7 @@ updateMatrixPreview();
 renderFoundGroups();
 renderMonitoredGroups();
 loadVacancies();
+loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} });
 </script>
 </body>
 </html>
