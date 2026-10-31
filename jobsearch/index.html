@@ -456,6 +456,7 @@
               <span id="scrapeLogText">Connecting to Facebook scraper...</span>
               <button type="button" id="btnGoToFeed" style="display:none;padding:5px 12px;font-size:12px;background:var(--lime);color:#0b0f17;font-weight:700">View Feed &rarr;</button>
             </div>
+            <div id="scrapeSummary" style="display:none;margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px"></div>
             <div style="margin-top:10px"><div style="font-size:11px;color:var(--mute);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Live backend activity</div><div id="scrapeLiveConsole" style="max-height:210px;overflow-y:auto;font:12px/1.5 ui-monospace,Consolas,monospace;background:#070b13;border:1px solid #1a2236;border-radius:8px;padding:8px 12px"></div></div>
           </div>
           <div class="status" id="scrapeStatus"></div>
@@ -3277,6 +3278,20 @@ function applyStageEvent(ev) {
   if (ev.stage === 'save' && st) { st.className = ev.status === 'ok' ? 'progress-step done' : 'progress-step warn'; const ic = st.querySelector('.pstep-icon'); if (ic) ic.textContent = ev.status === 'ok' ? '\u2713' : '!'; }
   $('scrapeProgressBar').style.width = ({ 1: 25, 2: 50, 3: 75, 4: 95 })[idx] + '%';
 }
+function accumulateStats(s, ev) {
+  const d = ev.data || {};
+  if (ev.stage === 'scrape') { s.posts = d.posts || 0; s.reached = 1; }
+  if (ev.stage === 'filter') { s.posts = d.input != null ? d.input : s.posts; s.withEmail = d.with_email || 0; s.withDoc = d.with_doc || 0; s.passed = d.passed || 0; }
+  if (ev.stage === 'ai') { s.hiring = d.hiring || 0; }
+  if (ev.stage === 'fraud') { s.flagged = d.flagged || 0; }
+  if (ev.stage === 'save') { s.saved = d.saved || 0; }
+}
+function renderScrapeSummary(s) {
+  const card = (n, label, color) => '<div style="background:#0d1320;border:1px solid #1a2236;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:24px;font-weight:800;color:' + color + '">' + n + '</div><div style="font-size:11px;color:var(--mute);margin-top:2px">' + label + '</div></div>';
+  const box = $('scrapeSummary');
+  box.innerHTML = card(s.posts, 'Posts found', '#fff') + card(s.withEmail, 'With email', 'var(--teal)') + card(s.withDoc, 'With Google Form/Doc', '#60a5fa') + card(s.posts - s.passed, 'No email/form (dropped)', '#f87171') + card(s.hiring, 'Real vacancies (AI)', 'var(--lime)') + card(s.flagged, 'Flagged by fraud check', '#fbbf24') + card(s.saved, 'Leads saved to feed', 'var(--lime)');
+  box.style.display = 'grid';
+}
 async function runVacancyScrapePipeline(urls, groupLabel = null) {
   if (!urls || !urls.length) { alert('Please select at least one Facebook group to scrape.'); return; }
   const btnStart = $('btnStartScrape');
@@ -3292,6 +3307,8 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
   $('scrapeProgressTitle').textContent = 'Scraping & Analysing: ' + label;
   $('btnGoToFeed').style.display = 'none';
   $('scrapeLiveConsole').innerHTML = '';
+  $('scrapeSummary').style.display = 'none'; $('scrapeSummary').innerHTML = '';
+  const stats = { posts: 0, withEmail: 0, withDoc: 0, passed: 0, hiring: 0, flagged: 0, saved: 0, reached: 0 };
   setScrapePhase(1, 'Sending request to backend...', 5);
   [1, 2, 3, 4].forEach(n => { $('pstep-' + n).querySelector('.pstep-desc').textContent = ({ 1: 'Apify pulling chronological posts', 2: 'Extracting emails & Google Forms', 3: 'AI verifying hiring intent & role', 4: 'Fraud check & saving to live feed' })[n]; });
 
@@ -3302,6 +3319,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
 
   const finish = (kind, title, msg) => {
     clearInterval(scrapeTimerInterval);
+    renderScrapeSummary(stats);
     const color = kind === 'error' ? 'var(--red)' : kind === 'warn' ? '#fbbf24' : 'var(--lime)';
     $('scrapeProgressTitle').innerHTML = '<span style="color:' + color + '">' + title + '</span>';
     $('scrapeLogText').innerHTML = msg;
@@ -3323,7 +3341,7 @@ async function runVacancyScrapePipeline(urls, groupLabel = null) {
         const r = await post('/rr-scrape-status', { run_id: runId, after });
         (r.events || []).forEach(ev => {
           after = Math.max(after, ev.id); idle = 0;
-          liveLine(ev); applyStageEvent(ev);
+          liveLine(ev); applyStageEvent(ev); accumulateStats(stats, ev);
           if (ev.stage === 'done' && !finished) {
             finished = true; clearInterval(poll);
             if (ev.status === 'error') finish('error', 'Scrape Failed', esc(ev.message));
