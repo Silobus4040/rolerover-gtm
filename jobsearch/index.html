@@ -3583,7 +3583,7 @@ loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} })
     {
       id: 'no_sensitive_id',
       title: '4. Never Share Bank Logins or Sensitive ID Before a Verified Offer',
-      body: 'Never share your bank account details, national ID, passport, driver\'s license, or Social Security number until you have independently verified the employer and received a genuine written offer.'
+      body: 'Never share your bank account details, national ID, passport, driver\'s license, or any identity number until you have independently verified the employer and received a genuine written offer.'
     },
     {
       id: 'fake_checks_crypto',
@@ -3598,6 +3598,77 @@ loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} })
   ];
 
   const leadMemoryCache = new Map();
+
+  function isGenericRegistrySearchPage(url) {
+    if (!url) return true;
+    const u = String(url).toLowerCase();
+    return (
+      u === 'https://www.cac.gov.ng/' ||
+      u === 'https://www.cac.gov.ng' ||
+      u.includes('cac.gov.ng/services/company-search') ||
+      u.includes('cac.gov.ng/foi-portal') ||
+      u.includes('find-and-update.company-information.service.gov.uk/?') ||
+      u === 'https://find-and-update.company-information.service.gov.uk/'
+    );
+  }
+
+  function normalizeDossier(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (raw.checks && typeof raw.checks === 'object') {
+      const c = raw.checks;
+      if (c.company_registration && Array.isArray(c.company_registration.registry_links)) {
+        c.company_registration.registry_links = c.company_registration.registry_links.filter(r => r && !isGenericRegistrySearchPage(r.url));
+      }
+      return raw;
+    }
+    // Convert backfilled claim1..claim6 format into normalized checks format
+    if (raw.claim1_registration_and_website || raw.claim2_cross_platform_socials || raw.claim3_domain_and_impersonation) {
+      const c1 = raw.claim1_registration_and_website || {};
+      const c2 = raw.claim2_cross_platform_socials || {};
+      const c3 = raw.claim3_domain_and_impersonation || {};
+      const c4 = raw.claim4_scam_fee_check || {};
+      const c6 = raw.claim6_contact_web_history || {};
+      const regLinks = (Array.isArray(c1.registry_records) ? c1.registry_records : []).filter(r => r && !isGenericRegistrySearchPage(r.url));
+      const domStatusMap = {
+        corporate_match: 'corporate_domain_match',
+        verified_free_email: 'free_email_verified_on_site',
+        impersonation_risk: 'brand_impersonation_warning'
+      };
+      return {
+        verified_at: raw.verified_at || new Date().toISOString(),
+        checks: {
+          company_registration: {
+            official_website: c1.official_website || c2.website || null,
+            registry_links: regLinks
+          },
+          social_footprint: {
+            company_linkedin: c2.company_linkedin || null,
+            poster_linkedin: c2.poster_linkedin || null,
+            twitter_x: c2.twitter_x || null,
+            facebook: c2.facebook || null,
+            instagram: c2.instagram || null,
+            website: c2.website || c1.official_website || null
+          },
+          domain_impersonation: {
+            status: domStatusMap[c3.status] || c3.status || 'checked',
+            badge: c3.badge || 'Domain Checked',
+            summary: c3.summary || ''
+          },
+          scam_reputation: {
+            status: c4.flagged ? 'scam_reports_found' : 'no_scam_reports_indexed',
+            badge: c4.flagged ? '⚠️ Scam / Fee Warning Found' : '✓ No Public Scam Reports Found',
+            summary: c4.summary || 'No public scam, fraud, or fee-demand reports found for this contact.',
+            warnings: Array.isArray(c4.hits) ? c4.hits : []
+          },
+          contact_web_history: {
+            count: Array.isArray(c6.mentions) ? c6.mentions.length : 0,
+            mentions: Array.isArray(c6.mentions) ? c6.mentions : []
+          }
+        }
+      };
+    }
+    return null;
+  }
 
   window.RR_SOCIAL_SAFETY = {
     hasAcknowledged: function() {
@@ -3722,7 +3793,7 @@ loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} })
           return;
         }
 
-        // Step 3: 7 Safety Rules
+        // Step 3: 6 Safety Rules
         backdrop.innerHTML = `
           <div class="rr-sv-modal" role="dialog" aria-modal="true">
             <div class="rr-sv-head">
@@ -3871,7 +3942,7 @@ loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} })
         this.openVerifyModal(lead, true);
       };
 
-      let dossier = (!forceRefresh && lead.verification_dossier && lead.verification_dossier.checks) ? lead.verification_dossier : null;
+      let dossier = (!forceRefresh && lead.verification_dossier) ? normalizeDossier(lead.verification_dossier) : null;
 
       if (!dossier) {
         try {
@@ -3893,7 +3964,7 @@ loadGroupHistory().then(() => { try { renderMonitoredGroups(); } catch (e) {} })
           if (res.ok) {
             const data = await res.json();
             if (data && data.dossier) {
-              dossier = data.dossier;
+              dossier = normalizeDossier(data.dossier);
               lead.verification_dossier = dossier;
               if (lead.id) leadMemoryCache.set(String(lead.id), lead);
             }
