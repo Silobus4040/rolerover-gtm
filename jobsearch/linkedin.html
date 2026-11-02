@@ -166,7 +166,8 @@
             <thead>
               <tr>
                 <th>Role</th>
-                <th>Country</th>
+                <th>Target Market</th>
+                <th class="num">Users Demanding</th>
                 <th>Status</th>
                 <th class="num">Leads Available</th>
                 <th>Last Scraped</th>
@@ -226,9 +227,10 @@ function render() {
   $('covTableBody').innerHTML = filtered.map(r => `
     <tr>
       <td><b>${esc(r.role)}</b></td>
-      <td>${esc(r.country)}${r.any_remote ? ' <span style="color:var(--mute);font-size:11px">(+ worldwide)</span>' : ''}</td>
+      <td>${esc(r.country === 'GLOBAL' ? '🌍 Worldwide (Remote)' : r.country)}</td>
+      <td class="num"><b style="color:var(--lime);font-size:14px">${r.user_count || 1}</b> <span style="color:var(--mute);font-size:11px">${r.user_count === 1 ? 'user' : 'users'}</span></td>
       <td>${statusBadge(r.status)}</td>
-      <td class="num">${r.available_leads > 0 ? `<button type="button" class="leads-link" data-role="${esc(r.role)}" data-country="${esc(r.country)}">${r.available_leads}</button>` : r.available_leads}</td>
+      <td class="num">${r.available_leads > 0 ? `<button type="button" class="leads-link" data-role="${esc(r.role)}" data-country="${esc(r.country)}">${r.available_leads}</button>` : `<span style="color:var(--red);font-weight:700">0</span>`}</td>
       <td>${esc(timeAgo(r.last_scraped_at))}</td>
       <td style="text-align:right">
         ${r.status === 'scraping'

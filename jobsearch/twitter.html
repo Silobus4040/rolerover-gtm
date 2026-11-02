@@ -172,7 +172,8 @@
             <thead>
               <tr>
                 <th>Role</th>
-                <th>Scope</th>
+                <th>Target Market</th>
+                <th class="num">Users Demanding</th>
                 <th>Status</th>
                 <th class="num">Leads Available</th>
                 <th>Last Scraped</th>
@@ -236,12 +237,13 @@ function render() {
   $('covTableBody').innerHTML = filtered.map(r => `
     <tr>
       <td><b>${esc(r.role)}</b></td>
-      <td><span class="badge badge-global">Global</span></td>
+      <td>${esc(r.country === 'GLOBAL' ? '🌍 Global' : r.country)}</td>
+      <td class="num"><b style="color:var(--lime);font-size:14px">${r.user_count || 1}</b> <span style="color:var(--mute);font-size:11px">${r.user_count === 1 ? 'user' : 'users'}</span></td>
       <td>${statusBadge(r.status)}</td>
       <td class="num">
         ${parseInt(r.available_leads, 10) > 0
           ? `<button type="button" class="leads-link" data-role="${esc(r.role)}">${r.available_leads}</button>`
-          : '0'}
+          : '<span style="color:var(--red);font-weight:700">0</span>'}
       </td>
       <td>${esc(timeAgo(r.last_scraped_at))}</td>
       <td style="text-align:right">
