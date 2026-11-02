@@ -122,41 +122,6 @@
       </div>
 
       <div class="card">
-        <!-- Scrape Controls Bar (User-controlled Date Range & Unlimited Posts) -->
-        <div class="ctrl-grid">
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <label style="font-size:12px;color:var(--mute);font-weight:600">Posts newer than (Date Range)</label>
-              <div style="display:flex;gap:5px;flex-wrap:wrap" id="datePills">
-                <span class="preset-pill active" data-val="24h">24h (Daily)</span>
-                <span class="preset-pill" data-val="7d">7d (Week)</span>
-                <span class="preset-pill" data-val="30d">30d (Month)</span>
-              </div>
-            </div>
-            <select id="scrapeDateRange" class="ctrl-input">
-              <option value="24h" selected>Last 24 hours (Daily run &mdash; recommended after first 7d scrape)</option>
-              <option value="7d">Last 7 days (First-time role backfill)</option>
-              <option value="30d">Last 30 days (Deep monthly backfill)</option>
-              <option value="1h">Last 1 hour</option>
-            </select>
-            <div style="font-size:11px;color:var(--mute);margin-top:4px">Run <b>7 days</b> once for a new role, then use <b>24 hours</b> daily so you never pay for old posts twice.</div>
-          </div>
-
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <label style="font-size:12px;color:var(--mute);font-weight:600">Posts per query</label>
-              <div style="display:flex;gap:5px;flex-wrap:wrap" id="limitPills">
-                <span class="preset-pill active" data-val="All">All (Unlimited)</span>
-                <span class="preset-pill" data-val="25">25</span>
-                <span class="preset-pill" data-val="50">50</span>
-                <span class="preset-pill" data-val="100">100</span>
-              </div>
-            </div>
-            <input id="scrapeMaxPosts" class="ctrl-input" value="All" placeholder="All (or type a number e.g. 50)">
-            <div style="font-size:11px;color:var(--mute);margin-top:4px"><b>All</b> removes the old 15-post cap and pulls every post inside your chosen date window.</div>
-          </div>
-        </div>
-
         <div class="filter-bar">
           <input id="qFilter" placeholder="Filter by role or country...">
         </div>
@@ -381,57 +346,8 @@ async function watchInProgress() {
 }
 
 
-function getScrapeDateRange() {
-  return ($('scrapeDateRange') && $('scrapeDateRange').value) || '24h';
-}
-function getScrapeMaxPosts() {
-  const raw = (($('scrapeMaxPosts') && $('scrapeMaxPosts').value) || 'All').trim();
-  return raw.toLowerCase() === 'all' ? 'All' : (+raw || 'All');
-}
-(function initScrapeControls() {
-  const savedDate = localStorage.getItem('rr_linkedin_date_range');
-  const savedMax = localStorage.getItem('rr_linkedin_max_posts');
-  if (savedDate && $('scrapeDateRange')) $('scrapeDateRange').value = savedDate;
-  if (savedMax && $('scrapeMaxPosts')) $('scrapeMaxPosts').value = savedMax;
-
-  function syncPills() {
-    const dv = getScrapeDateRange();
-    document.querySelectorAll('#datePills .preset-pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.val === dv);
-    });
-    const mv = String(getScrapeMaxPosts());
-    document.querySelectorAll('#limitPills .preset-pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.val.toLowerCase() === mv.toLowerCase());
-    });
-  }
-  document.querySelectorAll('#datePills .preset-pill').forEach(p => {
-    p.onclick = () => {
-      $('scrapeDateRange').value = p.dataset.val;
-      localStorage.setItem('rr_linkedin_date_range', p.dataset.val);
-      syncPills();
-    };
-  });
-  if ($('scrapeDateRange')) {
-    $('scrapeDateRange').onchange = () => {
-      localStorage.setItem('rr_linkedin_date_range', $('scrapeDateRange').value);
-      syncPills();
-    };
-  }
-  document.querySelectorAll('#limitPills .preset-pill').forEach(p => {
-    p.onclick = () => {
-      $('scrapeMaxPosts').value = p.dataset.val;
-      localStorage.setItem('rr_linkedin_max_posts', p.dataset.val);
-      syncPills();
-    };
-  });
-  if ($('scrapeMaxPosts')) {
-    $('scrapeMaxPosts').oninput = () => {
-      localStorage.setItem('rr_linkedin_max_posts', $('scrapeMaxPosts').value);
-      syncPills();
-    };
-  }
-  syncPills();
-})();
+function getScrapeDateRange() { return '7d'; }
+function getScrapeMaxPosts() { return 'All'; }
 
 $('btnRefresh').onclick = loadCoverage;
 $('btnScrapeAll').onclick = scrapeAllFlagged;
