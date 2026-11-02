@@ -234,16 +234,32 @@ function render() {
       <td>${esc(timeAgo(r.last_scraped_at))}</td>
       <td style="text-align:right">
         ${r.status === 'scraping'
-          ? '<span style="color:var(--mute);font-size:11px">in progress...</span>'
+          ? '<span style="color:var(--mute);font-size:11px"><span class="spin" style="width:9px;height:9px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span>in progress...</span>'
           : (r.status !== 'sufficient'
-            ? `<button type="button" class="ghost small btn-scrape-one" data-role="${esc(r.role)}" data-country="${esc(r.country)}">Scrape Now</button>`
+            ? `<div style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end">
+                 <select class="row-date" style="background:#0d1320;border:1px solid var(--line);color:var(--lime);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;cursor:pointer">
+                   <option value="7d" selected>7 Days</option>
+                   <option value="24h">24 Hours</option>
+                   <option value="30d">30 Days</option>
+                   <option value="1h">1 Hour</option>
+                 </select>
+                 <input class="row-max" value="All" placeholder="All" title="Number of posts to scrape (or 'All')" style="width:52px;text-align:center;background:#0d1320;border:1px solid var(--line);color:#fff;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700">
+                 <button type="button" class="btn-scrape-one" data-role="${esc(r.role)}" data-country="${esc(r.country)}" style="padding:6px 14px;font-size:12px;white-space:nowrap">⚡ Scrape</button>
+               </div>`
             : '&mdash;')}
       </td>
     </tr>
   `).join('');
 
   document.querySelectorAll('.btn-scrape-one').forEach(btn => {
-    btn.onclick = () => scrapeOne(btn.dataset.role, btn.dataset.country, btn);
+    btn.onclick = () => {
+      const parent = btn.closest('div');
+      const dateSel = parent ? parent.querySelector('.row-date') : null;
+      const maxInp = parent ? parent.querySelector('.row-max') : null;
+      const dateVal = dateSel ? dateSel.value : getScrapeDateRange();
+      const maxVal = maxInp ? maxInp.value : getScrapeMaxPosts();
+      scrapeOne(btn.dataset.role, btn.dataset.country, btn, dateVal, maxVal);
+    };
   });
   document.querySelectorAll('.leads-link').forEach(btn => {
     btn.onclick = () => showLeadsModal(btn.dataset.role, btn.dataset.country);
@@ -304,9 +320,11 @@ async function loadCoverage() {
   }
 }
 
-async function scrapeOne(role, country, btn) {
+async function scrapeOne(role, country, btn, customDate, customMax) {
   if (btn) { btn.disabled = true; btn.textContent = 'Scraping...'; }
-  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Starting LinkedIn scrape for ' + esc(role) + ' &middot; ' + esc(country) + '...</span>';
+  const dateRange = customDate || getScrapeDateRange();
+  const maxPosts = customMax != null ? customMax : getScrapeMaxPosts();
+  $('pageStatus').innerHTML = '<span class="spin"></span> <span>Starting LinkedIn scrape for ' + esc(role) + ' &middot; ' + esc(country) + ' (' + esc(dateRange) + ', ' + esc(maxPosts) + ' posts)...</span>';
 
   // Remember the row's state before this click, so polling can tell when THIS scrape actually finishes
   // (not just that the row happens to already have a last_scraped_at from a previous run).
@@ -317,7 +335,7 @@ async function scrapeOne(role, country, btn) {
     const res = await fetch(API_BASE + '/rr-linkedin-scrape-now', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ search_keyword: role, country: country, postedLimit: getScrapeDateRange(), maxPosts: getScrapeMaxPosts() })
+      body: JSON.stringify({ search_keyword: role, country: country, postedLimit: dateRange, maxPosts: maxPosts })
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
     await res.json(); // just the instant "started" ack - the real server-side flag is what matters now
