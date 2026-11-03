@@ -295,9 +295,23 @@ function showTelemetryModal(r) {
 
         <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
           <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">📧</span>
+            <div>
+              <b style="color:#fff;font-size:12px">2. Contact Pre-Filter</b>
+              <div style="font-size:11px;color:var(--mute)">Direct cold email vs external ATS form links</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <b style="font-size:13px;color:${(tel.with_email || 0) > 0 ? 'var(--lime)' : 'var(--red)'}">${tel.with_email || 0} direct emails</b>
+            <div style="font-size:10px;color:var(--mute)">${tel.with_form || 0} had ATS form links</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:16px">🎯</span>
             <div>
-              <b style="color:#fff;font-size:12px">2. Role Match & Classification</b>
+              <b style="color:#fff;font-size:12px">3. Role Match & Classification</b>
               <div style="font-size:11px;color:var(--mute)">Passed standard role taxonomy gate</div>
             </div>
           </div>
@@ -308,25 +322,11 @@ function showTelemetryModal(r) {
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:16px">🌍</span>
             <div>
-              <b style="color:#fff;font-size:12px">3. Grounded Geographic Proof</b>
+              <b style="color:#fff;font-size:12px">4. Grounded Geographic Proof</b>
               <div style="font-size:11px;color:var(--mute)">Quotes in text verifying Worldwide/remote</div>
             </div>
           </div>
           <b style="font-size:13px;color:#a78bfa">${tel.verified_geo != null ? tel.verified_geo : 0} verified</b>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:16px">📧</span>
-            <div>
-              <b style="color:#fff;font-size:12px">4. Contact Extraction Filter</b>
-              <div style="font-size:11px;color:var(--mute)">Direct cold email vs external ATS form links</div>
-            </div>
-          </div>
-          <div style="text-align:right">
-            <b style="font-size:13px;color:${(tel.with_email || 0) > 0 ? 'var(--lime)' : 'var(--red)'}">${tel.with_email || 0} direct emails</b>
-            <div style="font-size:10px;color:var(--mute)">${tel.with_form || 0} had ATS form links</div>
-          </div>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
