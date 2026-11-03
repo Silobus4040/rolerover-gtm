@@ -196,7 +196,14 @@ function render() {
       <td class="num"><b style="color:var(--lime);font-size:14px">${r.user_count || 1}</b> <span style="color:var(--mute);font-size:11px">${r.user_count === 1 ? 'user' : 'users'}</span></td>
       <td>${statusBadge(r.status)}</td>
       <td class="num">${r.available_leads > 0 ? `<button type="button" class="leads-link" data-role="${esc(r.role)}" data-country="${esc(r.country)}">${r.available_leads}</button>` : `<span style="color:var(--red);font-weight:700">0</span>`}</td>
-      <td>${esc(timeAgo(r.last_scraped_at))}</td>
+      <td>
+        <div>${esc(timeAgo(r.last_scraped_at))}</div>
+        ${r.last_run_summary || r.last_telemetry ? `
+          <button type="button" class="btn-telemetry" data-role="${esc(r.role)}" data-country="${esc(r.country)}" style="margin-top:4px;background:#131c2e;border:1px solid #22324e;color:#7dd3fc;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+            📊 Funnel Log
+          </button>
+        ` : ''}
+      </td>
       <td style="text-align:right">
         ${r.status === 'scraping'
           ? '<span style="color:var(--mute);font-size:11px"><span class="spin" style="width:9px;height:9px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span>in progress...</span>'
@@ -229,6 +236,98 @@ function render() {
   document.querySelectorAll('.leads-link').forEach(btn => {
     btn.onclick = () => showLeadsModal(btn.dataset.role, btn.dataset.country);
   });
+  document.querySelectorAll('.btn-telemetry').forEach(btn => {
+    btn.onclick = () => {
+      const row = rows.find(r => r.role === btn.dataset.role && r.country === btn.dataset.country);
+      if (row) showTelemetryModal(row);
+    };
+  });
+}
+
+
+function showTelemetryModal(r) {
+  const tel = r.last_telemetry || {};
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal-box" style="max-width:540px;background:#0d1320;border:1px solid #1e293b;border-radius:12px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px">
+        <div>
+          <b style="font-size:16px;color:#fff">${esc(r.role)}</b>
+          <div style="font-size:12px;color:var(--mute)">Target: ${esc(r.country === 'GLOBAL' ? '🌍 Worldwide (Remote)' : r.country)} &middot; Last Scraped: ${esc(timeAgo(r.last_scraped_at))}</div>
+        </div>
+        <button type="button" class="ghost small" id="btnCloseTelModal" style="color:var(--mute);font-size:16px;cursor:pointer">✕</button>
+      </div>
+      
+      <div style="background:#070b12;border:1px solid #1a2538;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;text-transform:uppercase;color:var(--mute);letter-spacing:0.5px;font-weight:700;margin-bottom:4px">Last Workflow Summary</div>
+        <div style="font-size:13px;color:#f1f5f9;font-weight:600">${esc(r.last_run_summary || tel.summary || 'No run summary recorded.')}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">🔍</span>
+            <div>
+              <b style="color:#fff;font-size:12px">1. Raw Scraped (Apify)</b>
+              <div style="font-size:11px;color:var(--mute)">LinkedIn posts matching keyword & country</div>
+            </div>
+          </div>
+          <b style="font-size:14px;color:var(--lime)">${tel.posts_scraped != null ? tel.posts_scraped : 0} posts</b>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">📧</span>
+            <div>
+              <b style="color:#fff;font-size:12px">2. Contact Extraction</b>
+              <div style="font-size:11px;color:var(--mute)">Direct cold email vs external ATS form links</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <b style="font-size:13px;color:${(tel.with_email || 0) > 0 ? 'var(--lime)' : 'var(--red)'}">${tel.with_email || 0} direct emails</b>
+            <div style="font-size:10px;color:var(--mute)">${tel.with_form || 0} had ATS form links</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">🎯</span>
+            <div>
+              <b style="color:#fff;font-size:12px">3. Role Match & Classification</b>
+              <div style="font-size:11px;color:var(--mute)">Passed standard role taxonomy gate</div>
+            </div>
+          </div>
+          <b style="font-size:13px;color:#38bdf8">${tel.matched_role != null ? tel.matched_role : 0} matched</b>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">🌍</span>
+            <div>
+              <b style="color:#fff;font-size:12px">4. Grounded Geographic Proof</b>
+              <div style="font-size:11px;color:var(--mute)">Quotes in text verifying Worldwide/remote</div>
+            </div>
+          </div>
+          <b style="font-size:13px;color:#a78bfa">${tel.verified_geo != null ? tel.verified_geo : 0} verified</b>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#111927;padding:10px 14px;border-radius:8px;border:1px solid #1e2c44">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">💾</span>
+            <div>
+              <b style="color:#fff;font-size:12px">5. Leads Saved to Database</b>
+              <div style="font-size:11px;color:var(--mute)">Direct outreach leads ready for candidates</div>
+            </div>
+          </div>
+          <b style="font-size:14px;color:${(tel.leads_saved || 0) > 0 ? 'var(--lime)' : 'var(--red)'}">${tel.leads_saved || 0} saved</b>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
+  backdrop.querySelector('#btnCloseTelModal').onclick = () => backdrop.remove();
 }
 
 async function showLeadsModal(role, country) {
