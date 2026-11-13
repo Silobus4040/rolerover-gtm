@@ -236,19 +236,23 @@
   <!-- AUTH SCREEN (shown when logged out) -->
   <div class="auth-card" id="authCard">
     <div class="step" id="authTitle" style="font-size:13px;color:var(--lime);margin-bottom:6px">Freelancer Login</div>
-    <div class="note" style="margin:0 0 16px;font-size:12px;color:var(--mute)">Log in with your freelancer account to access RoleRover job hunter leads, track your daily reply target, and receive your private Telegram alerts.</div>
+    <div class="note" id="authSubNote" style="margin:0 0 16px;font-size:12px;color:var(--mute)">Log in with your freelancer account to access RoleRover job hunter leads, track your daily reply target, and receive your private Telegram alerts.</div>
     <div class="auth-tabs">
       <button type="button" id="tabLogin" class="active">Log In</button>
       <button type="button" id="tabSignUp">Create Account</button>
+      <button type="button" id="tabReset">Reset Password</button>
     </div>
     <form id="authForm" onsubmit="handleAuthSubmit(event)">
       <div style="margin-bottom:12px">
         <label for="authEmail">Email address</label>
         <input id="authEmail" type="email" placeholder="freelancer@example.com" required autocomplete="email">
       </div>
-      <div style="margin-bottom:16px">
-        <label for="authPassword">Password</label>
-        <input id="authPassword" type="password" placeholder="your password" required autocomplete="current-password" minlength="6">
+      <div id="passwordFieldGroup" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label for="authPassword" style="margin:0">Password</label>
+          <a href="#" id="linkForgotPassword" style="font-size:11px;color:var(--teal);text-decoration:none">Forgot Password?</a>
+        </div>
+        <input id="authPassword" type="password" placeholder="your password" autocomplete="current-password" minlength="6">
       </div>
       <button type="submit" id="btnAuthSubmit" style="width:100%;padding:11px">Log In</button>
       <div id="authMsg" class="note" style="margin-top:10px;min-height:20px;text-align:center"></div>
@@ -261,6 +265,18 @@
           <button type="button" id="btnVerifyOtp" style="white-space:nowrap;padding:9px 16px">Verify &amp; Enter</button>
         </div>
         <div id="otpMsg" class="note" style="margin-top:6px;min-height:18px"></div>
+      </div>
+
+      <!-- Password Reset Section (shown when reset code is dispatched) -->
+      <div id="resetSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)">
+        <label for="resetOtp" style="color:var(--teal)">Enter Verification / Recovery Code</label>
+        <input id="resetOtp" type="text" placeholder="e.g. 123456" autocomplete="one-time-code" style="font-size:16px;letter-spacing:2px;font-weight:700;text-align:center;margin-top:4px">
+        <div style="margin-top:10px">
+          <label for="resetNewPassword" style="color:var(--lime)">Enter New Password</label>
+          <input id="resetNewPassword" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password" style="margin-top:4px">
+        </div>
+        <button type="button" id="btnConfirmReset" style="width:100%;margin-top:12px;padding:10px">Set New Password &amp; Log In</button>
+        <div id="resetMsg" class="note" style="margin-top:6px;min-height:18px"></div>
       </div>
     </form>
   </div>
@@ -495,6 +511,21 @@
     <div style="margin-top:6px"><span id="tgMsg" class="small" style="white-space:nowrap"></span></div>
     <div class="note" style="margin-top:12px">Create your bot with <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> on Telegram, copy the bot token, and message your bot. Get your chat ID from <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a>.</div>
   </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="step">Account &amp; Password</div>
+    <div class="note" style="margin:0 0 12px">Update your freelancer account password at any time.</div>
+    <div class="row">
+      <div style="flex:1;min-width:200px">
+        <label for="newPasswordInput">New Password</label>
+        <input id="newPasswordInput" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password">
+      </div>
+      <div style="flex:0;align-self:flex-end">
+        <button class="ghost" id="btnUpdatePassword" style="white-space:nowrap">Update Password</button>
+      </div>
+    </div>
+    <div style="margin-top:6px"><span id="pwUpdateMsg" class="small" style="white-space:nowrap"></span></div>
+  </div>
   </section>
   </div> <!-- #appWorkspace -->
 </div> <!-- .wrap -->
@@ -530,16 +561,44 @@ let dailyReplyCount = 0;
 const DAILY_TARGET = 150;
 
 /* AUTHENTICATION */
-function setAuthMode(signUp) {
-  isSignUpMode = signUp;
-  $('tabLogin').classList.toggle('active', !signUp);
-  $('tabSignUp').classList.toggle('active', signUp);
-  $('authTitle').textContent = signUp ? 'Create Freelancer Account' : 'Freelancer Log In';
-  $('btnAuthSubmit').textContent = signUp ? 'Create Account' : 'Log In';
+let authMode = 'login'; // 'login', 'signup', 'reset'
+
+function setAuthMode(mode) {
+  authMode = mode;
+  $('tabLogin').classList.toggle('active', mode === 'login');
+  $('tabSignUp').classList.toggle('active', mode === 'signup');
+  $('tabReset').classList.toggle('active', mode === 'reset');
   $('authMsg').textContent = '';
+  $('otpSection').style.display = 'none';
+  $('resetSection').style.display = 'none';
+
+  if (mode === 'signup') {
+    $('authTitle').textContent = 'Create Freelancer Account';
+    $('authSubNote').textContent = 'Create your freelancer account to access RoleRover job hunter leads and start earning.';
+    $('passwordFieldGroup').style.display = 'block';
+    $('authPassword').required = true;
+    $('btnAuthSubmit').textContent = 'Create Account';
+    if ($('linkForgotPassword')) $('linkForgotPassword').style.display = 'none';
+  } else if (mode === 'reset') {
+    $('authTitle').textContent = 'Reset Freelancer Password';
+    $('authSubNote').textContent = 'Enter your email address to receive a recovery code to reset your password.';
+    $('passwordFieldGroup').style.display = 'none';
+    $('authPassword').required = false;
+    $('btnAuthSubmit').textContent = 'Send Reset Code';
+    if ($('linkForgotPassword')) $('linkForgotPassword').style.display = 'none';
+  } else {
+    $('authTitle').textContent = 'Freelancer Log In';
+    $('authSubNote').textContent = 'Log in with your freelancer account to access RoleRover job hunter leads, track your daily reply target, and receive your private Telegram alerts.';
+    $('passwordFieldGroup').style.display = 'block';
+    $('authPassword').required = true;
+    $('btnAuthSubmit').textContent = 'Log In';
+    if ($('linkForgotPassword')) $('linkForgotPassword').style.display = 'inline';
+  }
 }
-$('tabLogin').onclick = () => setAuthMode(false);
-$('tabSignUp').onclick = () => setAuthMode(true);
+$('tabLogin').onclick = () => setAuthMode('login');
+$('tabSignUp').onclick = () => setAuthMode('signup');
+$('tabReset').onclick = () => setAuthMode('reset');
+if ($('linkForgotPassword')) $('linkForgotPassword').onclick = (e) => { e.preventDefault(); setAuthMode('reset'); };
 
 async function handleAuthSubmit(e) {
   e.preventDefault();
@@ -548,11 +607,30 @@ async function handleAuthSubmit(e) {
   const password = $('authPassword').value;
   $('btnAuthSubmit').disabled = true;
   $('authMsg').style.color = 'var(--mute)';
-  $('authMsg').textContent = isSignUpMode ? 'Creating your account...' : 'Logging in...';
+
+  if (authMode === 'reset') {
+    $('authMsg').textContent = 'Sending password recovery code...';
+    try {
+      const { error } = await sb.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      $('authMsg').style.color = 'var(--lime)';
+      $('authMsg').textContent = 'Recovery code sent! Enter the verification code and your new password below:';
+      $('resetSection').style.display = 'block';
+      $('resetOtp').focus();
+    } catch (err) {
+      $('authMsg').style.color = 'var(--red)';
+      $('authMsg').textContent = err.message || 'Error sending reset code';
+    } finally {
+      $('btnAuthSubmit').disabled = false;
+    }
+    return;
+  }
+
+  $('authMsg').textContent = authMode === 'signup' ? 'Creating your account...' : 'Logging in...';
 
   try {
     let res;
-    if (isSignUpMode) {
+    if (authMode === 'signup') {
       res = await sb.auth.signUp({ email, password });
       if (res.error) throw res.error;
 
@@ -634,6 +712,50 @@ $('btnVerifyOtp').onclick = async () => {
     $('otpMsg').textContent = err.message || 'Invalid verification code. Please check and retype.';
   } finally {
     $('btnVerifyOtp').disabled = false;
+  }
+};
+
+$('btnConfirmReset').onclick = async () => {
+  if (!sb) return;
+  const email = $('authEmail').value.trim();
+  const token = $('resetOtp').value.trim();
+  const newPassword = $('resetNewPassword').value;
+
+  if (!email || !token || !newPassword) {
+    $('resetMsg').style.color = 'var(--red)';
+    $('resetMsg').textContent = 'Please enter your email, the recovery code, and a new password.';
+    return;
+  }
+  if (newPassword.length < 6) {
+    $('resetMsg').style.color = 'var(--red)';
+    $('resetMsg').textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+
+  $('btnConfirmReset').disabled = true;
+  $('resetMsg').style.color = 'var(--mute)';
+  $('resetMsg').textContent = 'Verifying code & resetting password...';
+
+  try {
+    let res = await sb.auth.verifyOtp({ email, token, type: 'recovery' });
+    if (res.error) throw res.error;
+
+    const updateRes = await sb.auth.updateUser({ password: newPassword });
+    if (updateRes.error) throw updateRes.error;
+
+    $('resetMsg').style.color = 'var(--teal)';
+    $('resetMsg').textContent = 'Password successfully reset! Entering dashboard...';
+    if (updateRes.data?.user) {
+      applySession(updateRes.data.user);
+    } else {
+      const loginTry = await sb.auth.signInWithPassword({ email, password: newPassword });
+      if (loginTry.data?.session) applySession(loginTry.data.session.user);
+    }
+  } catch (err) {
+    $('resetMsg').style.color = 'var(--red)';
+    $('resetMsg').textContent = err.message || 'Invalid or expired recovery code. Please check and retry.';
+  } finally {
+    $('btnConfirmReset').disabled = false;
   }
 };
 
@@ -826,6 +948,34 @@ $('btnSaveTg').onclick = async () => {
     $('btnSaveTg').disabled = false;
   }
 };
+
+if ($('btnUpdatePassword')) {
+  $('btnUpdatePassword').onclick = async () => {
+    if (!sb || !currentUser) return;
+    const p = $('newPasswordInput').value;
+    if (!p || p.length < 6) {
+      $('pwUpdateMsg').style.color = 'var(--red)';
+      $('pwUpdateMsg').textContent = 'Password must be at least 6 characters.';
+      return;
+    }
+    $('btnUpdatePassword').disabled = true;
+    $('pwUpdateMsg').style.color = 'var(--mute)';
+    $('pwUpdateMsg').textContent = 'Updating password...';
+    try {
+      const { error } = await sb.auth.updateUser({ password: p });
+      if (error) throw error;
+      $('pwUpdateMsg').style.color = 'var(--teal)';
+      $('pwUpdateMsg').textContent = '✓ Password updated successfully!';
+      $('newPasswordInput').value = '';
+      setTimeout(() => { if ($('pwUpdateMsg')) $('pwUpdateMsg').textContent = ''; }, 4000);
+    } catch (err) {
+      $('pwUpdateMsg').style.color = 'var(--red)';
+      $('pwUpdateMsg').textContent = 'Error: ' + err.message;
+    } finally {
+      $('btnUpdatePassword').disabled = false;
+    }
+  };
+}
 
 /* TOP LEAD-YIELD GROUPS WIDGET ON DASHBOARD */
 async function loadTopGroupsForDashboard() {
