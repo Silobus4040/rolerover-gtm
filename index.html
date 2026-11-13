@@ -735,6 +735,13 @@
       <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
     </div>
     <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+    <div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border,#334155);border-radius:6px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text-bright)">Quick Add Facebook Group Link to Scrape</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="scraperDirectLink" type="text" placeholder="https://www.facebook.com/groups/..." style="flex:1;min-width:220px;font-size:12px">
+        <button type="button" class="ghost" id="btnScraperAddDirect" style="font-size:12px;white-space:nowrap">+ Add &amp; Select</button>
+      </div>
+    </div>
     <div id="scraperGroupsBox" style="margin-top:14px;display:none">
       <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
         <div>
@@ -1747,15 +1754,15 @@ async function loadGroupsFromDatabase() {
       const { data, error } = await sb
         .from('gtm_discovered_groups')
         .select('*')
-        .eq('status', 'active')
-        .order('members_count', { ascending: false });
+        .eq('active', true)
+        .order('members', { ascending: false });
 
       if (!error && data && data.length > 0) {
         groups = data.map(d => ({
           url: d.url,
           name: d.name,
-          membersNumber: d.members_count || 0,
-          visibility: d.visibility || 'Public',
+          membersNumber: d.members || 0,
+          visibility: d.access || 'Public',
           locations: [d.country || 'Nigeria'],
           category: d.category || 'General',
           query: d.query || ''
@@ -1764,7 +1771,9 @@ async function loadGroupsFromDatabase() {
         if (rawS) {
           const arr = JSON.parse(rawS) || [];
           selected = new Set(arr.filter(i => i < groups.length));
-        } else {
+        }
+        if (selected.size === 0) {
+          // Default to all active groups loaded from Supabase so Start Scraping is immediately enabled
           selected = new Set(groups.map((_, i) => i));
         }
         renderGroups();
@@ -1783,12 +1792,11 @@ async function syncGroupsToDatabase(targetGroups) {
     const rows = targetGroups.map(g => ({
       url: g.url,
       name: g.name || g.url,
-      members_count: g.membersNumber || 0,
-      visibility: g.visibility || 'Public',
+      members: g.membersNumber || 0,
+      access: g.visibility || 'Public',
       country: (g.locations && g.locations[0]) || 'Nigeria',
       category: g.category || 'General',
-      query: g.query || '',
-      status: 'active'
+      active: true
     }));
     await sb.from('gtm_discovered_groups').upsert(rows, { onConflict: 'url' });
   } catch (e) {
@@ -1888,7 +1896,7 @@ if ($('btnClearGroups')) $('btnClearGroups').onclick = async () => {
     if (sb && groups.length) {
       try {
         const urls = groups.map(g => g.url);
-        await sb.from('gtm_discovered_groups').update({ status: 'archived' }).in('url', urls);
+        await sb.from('gtm_discovered_groups').update({ active: false }).in('url', urls);
       } catch (e) {
         console.warn(e);
       }
@@ -1900,6 +1908,42 @@ if ($('btnClearGroups')) $('btnClearGroups').onclick = async () => {
     renderGroups();
   }
 };
+
+if ($('btnScraperAddDirect')) {
+  $('btnScraperAddDirect').onclick = async () => {
+    const inp = $('scraperDirectLink');
+    const val = (inp?.value || '').trim();
+    if (!val) {
+      alert('Please enter or paste a Facebook group URL.');
+      return;
+    }
+    if (!val.toLowerCase().includes('facebook.com')) {
+      alert('Please enter a valid Facebook group link (e.g. https://www.facebook.com/groups/...).');
+      return;
+    }
+    const cleanUrl = val.split('?')[0].replace(/\/+$/, '') + '/';
+    const existingIdx = groups.findIndex(g => g.url.toLowerCase() === cleanUrl.toLowerCase() || g.url.toLowerCase() === val.toLowerCase());
+    if (existingIdx >= 0) {
+      selected.add(existingIdx);
+    } else {
+      const gName = cleanUrl.replace(/https?:\/\/(www\.)?facebook\.com\/groups\/?/, '').replace(/\/$/, '') || 'Custom Group';
+      const newGroup = {
+        url: cleanUrl,
+        name: gName.replace(/[-_]/g, ' '),
+        membersNumber: 0,
+        visibility: 'Public',
+        locations: ['Nigeria']
+      };
+      groups.unshift(newGroup);
+      const newSelected = new Set([0]);
+      selected.forEach(i => newSelected.add(i + 1));
+      selected = newSelected;
+      await syncGroupsToDatabase([newGroup]);
+    }
+    if (inp) inp.value = '';
+    renderGroups();
+  };
+}
 
 if ($('cpp')) {
   $('cpp').addEventListener('change', () => {
