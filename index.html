@@ -1397,11 +1397,12 @@ if ($('btnUpdatePassword')) {
 
 /* TOP LEAD-YIELD GROUPS WIDGET ON DASHBOARD */
 async function loadTopGroupsForDashboard() {
-  if (!sb) return;
+  if (!sb || !currentUser) return;
   try {
     const { data, error } = await sb
       .from('gtm_discovered_groups')
       .select('name, url, members, total_leads_found, hot_leads_found, lead_yield_tier')
+      .eq('user_id', currentUser.id)
       .gt('total_leads_found', 0)
       .order('total_leads_found', { ascending: false })
       .order('members', { ascending: false });
@@ -1749,12 +1750,13 @@ function saveGroupsToStorage() {
 }
 
 async function loadGroupsFromDatabase() {
-  if (sb) {
+  if (sb && currentUser) {
     try {
       const { data, error } = await sb
         .from('gtm_discovered_groups')
         .select('*')
         .eq('active', true)
+        .eq('user_id', currentUser.id)
         .order('members', { ascending: false });
 
       if (!error && data && data.length > 0) {
@@ -1787,9 +1789,10 @@ async function loadGroupsFromDatabase() {
 }
 
 async function syncGroupsToDatabase(targetGroups) {
-  if (!sb || !targetGroups || !targetGroups.length) return;
+  if (!sb || !currentUser || !targetGroups || !targetGroups.length) return;
   try {
     const rows = targetGroups.map(g => ({
+      user_id: currentUser.id,
       url: g.url,
       name: g.name || g.url,
       members: g.membersNumber || 0,
@@ -1798,7 +1801,7 @@ async function syncGroupsToDatabase(targetGroups) {
       category: g.category || 'General',
       active: true
     }));
-    await sb.from('gtm_discovered_groups').upsert(rows, { onConflict: 'url' });
+    await sb.from('gtm_discovered_groups').upsert(rows, { onConflict: 'user_id,url' });
   } catch (e) {
     console.warn('Database sync error:', e);
   }
@@ -1893,10 +1896,10 @@ if ($('btnScraperAll')) $('btnScraperAll').onclick = () => { groups.forEach((_, 
 if ($('btnScraperNone')) $('btnScraperNone').onclick = () => { selected = new Set(); renderGroups(); };
 if ($('btnClearGroups')) $('btnClearGroups').onclick = async () => {
   if (confirm('Remove the current ' + groups.length + ' discovered groups from active list?')) {
-    if (sb && groups.length) {
+    if (sb && currentUser && groups.length) {
       try {
         const urls = groups.map(g => g.url);
-        await sb.from('gtm_discovered_groups').update({ active: false }).in('url', urls);
+        await sb.from('gtm_discovered_groups').update({ active: false }).eq('user_id', currentUser.id).in('url', urls);
       } catch (e) {
         console.warn(e);
       }
