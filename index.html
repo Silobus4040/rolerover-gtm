@@ -305,7 +305,14 @@
         <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="38"><select id="unit" style="width:90px"><option value="hours">hours</option><option value="days">days</option></select></div></div>
       <div><label for="viewOption">Sorting order</label>
         <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
-      <div><label for="cpp">Comments per post</label><input id="cpp" type="number" min="0" placeholder="All comments" value=""></div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label for="cpp" style="margin-bottom:0">Comments per post</label>
+          <span style="font-size:11px;color:var(--text-muted,#94a3b8)">(0 = Unlimited)</span>
+        </div>
+        <input id="cpp" type="number" min="0" placeholder="0 = All comments" value="0">
+        <div id="cppHint" style="font-size:11px;color:var(--teal,#10b981);margin-top:4px;font-weight:600">&#9889; Unlimited: Scrapes ALL comments &amp; replies</div>
+      </div>
       <div><label for="replies">Include replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
       <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
     </div>
@@ -1081,6 +1088,24 @@ if ($('btnClearGroups')) $('btnClearGroups').onclick = async () => {
   }
 };
 
+function updateCppHint() {
+  const input = $('cpp');
+  if (!input) return;
+  const val = input.value.trim();
+  const num = Number(val);
+  const hint = $('cppHint');
+  if (!hint) return;
+  if (val === '' || num === 0) {
+    hint.innerHTML = '<span style="color:var(--teal,#10b981);font-weight:600">&#9889; Unlimited: Scrapes ALL comments &amp; replies</span>';
+  } else {
+    hint.innerHTML = `<span style="color:var(--text-muted,#94a3b8)">Capped at <b>${num}</b> comment(s) per post</span>`;
+  }
+}
+if ($('cpp')) {
+  $('cpp').addEventListener('input', updateCppHint);
+  $('cpp').addEventListener('change', updateCppHint);
+}
+
 /* SCRAPER */
 $('btnScrape').onclick = async () => {
   const picked = [...selected].map(i => ({ url: groups[i].url, name: groups[i].name }));
@@ -1188,6 +1213,7 @@ $('btnCsv').onclick = () => {
 
 /* INITIAL SESSION CHECK */
 (async () => {
+  updateCppHint();
   await loadGroupsFromDatabase();
   if (sb) {
     const { data: { session } } = await sb.auth.getSession();
