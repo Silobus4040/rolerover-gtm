@@ -1482,7 +1482,11 @@ function toggleHideClaimed(checked) {
 /* LEADS & FLIP CARDS WITH UGC ROLE ROVER REPLIES */
 async function loadLeads() {
   try {
-    const res = await post('/rr-leads', { run_id: null });
+    const res = await post('/rr-leads', { 
+      run_id: null,
+      user_id: currentUser ? currentUser.id : null,
+      user_email: currentUser ? currentUser.email : null
+    });
     leads = res.leads || [];
     renderLeads();
   } catch (e) {
@@ -1977,6 +1981,8 @@ $('btnScrape').onclick = async () => {
 
   try {
     const res = await post('/rr-scrape', {
+      user_id: currentUser ? currentUser.id : null,
+      user_email: currentUser ? currentUser.email : null,
       groupUrls: picked,
       maxPosts: $('maxPosts').value.trim() === '' ? 0 : Math.max(0, +$('maxPosts').value),
       newerThan: $('hours').value + ' ' + $('unit').value,
@@ -1999,7 +2005,11 @@ function startScraperPoll() {
     sec += 5;
     $('runTimer').textContent = sec + 's elapsed';
     try {
-      const res = await post('/rr-leads', { run_id: runId });
+      const res = await post('/rr-leads', { 
+        run_id: runId,
+        user_id: currentUser ? currentUser.id : null,
+        user_email: currentUser ? currentUser.email : null
+      });
       if (res.leads && res.leads.length > 0) {
         $('stageAI').classList.add('done');
         $('stageAIDetail').textContent = res.leads.length + ' leads found!';
@@ -2017,13 +2027,25 @@ function startScraperPoll() {
 
 /* WATCHLIST */
 async function loadWatchlist() {
-  try {
-    const res = await post('/rr-watch', { action: 'list' });
-    watchlist = res.groups || [];
-    renderWatchlist();
-  } catch (e) {
-    console.warn('Error loading watchlist:', e);
+  if (sb && currentUser) {
+    try {
+      const { data, error } = await sb
+        .from('gtm_discovered_groups')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('members', { ascending: false });
+
+      if (!error && data) {
+        watchlist = data || [];
+        renderWatchlist();
+        return;
+      }
+    } catch (e) {
+      console.warn('Error loading watchlist from Supabase:', e);
+    }
   }
+  watchlist = [];
+  renderWatchlist();
 }
 
 function renderWatchlist() {
@@ -2036,12 +2058,12 @@ function renderWatchlist() {
     <div class="wl-row">
       <div class="wl-main">
         <a href="${esc(g.url)}" target="_blank" rel="noopener"><b>${esc(g.name || g.url)}</b></a>
-        <div class="small muted">Watched group</div>
+        <div class="small muted">${g.members ? g.members.toLocaleString() + ' members · ' : ''}Target Group</div>
       </div>
       <div class="wl-actions">
         <label class="wl-switch-wrap">
           <span class="wl-switch">
-            <input type="checkbox" ${g.status === 'active' ? 'checked' : ''} onchange="toggleWatch('${esc(g.url)}', this.checked)">
+            <input type="checkbox" ${g.active ? 'checked' : ''} onchange="toggleWatch('${esc(g.url)}', this.checked)">
             <span class="wl-switch-slider"></span>
           </span>
           24h auto-watch
@@ -2052,11 +2074,13 @@ function renderWatchlist() {
 }
 
 async function toggleWatch(url, active) {
-  try {
-    await post('/rr-watch', { action: active ? 'restore' : 'delete', url });
-    loadWatchlist();
-  } catch (e) {
-    alert('Error updating watchlist: ' + e.message);
+  if (sb && currentUser) {
+    try {
+      await sb.from('gtm_discovered_groups').update({ active }).eq('user_id', currentUser.id).eq('url', url);
+      loadWatchlist();
+    } catch (e) {
+      alert('Error updating watchlist: ' + e.message);
+    }
   }
 }
 
