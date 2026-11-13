@@ -462,9 +462,9 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&a
 const ACCESS_KEY = '9272b5b3ddd2fdc4806e9c05';
 const API_BASE = 'https://n8n.leadscompass.ai/webhook';
 
-/* SUPABASE MULTI-TENANCY AUTH & FREELANCER ACTIVITY TRACKING (ROLEROVER PROJECT) */
-const SUPABASE_URL = 'https://ahpvdcdpwtdeoiatjvnq.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFocHZkY2Rwd3RkZW9pYXRqdm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzkzOTgsImV4cCI6MjA5MjM1NTM5OH0.CtrIL_U2y4Ffu8BBENNzloAkWBkvcq3WAhEeROH1LC0';
+/* SUPABASE MULTI-TENANCY AUTH & FREELANCER ACTIVITY TRACKING (HETZNER SELF-HOSTED) */
+const SUPABASE_URL = 'https://core-ffnrirrrrnwoo3837q2b9x.myrolerover.com';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzNjM1MjQxLCJleHAiOjE5NTEzMTUyNDF9.fBMO3bKfgpe2o-Y87baP1PHbgN14BBosx75QdAAQL0k';
 const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 let currentUser = null;
