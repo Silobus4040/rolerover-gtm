@@ -79,10 +79,17 @@
   .warn{color:var(--amber)}
 
   /* Auth styling */
-  .auth-card{max-width:440px;margin:40px auto 20px;background:var(--card);border:1px solid #d4ff3333;border-radius:16px;padding:26px;box-shadow:0 12px 36px rgba(0,0,0,.5)}
+  .auth-card{max-width:440px;margin:40px auto 20px;background:var(--card);border:1px solid rgba(0,229,163,0.2);border-radius:16px;padding:26px;box-shadow:0 12px 36px rgba(0,0,0,.5)}
   .auth-tabs{display:flex;gap:8px;margin-bottom:18px}
-  .auth-tabs button{flex:1;background:#0d1320;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer}
-  .auth-tabs button.active{background:linear-gradient(90deg,var(--lime),var(--teal));color:#0b0f17;border-color:transparent}
+  .auth-tabs button{flex:1;background:#0d1320;border:1px solid var(--line);color:var(--text-muted);border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer}
+  .auth-tabs button.active{background:var(--accent);color:#080c14;border-color:transparent}
+
+  /* Password toggle icon button */
+  .pw-input-wrap{position:relative;display:flex;align-items:center}
+  .pw-input-wrap input{padding-right:38px}
+  .pw-eye-btn{position:absolute;right:8px;background:transparent!important;border:none!important;padding:4px;cursor:pointer;color:var(--text-dim);display:inline-flex;align-items:center;justify-content:center;box-shadow:none!important;transition:color .15s ease}
+  .pw-eye-btn:hover{color:var(--text)!important}
+  .pw-eye-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
   /* APP SHELL: sidebar + hamburger */
   .app-layout{display:flex;min-height:100vh}
@@ -497,9 +504,14 @@
       <div id="passwordFieldGroup" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <label for="authPassword" style="margin:0">Password</label>
-          <a href="#" id="linkForgotPassword" style="font-size:11px;color:var(--teal);text-decoration:none">Forgot Password?</a>
+          <a href="#" id="linkForgotPassword" style="font-size:11px;color:var(--accent);text-decoration:none">Forgot Password?</a>
         </div>
-        <input id="authPassword" type="password" placeholder="your password" autocomplete="current-password" minlength="6">
+        <div class="pw-input-wrap">
+          <input id="authPassword" type="password" placeholder="your password" autocomplete="current-password" minlength="6">
+          <button type="button" class="pw-eye-btn" onclick="togglePasswordVisibility('authPassword', this)" title="Show/Hide password" aria-label="Toggle password visibility">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
       </div>
       <button type="submit" id="btnAuthSubmit" style="width:100%;padding:11px">Log In</button>
       <div id="authMsg" class="note" style="margin-top:10px;min-height:20px;text-align:center"></div>
@@ -519,8 +531,13 @@
         <label for="resetOtp" style="color:var(--teal)">Enter Verification / Recovery Code</label>
         <input id="resetOtp" type="text" placeholder="e.g. 123456" autocomplete="one-time-code" style="font-size:16px;letter-spacing:2px;font-weight:700;text-align:center;margin-top:4px">
         <div style="margin-top:10px">
-          <label for="resetNewPassword" style="color:var(--lime)">Enter New Password</label>
-          <input id="resetNewPassword" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password" style="margin-top:4px">
+          <label for="resetNewPassword" style="color:var(--accent)">Enter New Password</label>
+          <div class="pw-input-wrap" style="margin-top:4px">
+            <input id="resetNewPassword" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password">
+            <button type="button" class="pw-eye-btn" onclick="togglePasswordVisibility('resetNewPassword', this)" title="Show/Hide password" aria-label="Toggle password visibility">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </div>
         <button type="button" id="btnConfirmReset" style="width:100%;margin-top:12px;padding:10px">Set New Password &amp; Log In</button>
         <div id="resetMsg" class="note" style="margin-top:6px;min-height:18px"></div>
@@ -764,7 +781,12 @@
     <div class="row">
       <div style="flex:1;min-width:200px">
         <label for="newPasswordInput">New Password</label>
-        <input id="newPasswordInput" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password">
+        <div class="pw-input-wrap">
+          <input id="newPasswordInput" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="new-password">
+          <button type="button" class="pw-eye-btn" onclick="togglePasswordVisibility('newPasswordInput', this)" title="Show/Hide password" aria-label="Toggle password visibility">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
       </div>
       <div style="flex:0;align-self:flex-end">
         <button class="ghost" id="btnUpdatePassword" style="white-space:nowrap">Update Password</button>
@@ -781,6 +803,19 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  if (btn) {
+    btn.innerHTML = isPassword
+      ? `<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+      : `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    btn.style.color = isPassword ? 'var(--accent)' : 'var(--text-dim)';
+  }
+}
 
 /* HARDCODED INTERNAL BACKEND COMMUNICATION - NO ACCESS KEYS PROMPTED TO FREELANCERS */
 const ACCESS_KEY = '9272b5b3ddd2fdc4806e9c05';
