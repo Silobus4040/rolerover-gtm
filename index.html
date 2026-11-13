@@ -457,18 +457,17 @@
     </div>
     <div class="note" style="margin:0 0 14px">Tap a card (or <b>Flip</b>) to view the tailored <b>UGC RoleRover Reply</b>, pain-point reasoning, and exact quote. Click <b>Open &amp; reply</b> to open Facebook and advance your daily 150-reply count!</div>
 
-    <!-- TEAM DEDUPLICATION & STATUS FILTER BAR -->
+    <!-- DEDUPLICATION & STATUS FILTER BAR -->
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:#0d1320;border:1px solid var(--line);border-radius:10px">
       <span style="font-size:12px;font-weight:700;color:var(--mute)">Filter:</span>
       <button type="button" class="lead-filter-btn active" id="flt-all" onclick="setLeadFilter('all')">All Leads (<span id="cntAll">0</span>)</button>
-      <button type="button" class="lead-filter-btn" id="flt-available" onclick="setLeadFilter('available')" style="color:var(--teal)">&#9889; Available to Reply (<span id="cntAvailable">0</span>)</button>
-      <button type="button" class="lead-filter-btn" id="flt-hot" onclick="setLeadFilter('hot')" style="color:var(--red)">&#128293; Hot Struggles (<span id="cntHot">0</span>)</button>
-      <button type="button" class="lead-filter-btn" id="flt-claimed" onclick="setLeadFilter('claimed')" style="color:var(--amber)">&#128274; Claimed by Team (<span id="cntClaimed">0</span>)</button>
-      <button type="button" class="lead-filter-btn" id="flt-my" onclick="setLeadFilter('my')" style="color:var(--lime)">&#10003; Replied by You (<span id="cntMy">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-hot" onclick="setLeadFilter('hot')" style="color:var(--red)">🔥 Hot Struggles (<span id="cntHot">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-my" onclick="setLeadFilter('my')" style="color:var(--lime)">✓ Replied by You (<span id="cntMy">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-claimed" onclick="setLeadFilter('claimed')" style="color:var(--amber)">🔒 Contacted by Team (<span id="cntClaimed">0</span>)</button>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
         <label style="margin:0;font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-weight:600">
           <input type="checkbox" id="chkHideClaimed" onchange="toggleHideClaimed(this.checked)" style="width:auto;margin:0;cursor:pointer">
-          <span>Hide Claimed Leads</span>
+          <span>Hide Leads Contacted by Team</span>
         </label>
       </div>
     </div>
@@ -1101,7 +1100,7 @@ function renderLeads() {
   }
 
   // Count metrics for filters
-  let cntAvailable = 0, cntHot = 0, cntClaimed = 0, cntMy = 0;
+  let cntHot = 0, cntClaimed = 0, cntMy = 0;
   leads.forEach(l => {
     const leadId = String(l.id || l.item_key || l.post_url || l.comment_url);
     const claim = teamRepliesMap.get(leadId);
@@ -1110,13 +1109,10 @@ function renderLeads() {
     if (claim) {
       if (claim.user_id === currentUser?.id) cntMy++;
       else cntClaimed++;
-    } else {
-      cntAvailable++;
     }
   });
 
   if ($('cntAll')) $('cntAll').textContent = leads.length;
-  if ($('cntAvailable')) $('cntAvailable').textContent = cntAvailable;
   if ($('cntHot')) $('cntHot').textContent = cntHot;
   if ($('cntClaimed')) $('cntClaimed').textContent = cntClaimed;
   if ($('cntMy')) $('cntMy').textContent = cntMy;
@@ -1136,11 +1132,10 @@ function renderLeads() {
       if (!gName.includes(targetG) && !targetG.includes(gName)) return false;
     }
 
-    // Hide claimed toggle
+    // Hide team contacted toggle
     if (hideClaimedLeads && isClaimedByOther) return false;
 
     // Filter tab
-    if (activeLeadFilter === 'available') return !claim;
     if (activeLeadFilter === 'hot') return isHot;
     if (activeLeadFilter === 'claimed') return isClaimedByOther;
     if (activeLeadFilter === 'my') return isClaimedByMe;
@@ -1171,7 +1166,7 @@ function renderLeads() {
     // Status badge on front face
     let statusBadge = isHot ? '<span class="badge hot">🔥 Hot Struggle</span>' : '<span class="badge seeker">Job Seeker</span>';
     if (isClaimedByOther) {
-      statusBadge = `<span class="badge" style="background:#fbbf2422;color:var(--amber);border-color:#fbbf2455;font-size:11px">🔒 Claimed by ${esc(claimedName)}</span>`;
+      statusBadge = `<span class="badge" style="background:#fbbf2422;color:var(--amber);border-color:#fbbf2455;font-size:11px">🔒 Contacted by ${esc(claimedName)}</span>`;
     } else if (isClaimedByMe) {
       statusBadge = '<span class="badge" style="background:#d4ff3322;color:var(--lime);border-color:#d4ff3355;font-size:11px">✓ Replied by You</span>';
     }
@@ -1179,7 +1174,7 @@ function renderLeads() {
     // Action button on front face
     let frontActionBtn = '';
     if (isClaimedByOther) {
-      frontActionBtn = `<button type="button" disabled style="background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:6px 12px;border-radius:8px;font-weight:600">🔒 Claimed by ${esc(claimedName)}</button>`;
+      frontActionBtn = `<button type="button" disabled style="background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:6px 12px;border-radius:8px;font-weight:600">🔒 Contacted by ${esc(claimedName)}</button>`;
     } else if (isClaimedByMe) {
       frontActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link replied">✓ You Replied</a>`;
     } else {
@@ -1189,7 +1184,7 @@ function renderLeads() {
     // Action button on back face
     let backActionBtn = '';
     if (isClaimedByOther) {
-      backActionBtn = `<button type="button" disabled style="width:100%;text-align:center;background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:9px 14px;border-radius:8px;font-weight:600">🔒 Already Claimed &amp; Replied by ${esc(claimedEmail)}</button>`;
+      backActionBtn = `<button type="button" disabled style="width:100%;text-align:center;background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:9px 14px;border-radius:8px;font-weight:600">🔒 Already Contacted by ${esc(claimedEmail)}</button>`;
     } else if (isClaimedByMe) {
       backActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link replied" style="width:100%;text-align:center">✓ You Replied (Click to reopen)</a>`;
     } else {
