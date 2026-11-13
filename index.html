@@ -137,6 +137,13 @@
   .copy-ugc-btn{background:#0d1320;border:1px solid var(--lime);color:var(--lime);font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
   .copy-ugc-btn:hover{background:var(--lime);color:#0b0f17}
 
+  /* TEAM DEDUP & DASHBOARD TOP GROUPS */
+  .lead-filter-btn{background:#0d1320;border:1px solid var(--line);color:var(--mute);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .lead-filter-btn:hover{border-color:#d4ff3366;color:var(--text)}
+  .lead-filter-btn.active{background:#162238;border-color:var(--teal);color:#fff;box-shadow:0 0 10px #00ffcc22}
+  .top-group-box{background:#0d1320;border:1px solid #1f2a40;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:all .2s ease}
+  .top-group-box:hover{border-color:#00ffcc55;background:#101828;transform:translateY(-1px)}
+
   /* WATCHLIST */
   .wl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 2px;border-bottom:1px solid #1a2236}
   .wl-row:last-child{border-bottom:0}
@@ -398,6 +405,29 @@
     <div class="stat"><b id="sComments" style="color:var(--amber)">0</b><span class="muted">From Comments</span></div>
   </div>
 
+  <!-- TOP LEAD-YIELD GROUPS TO JOIN WIDGET -->
+  <div class="card" id="topGroupsCard" style="background:linear-gradient(180deg, #161f30 0%, #111723 100%);border:1px solid #00ffcc33;border-radius:14px;padding:16px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px">&#128293;</span>
+          <b style="font-size:15px;color:var(--text)">Top Communities to Join (Highest Lead Yield)</b>
+          <span class="badge" style="background:#00ffcc22;color:var(--teal);border-color:#00ffcc55;font-size:11px">High Yield</span>
+        </div>
+        <div class="note" style="margin:4px 0 0;font-size:12px;color:var(--mute)">
+          Aggregated across 940 posts &amp; comments. Join these top groups on Facebook first to engage verified job seekers.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="ghost" id="btnClearGroupFilter" style="display:none;font-size:11px;padding:5px 12px;border-color:var(--teal);color:var(--teal)" onclick="clearGroupFilter()">&#10005; Clear Group Filter</button>
+        <button type="button" class="ghost" data-goto="watchlist" style="font-size:12px;padding:6px 14px">Manage All Groups &rarr;</button>
+      </div>
+    </div>
+    <div id="topGroupsGrid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:10px">
+      <!-- Populated dynamically from gtm_discovered_groups -->
+    </div>
+  </div>
+
   <div class="card" id="resCard">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
       <div>
@@ -410,6 +440,23 @@
       </div>
     </div>
     <div class="note" style="margin:0 0 14px">Tap a card (or <b>Flip</b>) to view the tailored <b>UGC RoleRover Reply</b>, pain-point reasoning, and exact quote. Click <b>Open &amp; reply</b> to open Facebook and advance your daily 150-reply count!</div>
+
+    <!-- TEAM DEDUPLICATION & STATUS FILTER BAR -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:#0d1320;border:1px solid var(--line);border-radius:10px">
+      <span style="font-size:12px;font-weight:700;color:var(--mute)">Filter:</span>
+      <button type="button" class="lead-filter-btn active" id="flt-all" onclick="setLeadFilter('all')">All Leads (<span id="cntAll">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-available" onclick="setLeadFilter('available')" style="color:var(--teal)">&#9889; Available to Reply (<span id="cntAvailable">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-hot" onclick="setLeadFilter('hot')" style="color:var(--red)">&#128293; Hot Struggles (<span id="cntHot">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-claimed" onclick="setLeadFilter('claimed')" style="color:var(--amber)">&#128274; Claimed by Team (<span id="cntClaimed">0</span>)</button>
+      <button type="button" class="lead-filter-btn" id="flt-my" onclick="setLeadFilter('my')" style="color:var(--lime)">&#10003; Replied by You (<span id="cntMy">0</span>)</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+        <label style="margin:0;font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-weight:600">
+          <input type="checkbox" id="chkHideClaimed" onchange="toggleHideClaimed(this.checked)" style="width:auto;margin:0;cursor:pointer">
+          <span>Hide Claimed Leads</span>
+        </label>
+      </div>
+    </div>
+
     <div class="lead-grid" id="leadsGrid"></div>
     <div class="empty" id="emptyMsg">No saved job seekers yet.</div>
   </div>
@@ -473,6 +520,12 @@ let groups = [], selected = new Set(), leads = [];
 let runId = null, poll = null, runLeadCount = 0, runSeen = 0, runStats = null;
 let watchlist = [];
 let repliedLeadIds = new Set();
+let teamRepliesMap = new Map();
+let myRepliedLeadIds = new Set();
+let dashboardTopGroups = [];
+let activeGroupFilter = null;
+let activeLeadFilter = 'all';
+let hideClaimedLeads = false;
 let dailyReplyCount = 0;
 const DAILY_TARGET = 150;
 
@@ -595,6 +648,7 @@ function applySession(user) {
     loadFreelancerSettings();
     loadFreelancerRepliesToday();
     loadLeads();
+    loadTopGroupsForDashboard();
     loadWatchlist();
     showPage('dashboard');
   } else {
@@ -619,7 +673,10 @@ function showPage(name) {
   $('pageTitle').textContent = $('page-' + name).dataset.title;
   closeMenu();
   window.scrollTo(0, 0);
-  if (name === 'dashboard') { loadFreelancerRepliesToday(); }
+  if (name === 'dashboard') {
+    loadFreelancerRepliesToday();
+    loadTopGroupsForDashboard();
+  }
   if (name === 'watchlist') { loadWatchlist(); }
 }
 function openMenu() { $('appSidebar').classList.add('open'); $('sidebarOverlay').classList.add('open'); }
@@ -646,7 +703,7 @@ function status(id, msg, busy) {
   if ($(id)) $(id).innerHTML = (busy ? '<span class="spin"></span> ' : '') + '<span>' + esc(msg) + '</span>';
 }
 
-/* FREELANCER DAILY REPLY ACCOUNTABILITY */
+/* FREELANCER DAILY REPLY ACCOUNTABILITY & TEAM DEDUPLICATION */
 async function loadFreelancerRepliesToday() {
   if (!sb || !currentUser) return;
   const startOfDay = new Date();
@@ -655,17 +712,33 @@ async function loadFreelancerRepliesToday() {
   try {
     const { data, error } = await sb
       .from('rr_freelancer_replies')
-      .select('lead_id')
-      .eq('user_id', currentUser.id)
-      .gte('replied_at', startOfDay.toISOString());
+      .select('id, user_id, user_email, lead_id, lead_name, group_name, replied_at')
+      .order('replied_at', { ascending: false });
 
     if (error) throw error;
-    repliedLeadIds = new Set((data || []).map(r => r.lead_id));
-    dailyReplyCount = repliedLeadIds.size;
+    
+    teamRepliesMap = new Map();
+    myRepliedLeadIds = new Set();
+    repliedLeadIds = new Set();
+
+    (data || []).forEach(r => {
+      const lid = String(r.lead_id || '');
+      if (lid) {
+        if (!teamRepliesMap.has(lid)) {
+          teamRepliesMap.set(lid, r);
+        }
+        if (r.user_id === currentUser.id && new Date(r.replied_at) >= startOfDay) {
+          myRepliedLeadIds.add(lid);
+        }
+        repliedLeadIds.add(lid);
+      }
+    });
+
+    dailyReplyCount = myRepliedLeadIds.size;
     updateGoalUI();
     renderLeads();
   } catch (e) {
-    console.warn('Error loading daily replies:', e);
+    console.warn('Error loading replies:', e);
   }
 }
 
@@ -683,13 +756,26 @@ function updateGoalUI() {
 async function recordFreelancerReply(lead) {
   if (!currentUser || !sb) return;
   const leadId = String(lead.id || lead.item_key || lead.post_url || lead.comment_url);
-  if (!repliedLeadIds.has(leadId)) {
+  
+  if (!teamRepliesMap.has(leadId)) {
+    const replyRecord = {
+      user_id: currentUser.id,
+      user_email: currentUser.email || 'freelancer',
+      lead_id: leadId,
+      lead_name: lead.full_name || 'Job Hunter',
+      group_name: lead.group_name || '',
+      replied_at: new Date().toISOString()
+    };
+    teamRepliesMap.set(leadId, replyRecord);
+    myRepliedLeadIds.add(leadId);
     repliedLeadIds.add(leadId);
-    dailyReplyCount = repliedLeadIds.size;
+    dailyReplyCount = myRepliedLeadIds.size;
     updateGoalUI();
+
     try {
       await sb.from('rr_freelancer_replies').insert({
         user_id: currentUser.id,
+        user_email: currentUser.email || 'freelancer',
         lead_id: leadId,
         lead_name: lead.full_name || 'Job Hunter',
         group_name: lead.group_name || ''
@@ -741,6 +827,107 @@ $('btnSaveTg').onclick = async () => {
   }
 };
 
+/* TOP LEAD-YIELD GROUPS WIDGET ON DASHBOARD */
+async function loadTopGroupsForDashboard() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb
+      .from('gtm_discovered_groups')
+      .select('name, url, members, total_leads_found, hot_leads_found, lead_yield_tier')
+      .gt('total_leads_found', 0)
+      .order('total_leads_found', { ascending: false })
+      .order('members', { ascending: false });
+
+    if (error) throw error;
+    dashboardTopGroups = data || [];
+    renderTopGroupsDashboard();
+  } catch (e) {
+    console.warn('Error loading top groups for dashboard:', e);
+  }
+}
+
+function renderTopGroupsDashboard() {
+  const container = $('topGroupsGrid');
+  if (!container) return;
+
+  if (!dashboardTopGroups || dashboardTopGroups.length === 0) {
+    container.innerHTML = '<div class="muted small" style="grid-column:1/-1;padding:12px;background:#0d1320;border-radius:8px">No lead-yield groups found yet.</div>';
+    return;
+  }
+
+  container.innerHTML = dashboardTopGroups.map(g => {
+    const isFiltered = activeGroupFilter && activeGroupFilter.toLowerCase() === g.name.toLowerCase();
+    const isHigh = (g.total_leads_found || 0) >= 10;
+    const isMed = (g.total_leads_found || 0) >= 3 && !isHigh;
+    const tierBadge = isHigh 
+      ? '<span class="badge" style="background:#00ffcc22;color:var(--teal);border-color:#00ffcc55;font-size:10px">🔥 High Yield</span>'
+      : isMed 
+      ? '<span class="badge" style="background:#d4ff3322;color:var(--lime);border-color:#d4ff3355;font-size:10px">⚡ Medium</span>'
+      : '<span class="badge" style="background:#60a5fa22;color:var(--blue);border-color:#60a5fa55;font-size:10px">Active</span>';
+
+    const borderStyle = isFiltered ? '2px solid var(--teal)' : '1px solid #1f2a40';
+    const bgStyle = isFiltered ? '#152136' : '#0d1320';
+
+    return `
+      <div class="top-group-box" style="background:${bgStyle};border:${borderStyle};border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+            <b style="font-size:13px;color:#fff;line-height:1.3">${esc(g.name)}</b>
+            ${tierBadge}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:var(--mute);flex-wrap:wrap">
+            <span>👥 ${(g.members || 0).toLocaleString()} members</span>
+            <span>&middot;</span>
+            <span style="color:var(--lime);font-weight:700">⚡ ${g.total_leads_found || 0} Leads</span>
+            <span style="color:var(--red);font-weight:700">(${g.hot_leads_found || 0} Hot)</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid #1a2336">
+          <button type="button" class="ghost" style="font-size:11px;padding:4px 9px;${isFiltered ? 'border-color:var(--teal);color:var(--teal)' : ''}" onclick="toggleGroupLeadFilter('${esc(g.name)}')">
+            ${isFiltered ? '✓ Showing Leads' : 'Filter Leads'}
+          </button>
+          <a href="${esc(g.url)}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:var(--teal);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            Join Group &rarr;
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if ($('btnClearGroupFilter')) {
+    $('btnClearGroupFilter').style.display = activeGroupFilter ? 'inline-block' : 'none';
+  }
+}
+
+function toggleGroupLeadFilter(groupName) {
+  if (activeGroupFilter && activeGroupFilter.toLowerCase() === groupName.toLowerCase()) {
+    activeGroupFilter = null;
+  } else {
+    activeGroupFilter = groupName;
+  }
+  renderTopGroupsDashboard();
+  renderLeads();
+}
+
+function clearGroupFilter() {
+  activeGroupFilter = null;
+  renderTopGroupsDashboard();
+  renderLeads();
+}
+
+function setLeadFilter(filter) {
+  activeLeadFilter = filter;
+  document.querySelectorAll('.lead-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'flt-' + filter);
+  });
+  renderLeads();
+}
+
+function toggleHideClaimed(checked) {
+  hideClaimedLeads = !!checked;
+  renderLeads();
+}
+
 /* LEADS & FLIP CARDS WITH UGC ROLE ROVER REPLIES */
 async function loadLeads() {
   try {
@@ -762,34 +949,119 @@ function renderLeads() {
     $('navLeadCount').textContent = leads.length;
     $('navLeadCount').style.display = leads.length ? 'inline-block' : 'none';
   }
-  $('emptyMsg').style.display = leads.length ? 'none' : 'block';
+
+  // Count metrics for filters
+  let cntAvailable = 0, cntHot = 0, cntClaimed = 0, cntMy = 0;
+  leads.forEach(l => {
+    const leadId = String(l.id || l.item_key || l.post_url || l.comment_url);
+    const claim = teamRepliesMap.get(leadId);
+    const isHot = l.hot === true || l.hot === 'true';
+    if (isHot) cntHot++;
+    if (claim) {
+      if (claim.user_id === currentUser?.id) cntMy++;
+      else cntClaimed++;
+    } else {
+      cntAvailable++;
+    }
+  });
+
+  if ($('cntAll')) $('cntAll').textContent = leads.length;
+  if ($('cntAvailable')) $('cntAvailable').textContent = cntAvailable;
+  if ($('cntHot')) $('cntHot').textContent = cntHot;
+  if ($('cntClaimed')) $('cntClaimed').textContent = cntClaimed;
+  if ($('cntMy')) $('cntMy').textContent = cntMy;
+
+  // Filter leads
+  const filtered = leads.filter(l => {
+    const leadId = String(l.id || l.item_key || l.post_url || l.comment_url);
+    const claim = teamRepliesMap.get(leadId);
+    const isClaimedByOther = claim && claim.user_id !== currentUser?.id;
+    const isClaimedByMe = claim && claim.user_id === currentUser?.id;
+    const isHot = l.hot === true || l.hot === 'true';
+
+    // Group filter from dashboard
+    if (activeGroupFilter) {
+      const gName = (l.group_name || '').toLowerCase();
+      const targetG = activeGroupFilter.toLowerCase();
+      if (!gName.includes(targetG) && !targetG.includes(gName)) return false;
+    }
+
+    // Hide claimed toggle
+    if (hideClaimedLeads && isClaimedByOther) return false;
+
+    // Filter tab
+    if (activeLeadFilter === 'available') return !claim;
+    if (activeLeadFilter === 'hot') return isHot;
+    if (activeLeadFilter === 'claimed') return isClaimedByOther;
+    if (activeLeadFilter === 'my') return isClaimedByMe;
+
+    return true;
+  });
+
+  $('emptyMsg').style.display = filtered.length ? 'none' : 'block';
+  if (!filtered.length && leads.length > 0) {
+    $('emptyMsg').textContent = 'No leads match the current filters. Tap "All Leads" or clear your group filter.';
+  } else if (!leads.length) {
+    $('emptyMsg').textContent = 'No saved job seekers yet.';
+  }
 
   const grid = $('leadsGrid');
-  grid.innerHTML = leads.map((l, i) => {
+  grid.innerHTML = filtered.map((l, i) => {
     const isHot = l.hot === true || l.hot === 'true';
     const leadId = String(l.id || l.item_key || l.post_url || l.comment_url);
-    const replied = repliedLeadIds.has(leadId);
+    const claim = teamRepliesMap.get(leadId);
+    const isClaimedByOther = claim && claim.user_id !== currentUser?.id;
+    const isClaimedByMe = claim && claim.user_id === currentUser?.id;
     const replyTargetUrl = l.comment_url || l.post_url || '#';
     const roleRoverReply = l.draft_reply || generateFallbackUgcReply(l);
 
+    const claimedEmail = claim ? (claim.user_email || 'freelancer') : '';
+    const claimedName = claimedEmail.split('@')[0];
+
+    // Status badge on front face
+    let statusBadge = isHot ? '<span class="badge hot">🔥 Hot Struggle</span>' : '<span class="badge seeker">Job Seeker</span>';
+    if (isClaimedByOther) {
+      statusBadge = `<span class="badge" style="background:#fbbf2422;color:var(--amber);border-color:#fbbf2455;font-size:11px">🔒 Claimed by ${esc(claimedName)}</span>`;
+    } else if (isClaimedByMe) {
+      statusBadge = '<span class="badge" style="background:#d4ff3322;color:var(--lime);border-color:#d4ff3355;font-size:11px">✓ Replied by You</span>';
+    }
+
+    // Action button on front face
+    let frontActionBtn = '';
+    if (isClaimedByOther) {
+      frontActionBtn = `<button type="button" disabled style="background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:6px 12px;border-radius:8px;font-weight:600">🔒 Claimed by ${esc(claimedName)}</button>`;
+    } else if (isClaimedByMe) {
+      frontActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link replied">✓ You Replied</a>`;
+    } else {
+      frontActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link" onclick="onLeadReplyClick(event, '${esc(leadId)}')">Open &amp; reply &rarr;</a>`;
+    }
+
+    // Action button on back face
+    let backActionBtn = '';
+    if (isClaimedByOther) {
+      backActionBtn = `<button type="button" disabled style="width:100%;text-align:center;background:#1e293b;color:#94a3b8;border:1px solid #334155;cursor:not-allowed;font-size:12px;padding:9px 14px;border-radius:8px;font-weight:600">🔒 Already Claimed &amp; Replied by ${esc(claimedEmail)}</button>`;
+    } else if (isClaimedByMe) {
+      backActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link replied" style="width:100%;text-align:center">✓ You Replied (Click to reopen)</a>`;
+    } else {
+      backActionBtn = `<a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link" style="width:100%;text-align:center" onclick="onLeadReplyClick(event, '${esc(leadId)}')">Open Facebook &amp; Send Reply &rarr;</a>`;
+    }
+
     return `
-    <div class="fcard" id="fcard-${i}">
+    <div class="fcard" id="fcard-${esc(leadId)}" style="${isClaimedByOther ? 'opacity:0.85;' : ''}">
       <div class="fcard-inner">
         <!-- FRONT FACE -->
-        <div class="fface front" onclick="toggleFlip(${i})">
+        <div class="fface front" onclick="toggleFlip('${esc(leadId)}')">
           <div class="fhead">
             <div>
               <b style="font-size:15px">${esc(l.full_name || 'Anonymous Job Hunter')}</b>
               <div class="small muted">${esc(l.group_name || 'Job Group')} &middot; ${l.source === 'comment' ? 'Comment' : 'Post'}</div>
             </div>
-            <span class="badge ${isHot ? 'hot' : 'seeker'}">${isHot ? '🔥 Hot Struggle' : 'Job Seeker'}</span>
+            ${statusBadge}
           </div>
           <div class="fsnip">${esc(l.item_text || '')}</div>
           <div class="ffoot" onclick="event.stopPropagation()">
-            <button type="button" class="flip-btn" onclick="toggleFlip(${i})">&#8635; View UGC Reply</button>
-            <a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link ${replied ? 'replied' : ''}" onclick="onLeadReplyClick(event, ${i})">
-              ${replied ? '✓ Replied' : 'Open &amp; reply &rarr;'}
-            </a>
+            <button type="button" class="flip-btn" onclick="toggleFlip('${esc(leadId)}')">&#8635; View UGC Reply</button>
+            ${frontActionBtn}
           </div>
         </div>
 
@@ -800,7 +1072,7 @@ function renderLeads() {
               <b style="font-size:14px">${esc(l.full_name || 'Job Hunter')}</b>
               <span class="badge ${isHot ? 'hot' : 'seeker'}" style="margin-left:6px">${isHot ? 'Hot' : 'Lead'}</span>
             </div>
-            <button type="button" class="flip-btn" onclick="toggleFlip(${i})">&#8635; Flip back</button>
+            <button type="button" class="flip-btn" onclick="toggleFlip('${esc(leadId)}')">&#8635; Flip back</button>
           </div>
           <div>
             <label style="color:var(--teal)">Why this connects to RoleRover</label>
@@ -809,14 +1081,12 @@ function renderLeads() {
           <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
               <label style="color:var(--lime)">Tailored UGC Reply (Mentions RoleRover)</label>
-              <button type="button" class="copy-ugc-btn" id="copyBtn-${i}" onclick="copyReplyText(${i}, '${esc(roleRoverReply)}')">📋 Copy Reply</button>
+              <button type="button" class="copy-ugc-btn" id="copyBtn-${esc(leadId)}" onclick="copyReplyText('${esc(leadId)}', '${esc(roleRoverReply)}')">📋 Copy Reply</button>
             </div>
-            <div class="qbox q-draft" id="replyBox-${i}">${esc(roleRoverReply)}</div>
+            <div class="qbox q-draft" id="replyBox-${esc(leadId)}">${esc(roleRoverReply)}</div>
           </div>
           <div class="ffoot" style="margin-top:auto">
-            <a href="${esc(replyTargetUrl)}" target="_blank" rel="noopener" class="btn-link ${replied ? 'replied' : ''}" style="width:100%;text-align:center" onclick="onLeadReplyClick(event, ${i})">
-              ${replied ? '✓ Replied (Click to reopen)' : 'Open Facebook &amp; Send Reply &rarr;'}
-            </a>
+            ${backActionBtn}
           </div>
         </div>
       </div>
@@ -851,14 +1121,14 @@ function generateFallbackUgcReply(lead) {
   return "Hey! What kind of roles or background are you targeting? Like tech, admin/VA, customer support, or sales? Might know a few places hiring depending on what you do.";
 }
 
-function toggleFlip(i) {
-  const el = $('fcard-' + i);
+function toggleFlip(id) {
+  const el = $('fcard-' + id);
   if (el) el.classList.toggle('flipped');
 }
 
-function copyReplyText(idx, text) {
+function copyReplyText(id, text) {
   navigator.clipboard.writeText(text).then(() => {
-    const btn = $('copyBtn-' + idx);
+    const btn = $('copyBtn-' + id);
     if (btn) {
       const orig = btn.innerHTML;
       btn.textContent = '✓ Copied!';
@@ -867,8 +1137,8 @@ function copyReplyText(idx, text) {
   });
 }
 
-function onLeadReplyClick(e, idx) {
-  const lead = leads[idx];
+function onLeadReplyClick(e, leadId) {
+  const lead = leads.find(l => String(l.id || l.item_key || l.post_url || l.comment_url) === String(leadId));
   if (lead) {
     recordFreelancerReply(lead);
   }
