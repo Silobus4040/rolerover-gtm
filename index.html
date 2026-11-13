@@ -236,6 +236,22 @@
     gap: 8px;
     flex: 1;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+    padding-bottom: 3px;
+  }
+  .cs-pills-wrap::-webkit-scrollbar {
+    height: 4px;
+  }
+  .cs-pills-wrap::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .cs-pills-wrap::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 99px;
+  }
+  .cs-pills-wrap::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
   .cs-pill {
     display: inline-flex;
@@ -270,16 +286,26 @@
     border-radius: 99px;
     font-weight: 700;
     font-size: 10px;
+    cursor: pointer;
   }
-  .cs-pill-link {
-    color: var(--text-dim);
-    text-decoration: none;
+  .cs-pill-join {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0,229,163,0.12);
+    border: 1px solid rgba(0,229,163,0.3);
+    color: var(--accent) !important;
+    text-decoration: none !important;
     font-weight: 700;
-    font-size: 12px;
-    padding-left: 2px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    transition: all .15s ease;
   }
-  .cs-pill-link:hover {
-    color: var(--accent);
+  .cs-pill-join:hover {
+    background: var(--accent);
+    color: #080c14 !important;
+    transform: translateY(-1px);
   }
   .cs-clear-btn {
     background: transparent;
@@ -1233,7 +1259,7 @@ function renderTopGroupsDashboard() {
       <div class="cs-pill ${isFiltered ? 'active' : ''}">
         <span class="cs-pill-name" onclick="toggleGroupLeadFilter('${esc(g.name)}')" title="Filter leads from ${esc(g.name)}">${esc(g.name)}</span>
         <span class="cs-pill-badge" onclick="toggleGroupLeadFilter('${esc(g.name)}')">${leadsCount} leads${hotCount ? ` (${hotCount} hot)` : ''}</span>
-        <a href="${esc(g.url)}" target="_blank" rel="noopener" class="cs-pill-link" title="Open group on Facebook">&#8599;</a>
+        <a href="${esc(g.url)}" target="_blank" rel="noopener" class="cs-pill-join" title="Join this group on Facebook">Join Group &nearr;</a>
       </div>
     `;
   }).join('');
