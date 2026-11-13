@@ -305,7 +305,7 @@
         <div style="display:flex;gap:6px"><input id="hours" type="number" min="1" value="38"><select id="unit" style="width:90px"><option value="hours">hours</option><option value="days">days</option></select></div></div>
       <div><label for="viewOption">Sorting order</label>
         <select id="viewOption"><option value="CHRONOLOGICAL">Newest first</option><option value="RECENT_ACTIVITY">Recent activity</option><option value="TOP_POSTS">Top posts</option></select></div>
-      <div><label for="cpp">Comments per post</label><input id="cpp" type="number" min="1" value="30"></div>
+      <div><label for="cpp">Comments per post</label><input id="cpp" type="number" min="0" placeholder="All comments" value=""></div>
       <div><label for="replies">Include replies</label><select id="replies"><option value="true">Include</option><option value="false">Exclude</option></select></div>
       <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
     </div>
@@ -927,10 +927,10 @@ $('btnScrape').onclick = async () => {
   try {
     const res = await post('/rr-scrape', {
       groupUrls: picked,
-      maxPosts: +$('maxPosts').value || 20,
+      maxPosts: $('maxPosts').value.trim() === '' ? 0 : Math.max(0, +$('maxPosts').value),
       newerThan: $('hours').value + ' ' + $('unit').value,
       viewOption: $('viewOption').value,
-      commentsPerPost: +$('cpp').value || 30,
+      commentsPerPost: $('cpp').value.trim() === '' ? 0 : Math.max(0, +$('cpp').value),
       includeReplies: $('replies').value === 'true'
     });
     runId = res.run_id;
