@@ -680,8 +680,6 @@
     <div class="row">
       <div class="grow"><label for="kw">Target roles or keywords (comma separated)</label>
         <input id="kw" placeholder="e.g. remote jobs, software engineer, customer support, virtual assistant" autocomplete="off"></div>
-      <div><label for="maxGroups">Max groups</label><input id="maxGroups" type="number" min="1" max="200" value="30"></div>
-      <div><label for="minMembers">Min members</label><input id="minMembers" type="number" min="0" value="0"></div>
       <div style="flex:0"><button id="btnFind">Find groups</button></div>
     </div>
     <div style="margin-top:14px">
@@ -1179,6 +1177,12 @@ $('btnConfirmReset').onclick = async () => {
 
 function applySession(user) {
   currentUser = user;
+  try {
+    localStorage.removeItem('rr_gtm_groups');
+    localStorage.removeItem('rr_gtm_selected');
+  } catch (e) {}
+  groups = [];
+  selected = new Set();
   if (user) {
     document.body.classList.add('authed');
     $('authCard').style.display = 'none';
@@ -1187,6 +1191,7 @@ function applySession(user) {
     $('userEmailTag').textContent = user.email || 'Freelancer';
     loadFreelancerSettings();
     loadFreelancerRepliesToday();
+    loadGroupsFromDatabase();
     loadLeads();
     loadTopGroupsForDashboard();
     loadWatchlist();
@@ -1704,8 +1709,8 @@ $('btnFind').onclick = async () => {
   try {
     const res = await post('/rr-group-finder', {
       keywords: kw.split(',').map(s => s.trim()).filter(Boolean),
-      maxGroups: +$('maxGroups').value || 30,
-      minMembers: +$('minMembers').value || 0
+      maxGroups: 50,
+      minMembers: 1500
     });
     if (!res.search_id) throw new Error('Search failed to start');
     // Poll for search results
@@ -1746,8 +1751,10 @@ $('btnAddLinks').onclick = () => {
 
 function saveGroupsToStorage() {
   try {
-    localStorage.setItem('rr_gtm_groups', JSON.stringify(groups));
-    localStorage.setItem('rr_gtm_selected', JSON.stringify(Array.from(selected)));
+    const gKey = currentUser ? ('rr_gtm_groups_' + currentUser.id) : 'rr_gtm_groups';
+    const sKey = currentUser ? ('rr_gtm_selected_' + currentUser.id) : 'rr_gtm_selected';
+    localStorage.setItem(gKey, JSON.stringify(groups));
+    localStorage.setItem(sKey, JSON.stringify(Array.from(selected)));
   } catch (e) {
     console.warn('LocalStorage save failed:', e);
   }
@@ -1763,27 +1770,35 @@ async function loadGroupsFromDatabase() {
         .eq('user_id', currentUser.id)
         .order('members', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        groups = data.map(d => ({
-          url: d.url,
-          name: d.name,
-          membersNumber: d.members || 0,
-          visibility: d.access || 'Public',
-          locations: [d.country || 'Nigeria'],
-          category: d.category || 'General',
-          query: d.query || ''
-        }));
-        const rawS = localStorage.getItem('rr_gtm_selected');
-        if (rawS) {
-          const arr = JSON.parse(rawS) || [];
-          selected = new Set(arr.filter(i => i < groups.length));
+      if (!error) {
+        if (data && data.length > 0) {
+          groups = data.map(d => ({
+            url: d.url,
+            name: d.name,
+            membersNumber: d.members || 0,
+            visibility: d.access || 'Public',
+            locations: [d.country || 'Nigeria'],
+            category: d.category || 'General',
+            query: d.query || ''
+          }));
+          const sKey = 'rr_gtm_selected_' + currentUser.id;
+          const rawS = localStorage.getItem(sKey);
+          if (rawS) {
+            const arr = JSON.parse(rawS) || [];
+            selected = new Set(arr.filter(i => i < groups.length));
+          }
+          if (selected.size === 0) {
+            selected = new Set(groups.map((_, i) => i));
+          }
+          renderGroups();
+          return;
+        } else {
+          // Explicitly empty for this isolated user
+          groups = [];
+          selected = new Set();
+          renderGroups();
+          return;
         }
-        if (selected.size === 0) {
-          // Default to all active groups loaded from Supabase so Start Scraping is immediately enabled
-          selected = new Set(groups.map((_, i) => i));
-        }
-        renderGroups();
-        return;
       }
     } catch (e) {
       console.warn('Database load failed, fallback to local:', e);
@@ -1813,8 +1828,10 @@ async function syncGroupsToDatabase(targetGroups) {
 
 function loadGroupsFromStorage() {
   try {
-    const rawG = localStorage.getItem('rr_gtm_groups');
-    const rawS = localStorage.getItem('rr_gtm_selected');
+    const gKey = currentUser ? ('rr_gtm_groups_' + currentUser.id) : 'rr_gtm_groups';
+    const sKey = currentUser ? ('rr_gtm_selected_' + currentUser.id) : 'rr_gtm_selected';
+    const rawG = localStorage.getItem(gKey);
+    const rawS = localStorage.getItem(sKey);
     if (rawG) {
       groups = JSON.parse(rawG) || [];
       if (rawS) {
@@ -1823,8 +1840,11 @@ function loadGroupsFromStorage() {
       } else {
         selected = new Set(groups.map((_, i) => i));
       }
-      renderGroups();
+    } else {
+      groups = [];
+      selected = new Set();
     }
+    renderGroups();
   } catch (e) {
     console.warn('LocalStorage load failed:', e);
   }
