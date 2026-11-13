@@ -885,7 +885,8 @@ $('btnFind').onclick = async () => {
         groups = pollRes.groups || [];
         selected = new Set(groups.map((_, idx) => idx));
         renderGroups();
-        status('st1', 'Found ' + groups.length + ' groups!');
+        syncGroupsToDatabase(groups);
+        status('st1', 'Found ' + groups.length + ' groups (synced to database)!');
         finished = true;
         break;
       }
@@ -908,6 +909,7 @@ $('btnAddLinks').onclick = () => {
   });
   $('manualLinks').value = '';
   renderGroups();
+  syncGroupsToDatabase(groups);
 };
 
 function saveGroupsToStorage() {
@@ -916,6 +918,61 @@ function saveGroupsToStorage() {
     localStorage.setItem('rr_gtm_selected', JSON.stringify(Array.from(selected)));
   } catch (e) {
     console.warn('LocalStorage save failed:', e);
+  }
+}
+
+async function loadGroupsFromDatabase() {
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from('gtm_discovered_groups')
+        .select('*')
+        .eq('status', 'active')
+        .order('members_count', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        groups = data.map(d => ({
+          url: d.url,
+          name: d.name,
+          membersNumber: d.members_count || 0,
+          visibility: d.visibility || 'Public',
+          locations: [d.country || 'Nigeria'],
+          category: d.category || 'General',
+          query: d.query || ''
+        }));
+        const rawS = localStorage.getItem('rr_gtm_selected');
+        if (rawS) {
+          const arr = JSON.parse(rawS) || [];
+          selected = new Set(arr.filter(i => i < groups.length));
+        } else {
+          selected = new Set(groups.map((_, i) => i));
+        }
+        renderGroups();
+        return;
+      }
+    } catch (e) {
+      console.warn('Database load failed, fallback to local:', e);
+    }
+  }
+  loadGroupsFromStorage();
+}
+
+async function syncGroupsToDatabase(targetGroups) {
+  if (!sb || !targetGroups || !targetGroups.length) return;
+  try {
+    const rows = targetGroups.map(g => ({
+      url: g.url,
+      name: g.name || g.url,
+      members_count: g.membersNumber || 0,
+      visibility: g.visibility || 'Public',
+      country: (g.locations && g.locations[0]) || 'Nigeria',
+      category: g.category || 'General',
+      query: g.query || '',
+      status: 'active'
+    }));
+    await sb.from('gtm_discovered_groups').upsert(rows, { onConflict: 'url' });
+  } catch (e) {
+    console.warn('Database sync error:', e);
   }
 }
 
@@ -960,7 +1017,7 @@ function renderGroups() {
       `).join('');
     }
     const selCount = $('selCount');
-    if (selCount) selCount.textContent = selected.size + ' of ' + groups.length + ' selected';
+    if (selCount) selCount.textContent = `${selected.size} of ${groups.length} selected (Supabase synced)`;
   }
 
   // Step 2: Post & Comment Scraper target table
@@ -979,7 +1036,7 @@ function renderGroups() {
       `).join('');
     }
     const scraperSelCount = $('scraperSelCount');
-    if (scraperSelCount) scraperSelCount.textContent = selected.size + ' of ' + groups.length + ' groups selected';
+    if (scraperSelCount) scraperSelCount.textContent = `${selected.size} of ${groups.length} selected for scraping (Supabase synced)`;
   }
 
   $('btnScrape').disabled = selected.size === 0;
@@ -1006,8 +1063,16 @@ $('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
 
 if ($('btnScraperAll')) $('btnScraperAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
 if ($('btnScraperNone')) $('btnScraperNone').onclick = () => { selected = new Set(); renderGroups(); };
-if ($('btnClearGroups')) $('btnClearGroups').onclick = () => {
-  if (confirm('Clear the current list of ' + groups.length + ' discovered groups?')) {
+if ($('btnClearGroups')) $('btnClearGroups').onclick = async () => {
+  if (confirm('Remove the current ' + groups.length + ' discovered groups from active list?')) {
+    if (sb && groups.length) {
+      try {
+        const urls = groups.map(g => g.url);
+        await sb.from('gtm_discovered_groups').update({ status: 'archived' }).in('url', urls);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
     groups = [];
     selected = new Set();
     localStorage.removeItem('rr_gtm_groups');
@@ -1123,7 +1188,7 @@ $('btnCsv').onclick = () => {
 
 /* INITIAL SESSION CHECK */
 (async () => {
-  loadGroupsFromStorage();
+  await loadGroupsFromDatabase();
   if (sb) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user) {
