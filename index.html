@@ -1709,7 +1709,7 @@ $('btnFind').onclick = async () => {
   try {
     const res = await post('/rr-group-finder', {
       keywords: kw.split(',').map(s => s.trim()).filter(Boolean),
-      maxGroups: 50,
+      maxGroups: 100,
       minMembers: 1500
     });
     if (!res.search_id) throw new Error('Search failed to start');
