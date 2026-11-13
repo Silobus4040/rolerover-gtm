@@ -310,6 +310,25 @@
       <div style="flex:0"><button id="btnScrape" disabled>Start scraping</button></div>
     </div>
     <div class="status" id="st2">Tick at least one group in Step 1 to enable Start scraping.</div>
+    <div id="scraperGroupsBox" style="margin-top:14px;display:none">
+      <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div>
+          <span style="font-weight:600;font-size:13px">&#128194; Target Groups for Scraping</span>
+          <span class="muted small" id="scraperSelCount" style="margin-left:8px"></span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="ghost" id="btnScraperAll" style="font-size:11px;padding:3px 8px">Select all</button>
+          <button type="button" class="ghost" id="btnScraperNone" style="font-size:11px;padding:3px 8px">Clear</button>
+          <button type="button" class="ghost" id="btnClearGroups" style="font-size:11px;padding:3px 8px;color:#f87171" title="Clear all discovered groups">Remove list</button>
+        </div>
+      </div>
+      <div style="overflow:auto;max-height:280px;border:1px solid var(--border,#334155);border-radius:6px">
+        <table id="scraperGroupsTbl" style="width:100%;font-size:12px">
+          <thead><tr><th style="width:36px;text-align:center"></th><th>Group Name &amp; Link</th><th class="num">Members</th><th>Type</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
     <div class="run-tracker" id="runTracker">
       <div class="run-tracker-head">
         <span class="run-tracker-title"><span class="pulse-dot"></span> Scraper &amp; RoleRover AI Classifier In Progress</span>
@@ -891,30 +910,111 @@ $('btnAddLinks').onclick = () => {
   renderGroups();
 };
 
-function renderGroups() {
-  $('groupsBox').style.display = groups.length ? 'block' : 'none';
-  const tb = $('groupsTbl').querySelector('tbody');
-  tb.innerHTML = groups.map((g, i) => `
-    <tr>
-      <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} onchange="onGroupToggle(${i}, this.checked)"></td>
-      <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name || g.url)}</a></td>
-      <td class="num">${g.membersNumber ? g.membersNumber.toLocaleString() : '-'}</td>
-      <td>${esc(g.visibility || 'Public')}</td>
-      <td class="num">${g.posts7d != null ? g.posts7d : '-'}</td>
-      <td class="num">${g.comments != null ? g.comments : '-'}</td>
-      <td><span class="badge ${g.alive ? 'seeker' : 'other'}">${g.alive ? 'Active' : 'Ready'}</span></td>
-    </tr>
-  `).join('');
-  $('selCount').textContent = selected.size + ' selected';
-  $('btnScrape').disabled = selected.size === 0;
+function saveGroupsToStorage() {
+  try {
+    localStorage.setItem('rr_gtm_groups', JSON.stringify(groups));
+    localStorage.setItem('rr_gtm_selected', JSON.stringify(Array.from(selected)));
+  } catch (e) {
+    console.warn('LocalStorage save failed:', e);
+  }
 }
+
+function loadGroupsFromStorage() {
+  try {
+    const rawG = localStorage.getItem('rr_gtm_groups');
+    const rawS = localStorage.getItem('rr_gtm_selected');
+    if (rawG) {
+      groups = JSON.parse(rawG) || [];
+      if (rawS) {
+        const arr = JSON.parse(rawS) || [];
+        selected = new Set(arr.filter(i => i < groups.length));
+      } else {
+        selected = new Set(groups.map((_, i) => i));
+      }
+      renderGroups();
+    }
+  } catch (e) {
+    console.warn('LocalStorage load failed:', e);
+  }
+}
+
+function renderGroups() {
+  saveGroupsToStorage();
+
+  // Step 1: Group Finder table
+  const gBox = $('groupsBox');
+  if (gBox) {
+    gBox.style.display = groups.length ? 'block' : 'none';
+    const tb = $('groupsTbl')?.querySelector('tbody');
+    if (tb) {
+      tb.innerHTML = groups.map((g, i) => `
+        <tr>
+          <td><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} onchange="onGroupToggle(${i}, this.checked)"></td>
+          <td><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name || g.url)}</a></td>
+          <td class="num">${g.membersNumber ? g.membersNumber.toLocaleString() : '-'}</td>
+          <td>${esc(g.visibility || 'Public')}</td>
+          <td class="num">${g.posts7d != null ? g.posts7d : '-'}</td>
+          <td class="num">${g.comments != null ? g.comments : '-'}</td>
+          <td><span class="badge ${g.alive ? 'seeker' : 'other'}">${g.alive ? 'Active' : 'Ready'}</span></td>
+        </tr>
+      `).join('');
+    }
+    const selCount = $('selCount');
+    if (selCount) selCount.textContent = selected.size + ' of ' + groups.length + ' selected';
+  }
+
+  // Step 2: Post & Comment Scraper target table
+  const sBox = $('scraperGroupsBox');
+  if (sBox) {
+    sBox.style.display = groups.length ? 'block' : 'none';
+    const tb2 = $('scraperGroupsTbl')?.querySelector('tbody');
+    if (tb2) {
+      tb2.innerHTML = groups.map((g, i) => `
+        <tr style="${selected.has(i) ? 'background:rgba(16,185,129,0.08)' : 'opacity:0.6'}">
+          <td style="text-align:center"><input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked' : ''} onchange="onGroupToggle(${i}, this.checked)"></td>
+          <td><a href="${esc(g.url)}" target="_blank" rel="noopener" style="font-weight:500">${esc(g.name || g.url)}</a></td>
+          <td class="num">${g.membersNumber ? g.membersNumber.toLocaleString() : '-'}</td>
+          <td><span class="badge ${g.locations && g.locations.includes('Nigeria') ? 'seeker' : 'other'}">${esc(g.locations?.[0] || 'Target')}</span></td>
+        </tr>
+      `).join('');
+    }
+    const scraperSelCount = $('scraperSelCount');
+    if (scraperSelCount) scraperSelCount.textContent = selected.size + ' of ' + groups.length + ' groups selected';
+  }
+
+  $('btnScrape').disabled = selected.size === 0;
+
+  const st2 = $('st2');
+  if (st2 && !runId) {
+    if (selected.size > 0) {
+      st2.innerHTML = `<span style="color:var(--teal)">✓ <b>${selected.size}</b> group(s) selected for scraping below. Click <b>Start scraping</b> to begin.</span>`;
+    } else if (groups.length > 0) {
+      st2.textContent = 'Tick at least one group below to enable Start scraping.';
+    } else {
+      st2.innerHTML = `No groups found yet. Go to <a href="#" onclick="showPage('finder');return false;" style="color:var(--teal);text-decoration:underline">Group Search</a> to find groups first.`;
+    }
+  }
+}
+
 function onGroupToggle(i, checked) {
   checked ? selected.add(i) : selected.delete(i);
-  $('selCount').textContent = selected.size + ' selected';
-  $('btnScrape').disabled = selected.size === 0;
+  renderGroups();
 }
+
 $('btnAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
 $('btnNone').onclick = () => { selected = new Set(); renderGroups(); };
+
+if ($('btnScraperAll')) $('btnScraperAll').onclick = () => { groups.forEach((_, i) => selected.add(i)); renderGroups(); };
+if ($('btnScraperNone')) $('btnScraperNone').onclick = () => { selected = new Set(); renderGroups(); };
+if ($('btnClearGroups')) $('btnClearGroups').onclick = () => {
+  if (confirm('Clear the current list of ' + groups.length + ' discovered groups?')) {
+    groups = [];
+    selected = new Set();
+    localStorage.removeItem('rr_gtm_groups');
+    localStorage.removeItem('rr_gtm_selected');
+    renderGroups();
+  }
+};
 
 /* SCRAPER */
 $('btnScrape').onclick = async () => {
@@ -1023,6 +1123,7 @@ $('btnCsv').onclick = () => {
 
 /* INITIAL SESSION CHECK */
 (async () => {
+  loadGroupsFromStorage();
   if (sb) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user) {
